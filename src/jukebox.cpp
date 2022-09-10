@@ -600,8 +600,8 @@ bool Jukebox::download_song(const SongMetadata& song) {
             }
 
             // is it encrypted? if so, unencrypt it
-            int encrypted = song.fm.encrypted;
-            int compressed = song.fm.compressed;
+            //int encrypted = song.fm.encrypted;
+            //int compressed = song.fm.compressed;
 
             //TODO: (3) encryption and compression (download_song)
             //if (encrypted == 1 || compressed == 1) {
@@ -709,7 +709,7 @@ void Jukebox::play_song(const string& song_file_path) {
 void Jukebox::download_songs() {
       // scan the play list directory to see if we need to download more songs
       vector<string> dir_listing = chaudiere::OSUtils::listFilesInDirectory(song_play_dir);
-      int song_file_count = 0;
+      unsigned int song_file_count = 0;
       auto it = dir_listing.begin();
       const auto it_end = dir_listing.end();
       for (; it != it_end; it++) {
@@ -724,7 +724,7 @@ void Jukebox::download_songs() {
          }
       }
 
-      int file_cache_count = jukebox_options.file_cache_count;
+      unsigned int file_cache_count = jukebox_options.file_cache_count;
 
       if (song_file_count < file_cache_count) {
          vector<SongMetadata> dl_songs;

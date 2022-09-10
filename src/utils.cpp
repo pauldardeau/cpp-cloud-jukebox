@@ -76,7 +76,7 @@ bool Utils::directory_delete_directory(const std::string& dir_path) {
 bool Utils::file_read_all_text(const string& file_path,
                                string& file_text)
 {
-   FILE* f = fopen(file_path.c_str(), "r");
+   FILE* f = fopen(file_path.c_str(), "rt");
    if (f == NULL) {
       return false;
    }
@@ -119,7 +119,7 @@ bool Utils::path_isfile(const string& path) {
 
 int Utils::find_last_index(const string& str, char x) {
    int index = -1;
-   for (int i = 0; i < str.length(); i++) {
+   for (unsigned int i = 0; i < str.length(); i++) {
       if (str[i] == x) {
          index = i;
       }
@@ -225,14 +225,68 @@ bool Utils::file_write_all_text(const string& file_path,
 
 bool Utils::file_read_all_bytes(const string& file_path,
                                 vector<unsigned char>& file_bytes) {
-   //TODO: implement file_read_all_bytes
-   return false;
+   FILE* f = fopen(file_path.c_str(), "rb");
+   if (f == NULL) {
+      return false;
+   }
+
+   bool success = false;
+
+   fseek(f, 0, SEEK_END);
+   const long num_file_bytes = ftell(f);
+   fseek(f, 0, SEEK_SET);
+
+   if (num_file_bytes > 0L) {
+      unsigned char* buffer = new unsigned char[num_file_bytes];
+      int num_objects_read = fread(buffer, num_file_bytes, 1, f);
+      if (num_objects_read == 1) {
+         for (long l = 0; l < num_file_bytes; l++) {
+            file_bytes.push_back(buffer[l]);
+	 }
+         success = true;
+      }
+   }
+   return success;
 }
 
 bool Utils::file_write_all_bytes(const string& file_path,
                                  const vector<unsigned char>& file_bytes) {
-   //TODO: implement file_write_all_bytes
-   return false;
+   FILE* f = fopen(file_path.c_str(), "rb");
+   if (f == NULL) {
+      return false;
+   }
+
+   unsigned long num_bytes_to_write = file_bytes.size();
+   unsigned long file_offset = 0;
+   unsigned char buffer[4096];
+   unsigned long buff_offset = 0;
+   unsigned long max_buff_offset = 4095;
+
+   bool write_success = true;
+
+   while (num_bytes_to_write > 0) {
+      unsigned long loop_bytes_to_write = max_buff_offset;   
+      if (num_bytes_to_write < loop_bytes_to_write) {
+         loop_bytes_to_write = num_bytes_to_write;
+      }
+
+      buff_offset = 0;
+
+      // fill up the buffer
+      for (unsigned long j = 0; j < loop_bytes_to_write; j++) {
+         buffer[buff_offset++] = file_bytes[file_offset++];
+      }
+
+      size_t items_written = fwrite(buffer, loop_bytes_to_write, 1, f);
+      if (items_written < 1) {
+         write_success = false;
+	 break;
+      }
+   }
+
+   fclose(f);
+
+   return write_success;
 }
 
 string Utils::md5_for_file(const string& path_to_file) {

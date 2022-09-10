@@ -48,7 +48,7 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
    int num_args = args.size();
    bool working = true;
    int i = 0;
-   int commands_found = 0;
+   unsigned int commands_found = 0;
 
    if (num_args == 0) {
       working = false;

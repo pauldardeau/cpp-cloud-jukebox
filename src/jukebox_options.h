@@ -12,8 +12,8 @@ public:
    bool use_encryption;
    bool use_compression;
    bool check_data_integrity;
-   int file_cache_count;
-   int number_songs;
+   unsigned int file_cache_count;
+   unsigned int number_songs;
    std::string encryption_key;
    std::string encryption_key_file;
    std::string encryption_iv;
@@ -62,11 +62,6 @@ public:
    }
 
    bool validate_options() {
-      if (file_cache_count < 0) {
-         printf("error: file cache count must be non-negative integer value\n");
-         return false;
-      }
-
       if (encryption_key_file.length() > 0 && ! Utils::file_exists(encryption_key_file)) {
          printf("error: encryption key file doesn't exist %s\n", encryption_key_file.c_str());
          return false;
