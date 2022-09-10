@@ -639,7 +639,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
                      if (jukebox.upload_metadata_db()) {
                         printf("metadata db uploaded");
                      } else {
-                        printf("error: unable to upload metadata db");
+                        printf("error: unable to upload metadata db\n");
                         exit_code = 1;
                      }
                   } else if (command == "import-album-art") {
