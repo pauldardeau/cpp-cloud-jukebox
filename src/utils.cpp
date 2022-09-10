@@ -92,8 +92,8 @@ bool Utils::file_read_all_text(const string& file_path,
       int num_objects_read = fread(buffer, num_file_bytes, 1, f);
       if (num_objects_read == 1) {
          buffer[num_file_bytes] = '\0';
-	 file_text = buffer;
-	 success = true;
+         file_text = buffer;
+         success = true;
       }
       delete [] buffer;
    } else {
@@ -242,7 +242,7 @@ bool Utils::file_read_all_bytes(const string& file_path,
       if (num_objects_read == 1) {
          for (long l = 0; l < num_file_bytes; l++) {
             file_bytes.push_back(buffer[l]);
-	 }
+         }
          success = true;
       }
    }
@@ -280,7 +280,7 @@ bool Utils::file_write_all_bytes(const string& file_path,
       size_t items_written = fwrite(buffer, loop_bytes_to_write, 1, f);
       if (items_written < 1) {
          write_success = false;
-	 break;
+         break;
       }
    }
 

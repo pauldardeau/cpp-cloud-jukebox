@@ -12,7 +12,7 @@ ArgumentParser::ArgumentParser() {
 
 void ArgumentParser::addOption(const string& o,
                                const string& option_type,
-			       const string& help) {
+                               const string& help) {
    dict_all_reserved_words[o] = option_type;
 
    if (option_type == TYPE_BOOL) {
@@ -60,7 +60,7 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
       auto it = dict_all_reserved_words.find(arg);
       if (it != dict_all_reserved_words.end()) {
          const string& arg_type = it->second;
-	 string the_arg = arg.substr(2, arg.length()-2);
+         string the_arg = arg.substr(2, arg.length()-2);
          if (arg_type == TYPE_BOOL) {
             printf("adding key=%s value=true\n", the_arg.c_str());
             pset->add(the_arg, new BoolPropertyValue(true));

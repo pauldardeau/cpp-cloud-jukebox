@@ -69,7 +69,7 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
 
          printf("error: no swift credentials given. please specify swift_account, "
                 "swift_user, and swift_password in credentials\n");
-	 Utils::sys_exit(1);
+         Utils::sys_exit(1);
       }
 
       string user = "";
@@ -196,7 +196,7 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
       if (azure_account_name.length() == 0 || azure_account_key.length() == 0) {
          printf("error: no azure credentials given. please specify azure_account_name "
                 "and azure_account_key in credentials file\n");
-	 Utils::sys_exit(1);
+         Utils::sys_exit(1);
       } else {
          string account_name = "";
          string account_key = "";
@@ -221,8 +221,8 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
 
 StorageSystem* JukeboxMain::connect_memory_system(const PropertySet& credentials,
                                                   string prefix,
-						  bool in_debug_mode,
-						  bool in_update_mode) {
+                                                  bool in_debug_mode,
+                                                  bool in_update_mode) {
    return new MemoryStorageSystem(in_debug_mode);
 }
 
@@ -369,12 +369,12 @@ void JukeboxMain::run(const vector<string>& console_args) {
          options.encryption_key = StrUtils::strip(encryption_key);
       } else {
          printf("error: unable to read key file %s\n", keyfile.c_str());
-	 Utils::sys_exit(1);
+         Utils::sys_exit(1);
       }
 
       if (options.encryption_key.length() == 0) {
          printf("error: no key found in file %s\n", keyfile.c_str());
-	 Utils::sys_exit(1);
+         Utils::sys_exit(1);
       }
    }
 
@@ -389,7 +389,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
       if (!supported_systems.contains(storage)) {
          printf("error: invalid storage type %s\n", storage.c_str());
          //printf("supported systems are: %s" % str(supported_systems));
-	 Utils::sys_exit(1);
+         Utils::sys_exit(1);
       } else {
          if (debug_mode) {
             printf("setting storage system to %s\n", storage.c_str());
@@ -430,12 +430,12 @@ void JukeboxMain::run(const vector<string>& console_args) {
             printf("reading creds file %s\n", creds_file_path.c_str());
          }
 
-	 string file_contents;
+         string file_contents;
 
-	 bool file_read = Utils::file_read_all_text(creds_file_path,
+         bool file_read = Utils::file_read_all_text(creds_file_path,
                                                     file_contents);
-	 if (file_read) {
-	    /*
+         if (file_read) {
+            /*
             foreach (var file_line in File.ReadLines(creds_file_path)) {
                string trimmed_file_line = file_line.Trim();
                if (trimmed_file_line.length() > 0) {
@@ -449,7 +449,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
                   }
                }
             }
-	    */
+            */
          } else {
             if (debug_mode) {
                printf("error: unable to read file %s\n", creds_file_path.c_str());
@@ -537,7 +537,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
                                                        in_update_mode);
                if (storage_system == NULL) {
                   printf("error: unable to connect to storage system\n");
-		  Utils::sys_exit(1);
+                  Utils::sys_exit(1);
                }
 
                printf("entering storage system\n");
@@ -650,7 +650,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
                {
                   printf("exception caught: %s\n", e.what());
                }
-	       catch (...)
+               catch (...)
                {
                   printf("unknown exception caught\n");
                }

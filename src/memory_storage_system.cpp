@@ -45,7 +45,7 @@ bool MemoryStorageSystem::delete_container(const string& container_name) {
       const auto it_list_end = list_container_names.end();
       for (; it_list != it_list_end; it_list++) {
          list_container_names.erase(it_list);
-	 break;
+         break;
       }
       container_deleted = true;
    }
@@ -75,18 +75,18 @@ bool MemoryStorageSystem::get_object_metadata(const std::string& container_name,
       const auto it_end = container_headers.end();
       if (it != it_end) {
          auto container_obj_headers = it->second;
-	 auto it_obj_headers = container_obj_headers.find(object_name);
-	 if (it_obj_headers != container_obj_headers.end()) {
+         auto it_obj_headers = container_obj_headers.find(object_name);
+         if (it_obj_headers != container_obj_headers.end()) {
             const map<string, PropertyValue*>& header_container = it_obj_headers->second;
-	    auto it_props = header_container.begin();
-	    const auto it_props_end = header_container.end();
-	    for (; it_props != it_props_end; it_props++) {
+            auto it_props = header_container.begin();
+            const auto it_props_end = header_container.end();
+            for (; it_props != it_props_end; it_props++) {
                const string& prop_name = it_props->first;
-	       const PropertyValue* pv = it_props->second;
-	       dict_props[prop_name] = pv->clone();
-	    }
-	    return true;
-	 }
+               const PropertyValue* pv = it_props->second;
+               dict_props[prop_name] = pv->clone();
+            }
+            return true;
+         }
       }
    }
    return false;
@@ -117,18 +117,18 @@ bool MemoryStorageSystem::delete_object(const string& container_name,
    if (container_name.length() > 0 && object_name.length() > 0) {
       if (has_container(container_name)) {
          auto it_container = container_objects.find(container_name);
-	 if (it_container != container_objects.end()) {
+         if (it_container != container_objects.end()) {
             auto object_container = it_container->second;
-	    auto it_objects = object_container.find(object_name);
-	    if (it_objects != object_container.end()) {
+            auto it_objects = object_container.find(object_name);
+            if (it_objects != object_container.end()) {
                object_container.erase(it_objects);
                object_deleted = true;
             }
-	 }
+         }
          map<string, map<string, PropertyValue*> >& header_container =
             container_headers[container_name];
-	 auto it_header = header_container.find(object_name);
-	 const auto it_header_end = header_container.end();
+         auto it_header = header_container.find(object_name);
+         const auto it_header_end = header_container.end();
          if (it_header != it_header_end) {
             header_container.erase(it_header);
             object_deleted = true;
@@ -140,7 +140,7 @@ bool MemoryStorageSystem::delete_object(const string& container_name,
 
 int MemoryStorageSystem::get_object(const string& container_name,
                                     const string& object_name,
-				    const string& local_file_path) {
+                                    const string& local_file_path) {
    int bytes_retrieved = 0;
    if (container_name.length() > 0 &&
        object_name.length() > 0 &&

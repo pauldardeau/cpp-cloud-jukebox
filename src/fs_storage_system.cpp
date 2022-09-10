@@ -79,8 +79,8 @@ bool FSStorageSystem::put_object(const string& container_name,
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       if (chaudiere::OSUtils::directoryExists(container_dir)) {
          string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
-	 object_added = Utils::file_write_all_bytes(object_path, file_contents);
-	 //TODO: write metadata
+         object_added = Utils::file_write_all_bytes(object_path, file_contents);
+         //TODO: write metadata
       }
    }
    return object_added;
@@ -92,11 +92,11 @@ bool FSStorageSystem::delete_object(const string& container_name,
    if (container_name.length() > 0 && object_name.length() > 0) {
       if (has_container(container_name)) {
          string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-	 string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
-	 if (Utils::file_exists(object_path)) {
+         string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+         if (Utils::file_exists(object_path)) {
             object_deleted = chaudiere::OSUtils::deleteFile(object_path);
-	    //TODO: delete object metadata
-	 }
+            //TODO: delete object metadata
+         }
       }
    }
    return object_deleted;
