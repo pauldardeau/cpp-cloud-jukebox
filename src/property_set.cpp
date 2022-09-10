@@ -9,12 +9,20 @@ PropertySet::PropertySet() {
 }
 
 PropertySet::~PropertySet() {
-   //TODO: delete all PropertyValue instances
+   clear();
 }
 
 void PropertySet::add(const std::string& prop_name, PropertyValue* prop_value) {
    if (prop_value != NULL) {
       map_props[prop_name] = prop_value;
+   }
+}
+
+void PropertySet::clear() {
+   auto it = map_props.begin();
+   const auto it_end = map_props.end();
+   for (; it != it_end; it++) {
+      delete it->second;
    }
 }
 

@@ -20,6 +20,7 @@ public:
    ~PropertySet();
 
    void add(const std::string& prop_name, PropertyValue* prop_value);
+   void clear();
 
    bool contains(const std::string& prop_name) const;
    const PropertyValue* get(const std::string& prop_name) const;
