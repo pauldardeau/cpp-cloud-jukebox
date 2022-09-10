@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "utils.h"
+#include "DateTime.h"
 
 using namespace std;
 
@@ -23,10 +24,8 @@ void Utils::time_sleep(int seconds) {
 
 double Utils::time_time() {
    // python time.time
-
-   //TODO: implement time_time
-   //return DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
-   return 0.0;
+   chaudiere::DateTime dt;
+   return chaudiere::DateTime::unixTimeValue(dt);
 }
 
 void Utils::sys_stdout_write(const string& s) {
@@ -172,10 +171,16 @@ vector<string> Utils::path_splitext(const string& path) {
 double Utils::path_getmtime(const string& path) {
    // python: os.path.getmtime
 
-   //TODO: implement path_getmtime
-   //DateTime dtModify = File.GetLastWriteTime(path);
-   //TimeSpan timeSpan = dtModify - new DateTime(1970, 1, 1, 0, 0, 0);
-   //return timeSpan.TotalSeconds;
+   struct stat st;
+   int rc = stat(path.c_str(), &st);
+   if (rc == 0) {
+      // struct timespec st_mtim;  // Time of last modification
+      //    time_t tv_sec   // whole seconds (valid values are >= 0)
+      //    long tv_nsec    // nanoseconds (valid values are [0, 999999999])
+      // DQ: should we return any fractional seconds?
+      return st.st_mtim.tv_sec * 1.0;
+   }
+
    return 0.0;
 }
 
@@ -200,27 +205,45 @@ long Utils::get_file_size(const string& path_to_file) {
 bool Utils::os_rename(const string& existing_file,
                       const string& new_file) {
    // python: os.rename
-
    return rename_file(existing_file, new_file);
 }
 
 bool Utils::rename_file(const string& existing_file,
                         const string& new_file) {
    // python: os.rename
-
    return 0 == rename(existing_file.c_str(), new_file.c_str());
 }
 
 bool Utils::file_append_all_text(const string& file_path,
                                  const string& append_file_text) {
-   //TODO: implement file_append_all_text
-   return false;
+   FILE* f = fopen(file_path.c_str(), "a");
+   if (f == NULL) {
+      return false;
+   }
+
+   size_t elems_written = fwrite(append_file_text.c_str(),
+                                 append_file_text.length(),
+                                 1,
+                                 f);
+   fclose(f);
+
+   return (elems_written == 1);
 }
 
 bool Utils::file_write_all_text(const string& file_path,
                                 const string& file_text) {
-   //TODO: implement file_write_all_text
-   return false;
+   FILE* f = fopen(file_path.c_str(), "w");
+   if (f == NULL) {
+      return false;
+   }
+   
+   size_t elems_written = fwrite(file_text.c_str(),
+                                 file_text.length(),
+                                 1,
+                                 f);
+   fclose(f);
+
+   return (elems_written == 1);
 }
 
 bool Utils::file_read_all_bytes(const string& file_path,
