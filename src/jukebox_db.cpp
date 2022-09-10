@@ -166,7 +166,7 @@ string JukeboxDB::get_playlist(const string& playlist_name) {
             string* playlist_uid = rs->stringForColumnIndex(0);
             if (playlist_uid != NULL) {
                pl_object = *playlist_uid;
-               //delete playlist_uid;
+               delete playlist_uid;
             }
          }
          delete rs;
@@ -180,19 +180,51 @@ bool JukeboxDB::songs_for_query(DBResultSet* rs,
    int num_songs = 0;
    while (rs->next()) {
       SongMetadata* song = new SongMetadata;;
-      song->fm.file_uid = *rs->stringForColumnIndex(0);
-      song->fm.file_time = *rs->stringForColumnIndex(1);
+      string* file_uid = rs->stringForColumnIndex(0);
+      if (file_uid != NULL) {
+         song->fm.file_uid = *file_uid;
+	 delete file_uid;
+      }
+      string* file_time = rs->stringForColumnIndex(1);
+      if (file_time != NULL) {
+         song->fm.file_time = *file_time;
+	 delete file_time;
+      }
       song->fm.origin_file_size = rs->longForColumnIndex(2);
       song->fm.stored_file_size = rs->longForColumnIndex(3);
       song->fm.pad_char_count = rs->longForColumnIndex(4);
-      song->artist_name = *rs->stringForColumnIndex(5);
-      song->artist_uid = *rs->stringForColumnIndex(6);
-      song->song_name = *rs->stringForColumnIndex(7);
-      song->fm.md5_hash = *rs->stringForColumnIndex(8);
+      string* artist_name = rs->stringForColumnIndex(5);
+      if (artist_name != NULL) {
+         song->artist_name = *artist_name;
+	 delete artist_name;
+      }
+      string* artist_uid = rs->stringForColumnIndex(6);
+      if (artist_uid != NULL) {
+         song->artist_uid = *artist_uid;
+	 delete artist_uid;
+      }
+      string* song_name = rs->stringForColumnIndex(7);
+      if (song_name != NULL) {
+         song->song_name = *song_name;
+	 delete song_name;
+      }
+      string* md5_hash = rs->stringForColumnIndex(8);
+      if (md5_hash != NULL) {
+         song->fm.md5_hash = *md5_hash;
+	 delete md5_hash;
+      }
       song->fm.compressed = rs->intForColumnIndex(9);
       song->fm.encrypted = rs->intForColumnIndex(10);
-      song->fm.container_name = *rs->stringForColumnIndex(11);
-      song->fm.object_name = *rs->stringForColumnIndex(12);
+      string* container_name = rs->stringForColumnIndex(11);
+      if (container_name != NULL) {
+         song->fm.container_name = *container_name;
+	 delete container_name;
+      }
+      string* object_name = rs->stringForColumnIndex(12);
+      if (object_name != NULL) {
+         song->fm.object_name = *object_name;
+         delete object_name;
+      }
       //if (!rs->IsDBNull(13)) {
       //   song->album_uid = rs->stringForColumnIndex(13);
       //} else {
@@ -495,6 +527,8 @@ void JukeboxDB::show_listings() {
             if (artist_name != NULL && song_name != NULL) {
                printf("%s, %s\n", artist_name->c_str(), song_name->c_str());
             }
+	    delete artist_name;
+	    delete song_name;
          }
          delete rs;
       }
@@ -512,6 +546,7 @@ void JukeboxDB::show_artists() {
             string* artist_name = rs->stringForColumnIndex(0);
             if (artist_name != NULL) {
                printf("%s\n", artist_name->c_str());
+	       delete artist_name;
             }
          }
          delete rs;
@@ -530,6 +565,7 @@ void JukeboxDB::show_genres() {
             string* genre_name = rs->stringForColumnIndex(0);
             if (genre_name != NULL) {
                printf("%s\n", genre_name->c_str());
+	       delete genre_name;
             }
          }
          delete rs;
@@ -555,6 +591,8 @@ void JukeboxDB::show_albums() {
             if (album_name != NULL && artist_name != NULL) {
                printf("%s (%s)\n", album_name->c_str(), artist_name->c_str());
             }
+	    delete album_name;
+	    delete artist_name;
          }
          delete rs;
       }
@@ -574,6 +612,8 @@ void JukeboxDB::show_playlists() {
             if (playlist_uid != NULL && playlist_name != NULL) {
                printf("%s - %s\n", playlist_uid->c_str(), playlist_name->c_str());
             }
+	    delete playlist_uid;
+	    delete playlist_name;
          }
          delete rs;
       }
