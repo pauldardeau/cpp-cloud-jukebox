@@ -26,6 +26,16 @@ public:
                                        bool in_debug_mode,
                                        bool in_update_mode);
 
+   StorageSystem* connect_memory_system(const PropertySet& credentials,
+                                        std::string prefix,
+                                        bool in_debug_mode,
+                                        bool in_update_mode);
+
+   StorageSystem* connect_fs_system(const PropertySet& credentials,
+                                    std::string prefix,
+                                    bool in_debug_mode,
+                                    bool in_update_mode);
+
    StorageSystem* connect_storage_system(const std::string& system_name,
                                          const PropertySet& credentials,
                                          std::string prefix,

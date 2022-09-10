@@ -20,7 +20,7 @@ public:
    bool enter();
    void exit();
 
-   const std::vector<std::string>& list_account_containers() const;
+   std::vector<std::string> list_account_containers();
 
    bool create_container(const std::string& container_name);
 
@@ -35,7 +35,7 @@ public:
    bool put_object(const std::string& container_name,
                    const std::string& object_name,
                    const std::vector<unsigned char>& file_contents,
-                   const std::map<std::string, PropertyValue*>& headers);
+                   const std::map<std::string, PropertyValue*>* headers=NULL);
 
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);

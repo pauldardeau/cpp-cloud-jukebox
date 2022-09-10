@@ -19,8 +19,9 @@ bool FSStorageSystem::enter() {
 void FSStorageSystem::exit() {
 }
 
-const vector<string>& FSStorageSystem::list_account_containers() const {
-   return list_container_names;
+vector<string> FSStorageSystem::list_account_containers() {
+   vector<string> ret_vec(list_container_names);
+   return ret_vec;   
 }
 
 bool FSStorageSystem::create_container(const string& container_name) {
@@ -72,7 +73,7 @@ bool FSStorageSystem::get_object_metadata(const std::string& container_name,
 bool FSStorageSystem::put_object(const string& container_name,
                                  const string& object_name,
                                  const vector<unsigned char>& file_contents,
-                                 const map<string, PropertyValue*>& headers) {
+                                 const map<string, PropertyValue*>* headers) {
    bool object_added = false;
    if (container_name.length() > 0 && object_name.length() > 0 && file_contents .size() > 0) {
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);

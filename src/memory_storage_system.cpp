@@ -14,8 +14,9 @@ bool MemoryStorageSystem::enter() {
 void MemoryStorageSystem::exit() {
 }
 
-const vector<string>& MemoryStorageSystem::list_account_containers() const {
-   return list_container_names;
+vector<string> MemoryStorageSystem::list_account_containers() {
+   vector<string> ret_vec(list_container_names);
+   return ret_vec;
 }
 
 bool MemoryStorageSystem::create_container(const string& container_name) {
@@ -94,7 +95,7 @@ bool MemoryStorageSystem::get_object_metadata(const std::string& container_name,
 bool MemoryStorageSystem::put_object(const string& container_name,
                                      const string& object_name,
                                      const vector<unsigned char>& file_contents,
-                                     const map<string, PropertyValue*>& headers) {
+                                     const map<string, PropertyValue*>* headers) {
    bool object_added = false;
    if (container_name.length() > 0 && object_name.length() > 0 && file_contents .size() > 0) {
       map<string, vector<unsigned char> > object_container =
