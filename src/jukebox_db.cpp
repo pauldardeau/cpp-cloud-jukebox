@@ -1,5 +1,9 @@
 #include "jukebox_db.h"
 #include "SQLiteDatabase.h"
+#include "DBStatementArgs.h"
+#include "DBInt.h"
+#include "DBLong.h"
+#include "DBString.h"
 #include "jb_utils.h"
 
 using namespace std;
@@ -153,9 +157,10 @@ string JukeboxDB::get_playlist(const string& playlist_name) {
    if (playlist_name.length() > 0 && db_connection != NULL) {
       string sql = "SELECT playlist_uid "
                    "FROM playlist "
-                   "WHERE playlist_name = $playlist_name";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-            //command.Parameters.AddWithValue("$playlist_name", playlist_name);
+                   "WHERE playlist_name = ?";
+      DBStatementArgs args;
+      args.add(new DBString(playlist_name));
+      DBResultSet* rs = db_connection->executeQuery(sql, args);
       if (rs != NULL) {
          if (rs->next()) {
             string* playlist_uid = rs->stringForColumnIndex(0);
@@ -218,9 +223,10 @@ SongMetadata* JukeboxDB::retrieve_song(const string& file_name) {
                    "     object_name,"
                    "     album_uid "
                    "FROM song "
-                   "WHERE song_uid = $song_uid";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-            //command.Parameters.AddWithValue("$song_uid", file_name);
+                   "WHERE song_uid = ?";
+      DBStatementArgs args;
+      args.add(new DBString(file_name));
+      DBResultSet* rs = db_connection->executeQuery(sql, args);
       if (rs != NULL) {
          vector<SongMetadata*> song_results;
          if (songs_for_query(rs, song_results)) {
@@ -238,11 +244,12 @@ bool JukeboxDB::insert_playlist(const string& pl_uid,
    bool insert_success = false;
 
    if (db_is_open && pl_uid.length() > 0 && pl_name.length() > 0) {
-      string sql = "INSERT INTO playlist VALUES ($pl_uid,$pl_name,$pl_desc)";
-      if (db_connection->executeUpdate(sql)) {
-         //command.Parameters.AddWithValue("$pl_uid", pl_uid);
-         //command.Parameters.AddWithValue("$pl_name", pl_name);
-         //command.Parameters.AddWithValue("$pl_desc", pl_desc);
+      string sql = "INSERT INTO playlist VALUES (?,?,?)";
+      DBStatementArgs args;
+      args.add(new DBString(pl_uid));
+      args.add(new DBString(pl_name));
+      args.add(new DBString(pl_desc));
+      if (db_connection->executeUpdate(sql, args)) {
          insert_success = true;
       } else {
          printf("error inserting playlist\n");
@@ -258,9 +265,10 @@ bool JukeboxDB::delete_playlist(const string& pl_name) {
    if (db_is_open && pl_name.length() > 0) {
       string sql = "DELETE "
                    "FROM playlist "
-                   "WHERE playlist_name = $playlist_name";
-      delete_success = db_connection->executeUpdate(sql);
-      //TODO: add pl_name
+                   "WHERE playlist_name = ?";
+      DBStatementArgs args;
+      args.add(new DBString(pl_name));
+      delete_success = db_connection->executeUpdate(sql, args);
    }
 
    return delete_success;
@@ -272,37 +280,38 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
    if (db_is_open) {
       //TODO: (2) fix unidentified column for new song record (insert_song)
       string sql = "INSERT INTO song "
-                   "VALUES ($file_uid,"
-                           "$file_time,"
-                           "$o_file_size,"
-                           "$s_file_size,"
-                           "$pad_char_count,"
-                           "$artist_name,"
-                           "$xxxx,"
-                           "$song_name,"
-                           "$md5,"
-                           "$compressed,"
-                           "$encrypted,"
-                           "$container_name,"
-                           "$object_name,"
-                           "$album_uid)";
-      bool success = db_connection->executeUpdate(sql);
-      /*
-      command.Parameters.AddWithValue("$file_uid", song.fm.file_uid);
-      command.Parameters.AddWithValue("$file_time", song.fm.file_time);
-      command.Parameters.AddWithValue("$o_file_size", song.fm.origin_file_size);
-      command.Parameters.AddWithValue("$s_file_size", song.fm.stored_file_size);
-      command.Parameters.AddWithValue("$pad_char_count", song.fm.pad_char_count);
-      command.Parameters.AddWithValue("$artist_name", song.artist_name);
-      command.Parameters.AddWithValue("", "");
-      command.Parameters.AddWithValue("$song_name", song.song_name);
-      command.Parameters.AddWithValue("$md5", song.fm.md5_hash);
-      command.Parameters.AddWithValue("$compressed", song.fm.compressed);
-      command.Parameters.AddWithValue("$encrypted", song.fm.encrypted);
-      command.Parameters.AddWithValue("$container_name", song.fm.container_name);
-      command.Parameters.AddWithValue("$object_name", song.fm.object_name);
-      command.Parameters.AddWithValue("$album_uid", song.album_uid);
-      */
+                   "VALUES (?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?,"
+                           "?)";
+
+      DBStatementArgs args;
+      args.add(new DBString(song.fm.file_uid));
+      args.add(new DBString(song.fm.file_time));
+      args.add(new DBLong(song.fm.origin_file_size));
+      args.add(new DBLong(song.fm.stored_file_size));
+      args.add(new DBLong(song.fm.pad_char_count));
+      args.add(new DBString(song.artist_name));
+      args.add(new DBString(""));
+      args.add(new DBString(song.song_name));
+      args.add(new DBString(song.fm.md5_hash));
+      args.add(new DBInt(song.fm.compressed));
+      args.add(new DBInt(song.fm.encrypted));
+      args.add(new DBString(song.fm.container_name));
+      args.add(new DBString(song.fm.object_name));
+      args.add(new DBString(song.album_uid));
+
+      bool success = db_connection->executeUpdate(sql, args);
       if (success) {
          insert_success = true;
       } else {
@@ -318,37 +327,37 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
 
       if (db_is_open && song.fm.file_uid.length() > 0) {
          string sql = "UPDATE song "
-                      "SET file_time = $file_time,"
-                          "origin_file_size = $o_file_size,"
-                          "stored_file_size = $s_file_size,"
-                          "pad_char_count = $pad_char_count,"
-                          "artist_name = $artist_name,"
-                          "artist_uid = $artist_uid,"
-                          "song_name = $song_name,"
-                          "md5_hash = $md5_hash,"
-                          "compressed = $compressed,"
-                          "encrypted = $encrypted,"
-                          "container_name = $container_name,"
-                          "object_name = $object_name,"
-                          "album_uid = $album_uid "
-                      "WHERE song_uid = $file_uid";
-         bool success = db_connection->executeUpdate(sql);
-         /*
-         command.Parameters.AddWithValue("$file_time", song.fm.file_time);
-         command.Parameters.AddWithValue("$o_file_size", song.fm.origin_file_size);
-         command.Parameters.AddWithValue("$s_file_size", song.fm.stored_file_size);
-         command.Parameters.AddWithValue("$pad_char_count", song.fm.pad_char_count);
-         command.Parameters.AddWithValue("$artist_name", song.artist_name);
-         command.Parameters.AddWithValue("$artist_uid", "");
-         command.Parameters.AddWithValue("$song_name", song.song_name);
-         command.Parameters.AddWithValue("$md5_hash", song.fm.md5_hash);
-         command.Parameters.AddWithValue("$compressed", song.fm.compressed);
-         command.Parameters.AddWithValue("$encrypted", song.fm.encrypted);
-         command.Parameters.AddWithValue("$container_name", song.fm.container_name);
-         command.Parameters.AddWithValue("$object_name", song.fm.object_name);
-         command.Parameters.AddWithValue("$album_uid", song.album_uid);
-         command.Parameters.AddWithValue("$file_uid", song.fm.file_uid);
-         */
+                      "SET file_time = ?,"
+                          "origin_file_size = ?,"
+                          "stored_file_size = ?,"
+                          "pad_char_count = ?,"
+                          "artist_name = ?,"
+                          "artist_uid = ?,"
+                          "song_name = ?,"
+                          "md5_hash = ?,"
+                          "compressed = ?,"
+                          "encrypted = ?,"
+                          "container_name = ?,"
+                          "object_name = ?,"
+                          "album_uid = ? "
+                      "WHERE song_uid = ?";
+	 DBStatementArgs args;
+	 args.add(new DBString(song.fm.file_time));
+	 args.add(new DBLong(song.fm.origin_file_size));
+	 args.add(new DBLong(song.fm.stored_file_size));
+	 args.add(new DBLong(song.fm.pad_char_count));
+	 args.add(new DBString(song.artist_name));
+	 args.add(new DBString(""));
+	 args.add(new DBString(song.song_name));
+	 args.add(new DBString(song.fm.md5_hash));
+	 args.add(new DBInt(song.fm.compressed));
+	 args.add(new DBInt(song.fm.encrypted));
+	 args.add(new DBString(song.fm.container_name));
+	 args.add(new DBString(song.fm.object_name));
+	 args.add(new DBString(song.album_uid));
+	 args.add(new DBString(song.fm.file_uid));
+
+         bool success = db_connection->executeUpdate(sql, args);
          if (success) {
             update_success = true;
          } else {
@@ -461,9 +470,10 @@ vector<SongMetadata*> JukeboxDB::songs_for_artist(const string& artist_name) {
                           "album_uid "
                    "FROM song";
       sql += sql_where_clause();
-      sql += " AND artist = $artist_name";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      //TODO: add artist_name argument
+      sql += " AND artist = ?";
+      DBStatementArgs args;
+      args.add(new DBString(artist_name));
+      DBResultSet* rs = db_connection->executeQuery(sql, args);
       if (rs != NULL) {
          songs_for_query(rs, songs);
          //TODO: who deletes rs?
@@ -574,12 +584,12 @@ bool JukeboxDB::delete_song(const string& song_uid) {
    bool was_deleted = false;
    if (db_is_open) {
       if (song_uid.length() > 0) {
-         string sql = "DELETE FROM song WHERE song_uid = $song_uid";
-         was_deleted = db_connection->executeUpdate(sql);
-               //command.Parameters.AddWithValue("$song_uid", song_uid);
+         string sql = "DELETE FROM song WHERE song_uid = ?";
+	 DBStatementArgs args;
+	 args.add(new DBString(song_uid));
+         was_deleted = db_connection->executeUpdate(sql, args);
          if (!was_deleted) {
             printf("error deleting song %s\n", song_uid.c_str());
-            //Console.WriteLine(e);
          }
       }
    } 
