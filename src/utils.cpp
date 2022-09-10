@@ -58,6 +58,21 @@ bool Utils::path_exists(const string& path) {
    }
 }
 
+bool Utils::file_exists(const string& path) {
+   struct stat s;
+   int rc = stat(path.c_str(), &s);
+   if (rc == 0) {
+      return (s.st_mode & S_IFREG);
+   } else {
+      return false;
+   }
+}
+
+bool Utils::directory_delete_directory(const std::string& dir_path) {
+   int rc = rmdir(dir_path.c_str());
+   return rc == 0;
+}
+
 bool Utils::file_read_all_text(const string& file_path,
                                string& file_text)
 {
@@ -194,6 +209,30 @@ bool Utils::rename_file(const string& existing_file,
    // python: os.rename
 
    return 0 == rename(existing_file.c_str(), new_file.c_str());
+}
+
+bool Utils::file_append_all_text(const string& file_path,
+                                 const string& append_file_text) {
+   //TODO: implement file_append_all_text
+   return false;
+}
+
+bool Utils::file_write_all_text(const string& file_path,
+                                const string& file_text) {
+   //TODO: implement file_write_all_text
+   return false;
+}
+
+bool Utils::file_read_all_bytes(const string& file_path,
+                                vector<unsigned char>& file_bytes) {
+   //TODO: implement file_read_all_bytes
+   return false;
+}
+
+bool Utils::file_write_all_bytes(const string& file_path,
+                                 const vector<unsigned char>& file_bytes) {
+   //TODO: implement file_write_all_bytes
+   return false;
 }
 
 string Utils::md5_for_file(const string& path_to_file) {

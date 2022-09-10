@@ -16,8 +16,6 @@ public:
    static void sys_exit(int exit_code);
    static bool path_exists(const std::string& path);
    static bool path_isfile(const std::string& path);
-   static std::string path_join(const std::string& dir_path,
-                                const std::string& file_name);
    static int find_last_index(const std::string& str, char x);
    static std::vector<std::string> path_splitext(const std::string& path);
    static double path_getmtime(const std::string& path);

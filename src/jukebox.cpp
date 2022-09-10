@@ -30,7 +30,7 @@ def install_signal_handlers():
 
 
 
-static Jukebox* g_jukebox_instance = NULL;
+Jukebox* Jukebox::g_jukebox_instance = NULL;
 
 Jukebox::Jukebox(const JukeboxOptions& jb_options,
                  StorageSystem& storage_sys,
@@ -57,10 +57,10 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    g_jukebox_instance = this;
 
    current_dir = chaudiere::OSUtils::getCurrentDirectory();
-   song_import_dir = Utils::path_join(current_dir, "song-import");
-   playlist_import_dir = Utils::path_join(current_dir, "playlist-import");
-   song_play_dir = Utils::path_join(current_dir, "song-play");
-   album_art_import_dir = Utils::path_join(current_dir, "album-art-import");
+   song_import_dir = chaudiere::OSUtils::pathJoin(current_dir, "song-import");
+   playlist_import_dir = chaudiere::OSUtils::pathJoin(current_dir, "playlist-import");
+   song_play_dir = chaudiere::OSUtils::pathJoin(current_dir, "song-play");
+   album_art_import_dir = chaudiere::OSUtils::pathJoin(current_dir, "album-art-import");
    //audio_player_process = NULL;
 
    if (jb_options.debug_mode) {
@@ -111,7 +111,7 @@ bool Jukebox::enter() {
                if (debug_print) {
                   printf("deleting existing metadata DB file\n");
                }
-	       Utils::file_delete(metadata_db_file_path);
+	       chaudiere::OSUtils::deleteFile(metadata_db_file_path);
             }
             // rename downloaded file
             if (debug_print) {
@@ -177,7 +177,7 @@ void Jukebox::advance_to_next_song() {
 }
 
 string Jukebox::get_metadata_db_file_path() {
-   return Utils::path_join(current_dir, metadata_db_file);
+   return chaudiere::OSUtils::pathJoin(current_dir, metadata_db_file);
 }
 
 vector<string> Jukebox::components_from_file_name(const string& file_name) {
@@ -321,7 +321,7 @@ string Jukebox::container_for_song(const string& song_uid) {
 
 void Jukebox::import_songs() {
       if (jukebox_db != NULL && jukebox_db->is_open()) {
-         vector<string> dir_listing = Utils::directory_get_files(song_import_dir);
+         vector<string> dir_listing = chaudiere::OSUtils::listFilesInDirectory(song_import_dir);
          float num_entries = (float) dir_listing.size();
          double progressbar_chars = 0.0;
          int progressbar_width = 40;
@@ -357,7 +357,7 @@ void Jukebox::import_songs() {
 
          for (; it != it_end; it++) {
             const string& listing_entry = *it;
-            string full_path = Utils::path_join(song_import_dir, listing_entry);
+            string full_path = chaudiere::OSUtils::pathJoin(song_import_dir, listing_entry);
             // ignore it if it's not a file
             if (Utils::path_isfile(full_path)) {
                string file_name = listing_entry;
@@ -510,7 +510,7 @@ void Jukebox::import_songs() {
 }
 
 string Jukebox::song_path_in_playlist(const SongMetadata& song) {
-   return Utils::path_join(song_play_dir, song.fm.file_uid);
+   return chaudiere::OSUtils::pathJoin(song_play_dir, song.fm.file_uid);
 }
 
 bool Jukebox::check_file_integrity(const SongMetadata& song) {
@@ -635,7 +635,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
                // we retrieved the file, but it failed our integrity check
                // if file exists, remove it
                if (Utils::file_exists(file_path)) {
-                  Utils::file_delete(file_path);
+                  chaudiere::OSUtils::deleteFile(file_path);
                }
             }
          }
@@ -698,7 +698,7 @@ void Jukebox::play_song(const string& song_file_path) {
 
          if (!is_paused) {
             // delete the song file from the play list directory
-            Utils::file_delete(song_file_path);
+            chaudiere::OSUtils::deleteFile(song_file_path);
          }
       } else {
          printf("song file doesn't exist: %s\n", song_file_path.c_str());
@@ -708,13 +708,13 @@ void Jukebox::play_song(const string& song_file_path) {
 
 void Jukebox::download_songs() {
       // scan the play list directory to see if we need to download more songs
-      vector<string> dir_listing = Utils::directory_get_files(song_play_dir);
+      vector<string> dir_listing = chaudiere::OSUtils::listFilesInDirectory(song_play_dir);
       int song_file_count = 0;
       auto it = dir_listing.begin();
       const auto it_end = dir_listing.end();
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
-         string full_path = Utils::path_join(song_play_dir, listing_entry);
+         string full_path = chaudiere::OSUtils::pathJoin(song_play_dir, listing_entry);
          if (Utils::path_isfile(full_path)) {
             vector<string> path_elems = Utils::path_splitext(full_path);
             const string& extension = path_elems[1];
@@ -778,25 +778,25 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
          }
 
          // does play list directory exist?
-         if (!Utils::directory_exists(song_play_dir)) {
+         if (!chaudiere::OSUtils::directoryExists(song_play_dir)) {
             if (debug_print) {
                printf("song-play directory does not exist, creating it\n");
             }
-	    Utils::directory_create_directory(song_play_dir);
+	    chaudiere::OSUtils::createDirectory(song_play_dir);
          } else {
             // play list directory exists, delete any files in it
             if (debug_print) {
                printf("deleting existing files in song-play directory\n");
             }
 
-            vector<string> list_files = Utils::directory_get_files(song_play_dir);
+            vector<string> list_files = chaudiere::OSUtils::listFilesInDirectory(song_play_dir);
 	    auto it = list_files.begin();
 	    const auto it_end = list_files.end();
             for (; it != it_end; it++) {
                const string& theFile = *it;
-               string file_path = Utils::path_join(song_play_dir, theFile);
+               string file_path = chaudiere::OSUtils::pathJoin(song_play_dir, theFile);
                if (Utils::path_isfile(file_path)) {
-                  Utils::file_delete(file_path);
+                  chaudiere::OSUtils::deleteFile(file_path);
                }
             }
          }
@@ -863,7 +863,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
 		      Utils::time_sleep(1);
                    }
                 }
-		Utils::file_delete("jukebox.pid");
+		chaudiere::OSUtils::deleteFile("jukebox.pid");
              } else {
                 printf("error: unable to download songs\n");
 		Utils::sys_exit(1);
@@ -873,7 +873,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
          {
             printf("exception caught: %s\n", e.what());
             printf("\nexiting jukebox\n");
-	    Utils::file_delete("jukebox.pid");
+	    chaudiere::OSUtils::deleteFile("jukebox.pid");
             exit_requested = true;
          }
       }
@@ -1012,7 +1012,7 @@ bool Jukebox::upload_metadata_db() {
 void Jukebox::import_playlists() {
    if (jukebox_db != NULL && jukebox_db->is_open()) {
       int file_import_count = 0;
-      vector<string> dir_listing = Utils::directory_get_files(playlist_import_dir);
+      vector<string> dir_listing = chaudiere::OSUtils::listFilesInDirectory(playlist_import_dir);
       if (dir_listing.size() == 0) {
          printf("no playlists found\n");
          return;
@@ -1036,7 +1036,7 @@ void Jukebox::import_playlists() {
 
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
-         string full_path = Utils::path_join(playlist_import_dir, listing_entry);
+         string full_path = chaudiere::OSUtils::pathJoin(playlist_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::file_exists(full_path)) {
             string object_name = listing_entry;
@@ -1197,7 +1197,7 @@ bool Jukebox::delete_playlist(const string& playlist_name) {
 void Jukebox::import_album_art() {
    if (jukebox_db != NULL && jukebox_db->is_open()) {
       int file_import_count = 0;
-      vector<string> dir_listing = Utils::directory_get_files(album_art_import_dir);
+      vector<string> dir_listing = chaudiere::OSUtils::listFilesInDirectory(album_art_import_dir);
       if (dir_listing.size() == 0) {
          printf("no album art found\n");
          return;
@@ -1221,7 +1221,7 @@ void Jukebox::import_album_art() {
 
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
-         string full_path = Utils::path_join(album_art_import_dir, listing_entry);
+         string full_path = chaudiere::OSUtils::pathJoin(album_art_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string object_name = listing_entry;

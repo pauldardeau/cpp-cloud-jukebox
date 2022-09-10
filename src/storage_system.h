@@ -6,6 +6,7 @@
 
 #include "file_metadata.h"
 #include "utils.h"
+#include "OSUtils.h"
 
 class PropertyValue;
 
@@ -63,7 +64,7 @@ public:
 
    int retrieve_file(const FileMetadata& fm, const std::string& local_directory) {
       if (local_directory.length() > 0) {
-         std::string file_path = Utils::path_join(local_directory, fm.file_uid);
+         std::string file_path = chaudiere::OSUtils::pathJoin(local_directory, fm.file_uid);
          // print("retrieving container=%s" % fm.container_name);
          // print("retrieving object=%s" % fm.object_name);
          return get_object(fm.container_name, fm.object_name, file_path);

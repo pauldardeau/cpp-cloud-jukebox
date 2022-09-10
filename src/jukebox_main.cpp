@@ -400,7 +400,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
       string creds_file = storage_type + "_creds.txt";
       PropertySet creds;
       string cwd = OSUtils::getCurrentDirectory();
-      string creds_file_path = Utils::path_join(cwd, creds_file);
+      string creds_file_path = chaudiere::OSUtils::pathJoin(cwd, creds_file);
 
       if (Utils::path_exists(creds_file_path)) {
          if (debug_mode) {
