@@ -336,7 +336,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
 
    if (args->contains("compress")) {
       if (debug_mode) {
-         printf("setting compression on");
+         printf("setting compression on\n");
       }
       options.use_compression = true;
    }
@@ -575,69 +575,69 @@ void JukeboxMain::run(const vector<string>& console_args) {
                      if (playlist.length() > 0) {
                         jukebox.show_playlist(playlist);
                      } else {
-                        printf("error: playlist must be specified using --playlist option");
+                        printf("error: playlist must be specified using --playlist option\n");
                         exit_code = 1;
                      }
                   } else if (command == "play-playlist") {
                      if (playlist.length() > 0) {
                         jukebox.play_playlist(playlist);
                      } else {
-                        printf("error: playlist must be specified using --playlist option");
+                        printf("error: playlist must be specified using --playlist option\n");
                         exit_code = 1;
                      }
                   } else if (command == "retrieve-catalog") {
-                     printf("retrieve-catalog not yet implemented");
+                     printf("retrieve-catalog not yet implemented\n");
                   } else if (command == "delete-song") {
                      if (song.length() > 0) {
                         if (jukebox.delete_song(song)) {
-                           printf("song deleted");
+                           printf("song deleted\n");
                         } else {
-                           printf("error: unable to delete song");
+                           printf("error: unable to delete song\n");
                            exit_code = 1;
                         }
                      } else {
-                        printf("error: song must be specified using --song option");
+                        printf("error: song must be specified using --song option\n");
                         exit_code = 1;
                      }
                   } else if (command == "delete-artist") {
                      if (artist.length() > 0) {
                         if (jukebox.delete_artist(artist)) {
-                           printf("artist deleted");
+                           printf("artist deleted\n");
                         } else {
-                           printf("error: unable to delete artist");
+                           printf("error: unable to delete artist\n");
                            exit_code = 1;
                         }
                      } else {
-                        printf("error: artist must be specified using --artist option");
+                        printf("error: artist must be specified using --artist option\n");
                         exit_code = 1;
                      }
                   } else if (command == "delete-album") {
                      if (album.length() > 0) {
                         if (jukebox.delete_album(album)) {
-                           printf("album deleted");
+                           printf("album deleted\n");
                         } else {
-                           printf("error: unable to delete album");
+                           printf("error: unable to delete album\n");
                            exit_code = 1;
                         }
                      } else {
-                        printf("error: album must be specified using --album option");
+                        printf("error: album must be specified using --album option\n");
                         exit_code = 1;
                      }
                   } else if (command == "delete-playlist") {
                      if (playlist.length() > 0) {
                         if (jukebox.delete_playlist(playlist)) {
-                           printf("playlist deleted");
+                           printf("playlist deleted\n");
                         } else {
-                           printf("error: unable to delete playlist");
+                           printf("error: unable to delete playlist\n");
                            exit_code = 1;
                         }
                      } else {
-                        printf("error: playlist must be specified using --playlist option");
+                        printf("error: playlist must be specified using --playlist option\n");
                         exit_code = 1;
                      }
                   } else if (command == "upload-metadata-db") {
                      if (jukebox.upload_metadata_db()) {
-                        printf("metadata db uploaded");
+                        printf("metadata db uploaded\n");
                      } else {
                         printf("error: unable to upload metadata db\n");
                         exit_code = 1;
@@ -668,7 +668,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
          }
       }
    } else {
-      printf("Error: no command given");
+      printf("Error: no command given\n");
       show_usage();
    }
    Utils::sys_exit(exit_code);

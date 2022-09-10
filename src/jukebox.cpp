@@ -884,7 +884,7 @@ void Jukebox::show_list_containers() {
    /*
    if (storage_system.list_containers != NULL) {
       foreach (var container_name in storage_system.list_containers) {
-         printf(container_name);
+         printf("%s\n", container_name.c_str());
       }
    }
    */
