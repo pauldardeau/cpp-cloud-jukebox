@@ -256,6 +256,15 @@ StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
    }
 }
 
+void JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
+   if (Jukebox::initialize_storage_system(*storage_sys)) {
+      printf("storage system successfully initialized\n");
+   } else {
+      printf("error: unable to initialize storage system\n");
+      Utils::sys_exit(1);
+   }
+}
+
 void JukeboxMain::show_usage() const {
    printf("Supported Commands:\n");
    printf("\tdelete-artist      - delete specified artist\n");
@@ -266,6 +275,7 @@ void JukeboxMain::show_usage() const {
    printf("\timport-songs       - import all new songs from song-import subdirectory\n");
    printf("\timport-playlists   - import all new playlists from playlist-import subdirectory\n");
    printf("\timport-album-art   - import all album art from album-art-import subdirectory\n");
+   printf("\tinit-storage       - initialize storage system\n");
    printf("\tlist-songs         - show listing of all available songs\n");
    printf("\tlist-artists       - show listing of all available artists\n");
    printf("\tlist-containers    - show listing of all available storage containers\n");
@@ -498,10 +508,12 @@ void JukeboxMain::run(const vector<string>& console_args) {
       update_cmds.add("delete-artist");
       update_cmds.add("upload-metadata-db");
       update_cmds.add("import-album-art");
+      update_cmds.add("init-storage");
 
       StringSet all_cmds;
       all_cmds.append(help_cmds);
       all_cmds.append(non_help_cmds);
+      all_cmds.append(update_cmds);
 
       if (!all_cmds.contains(command)) {
          printf("Unrecognized command %s\n", command.c_str());
@@ -543,6 +555,11 @@ void JukeboxMain::run(const vector<string>& console_args) {
 
                printf("entering storage system\n");
                storage_system->enter();
+
+	       if (command == "init-storage") {
+                  init_storage_system(storage_system);
+                  Utils::sys_exit(0);
+	       }
 
                printf("creating jukebox\n");
                Jukebox jukebox(options, *storage_system);

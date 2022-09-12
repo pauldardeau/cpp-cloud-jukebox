@@ -42,6 +42,8 @@ public:
                                          bool in_debug_mode,
                                          bool in_update_mode);
 
+   void init_storage_system(StorageSystem* storage_sys);
+
    void show_usage() const;
 
    void run(const std::vector<std::string>& console_args);

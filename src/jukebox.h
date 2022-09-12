@@ -135,6 +135,8 @@ public:
    bool delete_album(const std::string& album);
    bool delete_playlist(const std::string& playlist_name);
    void import_album_art();
+
+   static bool initialize_storage_system(StorageSystem& storage_sys, std::string prefix="");
 };
 
 #endif

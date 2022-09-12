@@ -1247,4 +1247,42 @@ void Jukebox::import_album_art() {
    }
 }
 
+bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
+                                        string prefix) {
+   // create the containers that will hold songs
+   char artist_song_chars[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+   const int num_chars = strlen(artist_song_chars);
+   char buf_cnr_name[15]; // x-artist-songs
+
+   strncpy(buf_cnr_name, " -artist-songs", 15);
+
+   for (int i = 0; i < num_chars; i++) {
+      char ch = artist_song_chars[i];
+      buf_cnr_name[0] = ch;
+      if (!storage_sys.create_container(buf_cnr_name)) {
+         printf("error: unable to create container '%s'\n", buf_cnr_name);
+         return false;
+      }
+   }
+
+   // create the other (non-song) containers
+   vector<string> cnr_names;
+   cnr_names.push_back("music-metadata");
+   cnr_names.push_back("album-art");
+   cnr_names.push_back("albums");
+   cnr_names.push_back("playlists");
+
+   auto it = cnr_names.begin();
+   const auto it_end = cnr_names.end();
+
+   for (; it != it_end; it++) {
+      const string& container_name = *it;
+      if (!storage_sys.create_container(container_name)) {
+         printf("error: unable to create container '%s'\n", container_name.c_str());
+	 return false;
+      }
+   }
+
+   return true;
+}
 
