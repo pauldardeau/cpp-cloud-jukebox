@@ -8,6 +8,7 @@
 #include "jukebox.h"
 #include "utils.h"
 #include "OSUtils.h"
+#include "StringTokenizer.h"
 #include "StrUtils.h"
 #include "fs_storage_system.h"
 
@@ -145,7 +146,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
             secret_key = aws_secret_key;
          }
 
-         //TODO: hook up S3StorageSystem
+         //TODO: hookup S3StorageSystem (connect_s3_system)
          //printf("Creating S3StorageSystem\n");
          //return new S3StorageSystem(access_key,
          //                           secret_key,
@@ -223,8 +224,16 @@ StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
                                               string prefix,
                                               bool in_debug_mode,
                                               bool in_update_mode) {
-   //TODO: specify root_dir in creds file
-   return new FSStorageSystem("/tmp/cpp-cloud-jukebox-fs", in_debug_mode);
+   if (credentials.contains("root_dir")) {
+      const string& root_dir = credentials.get_string_value("root_dir");
+      if (in_debug_mode) {
+         printf("root_dir = '%s'\n", root_dir.c_str());
+      }
+      return new FSStorageSystem(root_dir, in_debug_mode);
+   } else {
+      printf("error: 'root_dir' must be specified in fs_creds.txt\n");
+      return NULL;
+   }
 }
 
 StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
@@ -434,22 +443,20 @@ void JukeboxMain::run(const vector<string>& console_args) {
 
          bool file_read = Utils::file_read_all_text(creds_file_path,
                                                     file_contents);
-         if (file_read) {
-            /*
-            foreach (var file_line in File.ReadLines(creds_file_path)) {
-               string trimmed_file_line = file_line.Trim();
-               if (trimmed_file_line.length() > 0) {
-                  string[] tokens = trimmed_file_line.Split("=");
-                  if (tokens.Length == 2) {
-                     string key = tokens[0].Trim();
-                     string value = tokens[1].Trim();
-                     if (key.Length > 0 && value.Length > 0) {
-                        creds[key] = value;
-                     }
+         if (file_read && file_contents.length() > 0) {
+            chaudiere::StringTokenizer st(file_contents, "\n");
+
+	    while (st.hasMoreTokens()) {
+               const string& file_line = st.nextToken();
+	       vector<string> line_tokens = StrUtils::split(file_line, "=");
+	       if (line_tokens.size() == 2) {
+                  string key = chaudiere::StrUtils::strip(line_tokens[0]);
+		  string value = chaudiere::StrUtils::strip(line_tokens[1]);
+		  if (key.length() > 0 && value.length() > 0) {
+                     creds.add(key, new StrPropertyValue(value));
                   }
                }
             }
-            */
          } else {
             if (debug_mode) {
                printf("error: unable to read file %s\n", creds_file_path.c_str());
