@@ -15,7 +15,6 @@ jukebox.o \
 jukebox_db.o \
 jukebox_main.o \
 main.o \
-memory_storage_system.o \
 property_set.o \
 utils.o
 

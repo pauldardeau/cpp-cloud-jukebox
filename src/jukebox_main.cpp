@@ -9,7 +9,6 @@
 #include "utils.h"
 #include "OSUtils.h"
 #include "StrUtils.h"
-#include "memory_storage_system.h"
 #include "fs_storage_system.h"
 
 using namespace std;
@@ -220,13 +219,6 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
       return NULL;
 }
 
-StorageSystem* JukeboxMain::connect_memory_system(const PropertySet& credentials,
-                                                  string prefix,
-                                                  bool in_debug_mode,
-                                                  bool in_update_mode) {
-   return new MemoryStorageSystem(in_debug_mode);
-}
-
 StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
                                               string prefix,
                                               bool in_debug_mode,
@@ -246,8 +238,6 @@ StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
       return connect_s3_system(credentials, prefix, in_debug_mode, in_update_mode);
    } else if (system_name == "azure") {
       return connect_azure_system(credentials, prefix, in_debug_mode, in_update_mode);
-   } else if (system_name == "memory") {
-      return connect_memory_system(credentials, prefix, in_debug_mode, in_update_mode);
    } else if (system_name == "fs") {
       return connect_fs_system(credentials, prefix, in_debug_mode, in_update_mode);
    } else {
@@ -395,7 +385,6 @@ void JukeboxMain::run(const vector<string>& console_args) {
       supported_systems.add("swift");
       supported_systems.add("s3");
       supported_systems.add("azure");
-      supported_systems.add("memory");
       supported_systems.add("fs");
       if (!supported_systems.contains(storage)) {
          printf("error: invalid storage type %s\n", storage.c_str());
