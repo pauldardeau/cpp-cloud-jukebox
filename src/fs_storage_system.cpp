@@ -42,7 +42,16 @@ bool FSStorageSystem::delete_container(const string& container_name) {
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       container_deleted = Utils::directory_delete_directory(container_dir);
       if (container_deleted) {
-         //TODO: remove it from list
+	 list_containers.erase(container_name);
+
+         auto it = list_container_names.begin();
+	 const auto it_end = list_container_names.end();
+	 for (; it != it_end; it++) {
+            if (*it == container_name) {
+               list_container_names.erase(it);
+	       break;
+            }
+         }
       }
    }
    return container_deleted;
@@ -124,9 +133,12 @@ int FSStorageSystem::get_object(const string& container_name,
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
       if (Utils::file_exists(object_path)) {
-         //TODO: read object contents and write to local_file_path
-         //Utils::file_write_all_bytes(local_file_path, object_contents);
-         //bytes_retrieved = object_contents.size();
+         vector<unsigned char> obj_file_contents;
+	 if (Utils::file_read_all_bytes(object_path, obj_file_contents)) {
+            if (Utils::file_write_all_bytes(local_file_path, obj_file_contents)) {
+               bytes_retrieved = obj_file_contents.size();
+	    }
+	 }
       }
    }
    return bytes_retrieved;
