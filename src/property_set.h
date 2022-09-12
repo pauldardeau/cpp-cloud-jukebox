@@ -31,6 +31,10 @@ public:
    unsigned long get_ulong_value(const std::string& prop_name) const;
    bool get_bool_value(const std::string& prop_name) const;
    const std::string& get_string_value(const std::string& prop_name) const;
+
+   bool write_to_file(const std::string& file_path) const;
+   bool read_from_file(const std::string& file_path);
+   size_t count() const;
 };
 
 #endif

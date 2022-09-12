@@ -63,8 +63,11 @@ bool FSStorageSystem::get_object_metadata(const std::string& container_name,
    if (container_name.length() > 0 && object_name.length() > 0) {
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       if (chaudiere::OSUtils::directoryExists(container_dir)) {
-         //TODO: handle metadata
-         //return true;
+         string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+         string meta_path = object_path + ".meta";
+         if (Utils::file_exists(meta_path)) {
+            return dict_props.read_from_file(meta_path);
+         }
       }
    }
    return false;
@@ -80,7 +83,12 @@ bool FSStorageSystem::put_object(const string& container_name,
       if (chaudiere::OSUtils::directoryExists(container_dir)) {
          string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
          object_added = Utils::file_write_all_bytes(object_path, file_contents);
-         //TODO: write metadata
+	 if (headers != NULL) {
+            if (headers->count() > 0) {
+               string meta_path = object_path + ".meta";
+	       headers->write_to_file(meta_path);
+            }
+         }
       }
    }
    return object_added;
@@ -95,7 +103,10 @@ bool FSStorageSystem::delete_object(const string& container_name,
          string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
          if (Utils::file_exists(object_path)) {
             object_deleted = chaudiere::OSUtils::deleteFile(object_path);
-            //TODO: delete object metadata
+	    string meta_path = object_path + ".meta";
+	    if (Utils::file_exists(meta_path)) {
+               chaudiere::OSUtils::deleteFile(meta_path);
+            }
          }
       }
    }
@@ -113,6 +124,7 @@ int FSStorageSystem::get_object(const string& container_name,
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
       if (Utils::file_exists(object_path)) {
+         //TODO: read object contents and write to local_file_path
          //Utils::file_write_all_bytes(local_file_path, object_contents);
          //bytes_retrieved = object_contents.size();
       }
