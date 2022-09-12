@@ -388,7 +388,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
       supported_systems.add("fs");
       if (!supported_systems.contains(storage)) {
          printf("error: invalid storage type %s\n", storage.c_str());
-         //printf("supported systems are: %s" % str(supported_systems));
+         printf("supported systems are: %s\n", supported_systems.to_string().c_str());
          Utils::sys_exit(1);
       } else {
          if (debug_mode) {

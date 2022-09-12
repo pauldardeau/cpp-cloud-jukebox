@@ -35,6 +35,7 @@ public:
    bool write_to_file(const std::string& file_path) const;
    bool read_from_file(const std::string& file_path);
    size_t count() const;
+   std::string to_string() const;
 };
 
 #endif

@@ -316,11 +316,7 @@ public:
    }
 
    void remove(const std::string& s) {
-      //TODO: implement StringSet::remove
-      //auto it = set_of_strings.find(s);
-      //if (it != set_of_strings.end()) {
-      //   set_of_strings.erase(it);
-      //}
+      set_of_strings.erase(s);
    }
 
    void clear() {
@@ -333,6 +329,29 @@ public:
       for (; it != it_end; it++) {
          add(*it);
       }
+   }
+
+   std::string to_string() const {
+      const std::string COMMA_SPACE = ", ";
+      bool first_entry = true;
+      auto it = set_of_strings.begin();
+      const auto it_end = set_of_strings.end();
+      std::string combined;
+
+      for (; it != it_end; it++) {
+         if (!first_entry) {
+            combined += COMMA_SPACE;
+         }
+
+         const std::string& current = *it;
+	 combined += current;
+
+	 if (first_entry) {
+            first_entry = false;
+         }
+      }
+
+      return combined;
    }
 };
 

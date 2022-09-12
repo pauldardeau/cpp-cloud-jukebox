@@ -183,3 +183,26 @@ bool PropertySet::read_from_file(const std::string& file_path) {
 size_t PropertySet::count() const {
    return map_props.size();
 }
+
+std::string PropertySet::to_string() const {
+   auto it = map_props.begin();
+   const auto it_end = map_props.end();
+   bool first_prop = true;
+   string props_string;
+   const string COMMA_SPACE = ", ";
+
+   for (; it != it_end; it++) {
+      if (!first_prop) {
+         props_string += COMMA_SPACE;
+      }
+
+      props_string += it->first;
+
+      if (first_prop) {
+         first_prop = false;
+      }
+   }
+
+   return props_string;
+}
+
