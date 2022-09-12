@@ -231,7 +231,7 @@ StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
                                               string prefix,
                                               bool in_debug_mode,
                                               bool in_update_mode) {
-   //TODO: how to specify root_dir?
+   //TODO: specify root_dir in creds file
    return new FSStorageSystem("/tmp/cpp-cloud-jukebox-fs", in_debug_mode);
 }
 
