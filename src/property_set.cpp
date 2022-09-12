@@ -31,6 +31,14 @@ bool PropertySet::contains(const std::string& prop_name) const {
    return it != map_props.end();
 }
 
+void PropertySet::get_keys(std::vector<std::string>& keys) const {
+   auto it = map_props.begin();
+   const auto it_end = map_props.end();
+   for (; it != it_end; it++) {
+      keys.push_back(it->first);
+   }
+}
+
 const PropertyValue* PropertySet::get(const std::string& prop_name) const {
    auto it = map_props.find(prop_name);
    if (it != map_props.end()) {

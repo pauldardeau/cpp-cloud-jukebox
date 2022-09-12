@@ -30,12 +30,12 @@ public:
 
    bool get_object_metadata(const std::string& container_name,
                             const std::string& object_name,
-                            std::map<std::string, PropertyValue*>& dict_props);
+                            PropertySet& dict_props);
 
    bool put_object(const std::string& container_name,
                    const std::string& object_name,
                    const std::vector<unsigned char>& file_contents,
-                   const std::map<std::string, PropertyValue*>* headers=NULL);
+                   const PropertySet* headers=NULL);
 
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);

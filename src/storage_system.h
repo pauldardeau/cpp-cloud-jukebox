@@ -7,8 +7,9 @@
 #include "file_metadata.h"
 #include "utils.h"
 #include "OSUtils.h"
+#include "data_types.h"
+#include "property_set.h"
 
-class PropertyValue;
 
 class StorageSystem {
 public:
@@ -74,16 +75,12 @@ public:
 
    bool store_file(const FileMetadata& fm, std::vector<unsigned char>& file_contents) {
       if (file_contents.size() > 0) {
-         std::map<std::string, PropertyValue*> dict_props = fm.to_dictionary(metadata_prefix);
+         PropertySet dict_props;
+         fm.to_dictionary(dict_props, metadata_prefix);
          bool success = put_object(fm.container_name,
                                    fm.object_name,
                                    file_contents,
                                    &dict_props);
-	 auto it = dict_props.begin();
-	 const auto it_end = dict_props.end();
-	 for (; it != it_end; it++) {
-            delete it->second;
-	 }
 	 return success;
       }
       return false;
@@ -119,12 +116,12 @@ public:
 
    virtual bool get_object_metadata(const std::string& container_name,
                                     const std::string& object_name,
-				    std::map<std::string, PropertyValue*>& dict_props) = 0;
+				    PropertySet& dict_props) = 0;
 
    virtual bool put_object(const std::string& container_name,
 		           const std::string& object_name,
 		           const std::vector<unsigned char>& object_bytes,
-		           const std::map<std::string, PropertyValue*>* headers=NULL) = 0;
+		           const PropertySet* headers=NULL) = 0;
 
    virtual bool delete_object(const std::string& container_name,
                               const std::string& object_name) = 0;

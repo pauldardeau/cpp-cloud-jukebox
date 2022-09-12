@@ -23,6 +23,7 @@ public:
    void clear();
 
    bool contains(const std::string& prop_name) const;
+   void get_keys(std::vector<std::string>& keys) const;
    const PropertyValue* get(const std::string& prop_name) const;
 
    int get_int_value(const std::string& prop_name) const;

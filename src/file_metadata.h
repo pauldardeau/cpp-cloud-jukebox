@@ -5,6 +5,7 @@
 #include <map>
 
 #include "data_types.h"
+#include "property_set.h"
 
 
 class FileMetadata {
@@ -51,123 +52,87 @@ public:
       return !(this->operator==(other));
    }
 
-   void from_dictionary(const std::map<std::string, PropertyValue*>& dictionary,
+   void from_dictionary(const PropertySet& dictionary,
                         std::string prefix="") {
       std::string key = prefix + "file_uid";
-      const auto it_end = dictionary.end();
-      auto it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            file_uid = pv->get_string_value();
-	 }
+      const PropertyValue* pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         file_uid = pv->get_string_value();
       }
 
       key = prefix + "file_name";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            file_name = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         file_name = pv->get_string_value();
       }
 
       key = prefix + "origin_file_size";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_ulong()) {
-            origin_file_size = pv->get_ulong_value();
-	 }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_ulong()) {
+         origin_file_size = pv->get_ulong_value();
       }
 
       key = prefix + "stored_file_size";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-         if (pv->is_ulong()) {
-            stored_file_size = pv->get_ulong_value();
-	 }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_ulong()) {
+         stored_file_size = pv->get_ulong_value();
       }
 
       key = prefix + "pad_char_count";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_ulong()) {
-            pad_char_count = pv->get_ulong_value();
-	 }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_ulong()) {
+         pad_char_count = pv->get_ulong_value();
       }
 
       key = prefix + "file_time";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            file_time = pv->get_string_value();
-	 }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         file_time = pv->get_string_value();
       }
 
       key = prefix + "md5_hash";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            md5_hash = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         md5_hash = pv->get_string_value();
       }
 
       key = prefix + "compressed";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_int()) {
-            compressed = pv->get_int_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_int()) {
+         compressed = pv->get_int_value();
       }
 
       key = prefix + "encrypted";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_int()) {
-            encrypted = pv->get_int_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_int()) {
+         encrypted = pv->get_int_value();
       }
 
       key = prefix + "container_name";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            container_name = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         container_name = pv->get_string_value();
       }
 
       key = prefix + "object_name";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            object_name = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         object_name = pv->get_string_value();
       }
    }
 
-   std::map<std::string, PropertyValue*> to_dictionary(std::string prefix = "") const {
-      std::map<std::string, PropertyValue*> d;
-      d[prefix + "file_uid"] = new StrPropertyValue(file_uid);
-      d[prefix + "file_name"] = new StrPropertyValue(file_name);
-      d[prefix + "origin_file_size"] = new ULongPropertyValue(origin_file_size);
-      d[prefix + "stored_file_size"] = new ULongPropertyValue(stored_file_size);
-      d[prefix + "pad_char_count"] = new ULongPropertyValue(pad_char_count);
-      d[prefix + "file_time"] = new StrPropertyValue(file_time);
-      d[prefix + "md5_hash"] = new StrPropertyValue(md5_hash);
-      d[prefix + "compressed"] = new IntPropertyValue(compressed);
-      d[prefix + "encrypted"] = new IntPropertyValue(encrypted);
-      d[prefix + "container_name"] = new StrPropertyValue(container_name);
-      d[prefix + "object_name"] = new StrPropertyValue(object_name);
-      return d;
+   void to_dictionary(PropertySet& d, std::string prefix = "") const {
+      d.add(prefix + "file_uid", new StrPropertyValue(file_uid));
+      d.add(prefix + "file_name", new StrPropertyValue(file_name));
+      d.add(prefix + "origin_file_size", new ULongPropertyValue(origin_file_size));
+      d.add(prefix + "stored_file_size", new ULongPropertyValue(stored_file_size));
+      d.add(prefix + "pad_char_count", new ULongPropertyValue(pad_char_count));
+      d.add(prefix + "file_time", new StrPropertyValue(file_time));
+      d.add(prefix + "md5_hash", new StrPropertyValue(md5_hash));
+      d.add(prefix + "compressed", new IntPropertyValue(compressed));
+      d.add(prefix + "encrypted", new IntPropertyValue(encrypted));
+      d.add(prefix + "container_name", new StrPropertyValue(container_name));
+      d.add(prefix + "object_name", new StrPropertyValue(object_name));
    }
 };
 

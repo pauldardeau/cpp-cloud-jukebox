@@ -69,7 +69,7 @@ vector<string> MemoryStorageSystem::list_container_contents(const string& contai
 
 bool MemoryStorageSystem::get_object_metadata(const std::string& container_name,
                                               const std::string& object_name,
-                                              std::map<std::string, PropertyValue*>& dict_props) {
+                                              PropertySet& dict_props) {
    if (container_name.length() > 0 && object_name.length() > 0) {
       auto it = container_headers.find(container_name);
       const auto it_end = container_headers.end();
@@ -83,7 +83,7 @@ bool MemoryStorageSystem::get_object_metadata(const std::string& container_name,
             for (; it_props != it_props_end; it_props++) {
                const string& prop_name = it_props->first;
                const PropertyValue* pv = it_props->second;
-               dict_props[prop_name] = pv->clone();
+               dict_props.add(prop_name, pv->clone());
             }
             return true;
          }
@@ -95,7 +95,7 @@ bool MemoryStorageSystem::get_object_metadata(const std::string& container_name,
 bool MemoryStorageSystem::put_object(const string& container_name,
                                      const string& object_name,
                                      const vector<unsigned char>& file_contents,
-                                     const map<string, PropertyValue*>* headers) {
+                                     const PropertySet* headers) {
    bool object_added = false;
    if (container_name.length() > 0 && object_name.length() > 0 && file_contents .size() > 0) {
       map<string, vector<unsigned char> > object_container =

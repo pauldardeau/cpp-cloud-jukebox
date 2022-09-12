@@ -34,56 +34,41 @@ public:
       return !(this->operator==(other));
    }
 
-   void from_dictionary(const std::map<std::string, PropertyValue*>& dictionary,
+   void from_dictionary(const PropertySet& dictionary,
                         std::string prefix) {
       fm.from_dictionary(dictionary, prefix);
 
       std::string key = prefix + "artist_uid";
-      const auto it_end = dictionary.end();
-      auto it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-	 if (pv->is_string()) {
-            artist_uid = pv->get_string_value();
-	 }
+      const PropertyValue* pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         artist_uid = pv->get_string_value();
       }
 
       key = prefix + "artist_name";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-         if (pv->is_string()) {
-            artist_name = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         artist_name = pv->get_string_value();
       }
 
       key = prefix + "album_uid";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-         if (pv->is_string()) {
-            album_uid = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         album_uid = pv->get_string_value();
       }
 
       key = prefix + "song_name";
-      it = dictionary.find(key);
-      if (it != it_end) {
-         const PropertyValue* pv = it->second;
-         if (pv->is_string()) {
-            song_name = pv->get_string_value();
-         }
+      pv = dictionary.get(key);
+      if (pv != NULL && pv->is_string()) {
+         song_name = pv->get_string_value();
       }
    }
 
-   std::map<std::string, PropertyValue*> to_dictionary(std::string prefix="") const {
-      std::map<std::string, PropertyValue*> d;
-      //d[prefix + "fm"] = fm.to_dictionary(prefix)},
-      d[prefix + "artist_uid"] = new StrPropertyValue(artist_uid);
-      d[prefix + "artist_name"] = new StrPropertyValue(artist_name);
-      d[prefix + "album_uid"] = new StrPropertyValue(album_uid);
-      d[prefix + "song_name"] = new StrPropertyValue(song_name);
-      return d;
+   void to_dictionary(PropertySet& d, std::string prefix="") const {
+      fm.to_dictionary(d, prefix);
+      d.add(prefix + "artist_uid", new StrPropertyValue(artist_uid));
+      d.add(prefix + "artist_name", new StrPropertyValue(artist_name));
+      d.add(prefix + "album_uid", new StrPropertyValue(album_uid));
+      d.add(prefix + "song_name", new StrPropertyValue(song_name));
    }
 };
 

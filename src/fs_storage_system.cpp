@@ -59,7 +59,7 @@ vector<string> FSStorageSystem::list_container_contents(const string& container_
 
 bool FSStorageSystem::get_object_metadata(const std::string& container_name,
                                           const std::string& object_name,
-                                          std::map<std::string, PropertyValue*>& dict_props) {
+                                          PropertySet& dict_props) {
    if (container_name.length() > 0 && object_name.length() > 0) {
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       if (chaudiere::OSUtils::directoryExists(container_dir)) {
@@ -73,7 +73,7 @@ bool FSStorageSystem::get_object_metadata(const std::string& container_name,
 bool FSStorageSystem::put_object(const string& container_name,
                                  const string& object_name,
                                  const vector<unsigned char>& file_contents,
-                                 const map<string, PropertyValue*>* headers) {
+                                 const PropertySet* headers) {
    bool object_added = false;
    if (container_name.length() > 0 && object_name.length() > 0 && file_contents .size() > 0) {
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
