@@ -13,7 +13,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
                                  const string& container_prefix,
                                  bool debug) :
    StorageSystem("S3", debug),
-   debug_mode(debug),
+   debug_mode(true), //debug),
    aws_access_key(access_key),
    aws_secret_key(secret_key),
    client(NULL) {
@@ -41,15 +41,23 @@ bool S3StorageSystem::enter() {
       printf("attempting to connect to S3\n");
    }
 
-   minio::s3::BaseUrl base_url("https://s3.us-central-1.wasabisys.com");
-
-   minio::creds::StaticProvider provider(
-      aws_access_key, aws_secret_key);
+   minio::s3::BaseUrl base_url("https://s3.us-central-1.wasabisys.com", true);
+   minio::creds::StaticProvider provider(aws_access_key, aws_secret_key);
 
    client = new minio::s3::Client(base_url, &provider);
 
    authenticated = true;
+   vector<string> list_buckets = list_account_containers();
+   auto it = list_buckets.begin();
+   const auto it_end = list_buckets.end();
+   for (; it != it_end; it++) {
+      const string& bucket_name = *it;
+      printf("container: '%s'\n", bucket_name.c_str());
+      list_containers.insert(bucket_name);
+   }
+
    //list_containers = list_account_containers();
+
    return true;
 }
 
@@ -76,6 +84,9 @@ vector<string> S3StorageSystem::list_account_containers() {
    if (client != NULL) {
       minio::s3::ListBucketsResponse resp = client->ListBuckets();
       if (resp) {
+         if (debug_mode) {
+            printf("ListBuckets request succeeded\n");
+         }
          vector<string> list_containers;
          for (auto& bucket : resp.buckets) {
             list_containers.push_back(bucket.name);
@@ -83,6 +94,8 @@ vector<string> S3StorageSystem::list_account_containers() {
       } else {
          printf("error: unable to list containers - %s\n", resp.Error().String().c_str());
       }
+   } else {
+      printf("s3 client is null\n");
    }
 
    return vector<string>();
