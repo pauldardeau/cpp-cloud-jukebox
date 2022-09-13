@@ -7,6 +7,9 @@
 #include "storage_system.h"
 #include "property_set.h"
 
+// minio client
+#include "client.h"
+
 // Helpful links:
 // https://docs.ceph.com/en/latest/radosgw/s3/csharp/
 
@@ -16,7 +19,7 @@ private:
    bool debug_mode;
    std::string aws_access_key;
    std::string aws_secret_key;
-   //AmazonS3Client conn;
+   minio::s3::Client* client;
 
    S3StorageSystem(const S3StorageSystem&);
    S3StorageSystem& operator=(const S3StorageSystem&);

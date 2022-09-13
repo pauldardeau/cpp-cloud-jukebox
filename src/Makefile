@@ -1,10 +1,12 @@
 # Copyright Paul Dardeau, SwampBits LLC 2022
 
 CC = c++
-CC_OPTS = -c -Wall -fPIC -O2 -I../../chaudiere/src -I../../chapeau/src
+CC_OPTS = -c -Wall -fPIC -O2 -I../include -I../../chaudiere/src -I../../chapeau/src
 LINK_CMD = c++
 # remove -ldl for non-linux
-LINK_LIBS = -lsqlite3
+# libapps.a    libcrypto.a  libcurlpp.a   libinih.a    libminiocpp.a  libssl.a
+# libcommon.a  libcurl.a    libdefault.a  liblegacy.a  libpugixml.a   libz.a
+LINK_LIBS = -lsqlite3 -lminiocpp -lcurlpp -lcurl -linih -lpugixml -lssl -lcrypto -lz
 
 EXE_NAME = cpp-cloud-jukebox
 
@@ -27,7 +29,7 @@ clean :
 	rm -f $(EXE_NAME)
 
 $(EXE_NAME) : $(OBJS)
-	$(LINK_CMD) $(OBJS) -o $(EXE_NAME) ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so $(LINK_LIBS)
+	$(LINK_CMD) $(OBJS) -o $(EXE_NAME) ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so -L../lib $(LINK_LIBS)
 
 %.o : %.cpp
 	$(CC) $(CC_OPTS) $< -o $@

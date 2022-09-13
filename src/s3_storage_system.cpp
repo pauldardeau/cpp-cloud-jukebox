@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <strstream>
 #include "s3_storage_system.h"
 
 using namespace std;
@@ -14,7 +15,8 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
    StorageSystem("S3", debug),
    debug_mode(debug),
    aws_access_key(access_key),
-   aws_secret_key(secret_key) {
+   aws_secret_key(secret_key),
+   client(NULL) {
 
    if (debug_mode) {
       printf("Using access_key=%s, secret_key=%s\n",
@@ -28,6 +30,9 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
 }
 
 S3StorageSystem::~S3StorageSystem() {
+   if (client != NULL) {
+      exit();
+   }
 }
 
 bool S3StorageSystem::enter() {
@@ -36,17 +41,16 @@ bool S3StorageSystem::enter() {
       printf("attempting to connect to S3\n");
    }
 
-   //AmazonS3Config config = new AmazonS3Config();
-   //config.ServiceURL = "https://s3.us-central-1.wasabisys.com";
+   minio::s3::BaseUrl base_url("https://s3.us-central-1.wasabisys.com");
 
-   //conn = new AmazonS3Client(aws_access_key,
-   //                          aws_secret_key,
-   //                          config);
-   //authenticated = true;
+   minio::creds::StaticProvider provider(
+      aws_access_key, aws_secret_key);
+
+   client = new minio::s3::Client(base_url, &provider);
+
+   authenticated = true;
    //list_containers = list_account_containers();
-   //return true;
-
-   return false;
+   return true;
 }
 
 void S3StorageSystem::exit() {
@@ -54,40 +58,32 @@ void S3StorageSystem::exit() {
       printf("S3StorageSystem.exit\n");
    }
 
-   /*
-   if (conn != NULL) {
+   if (client != NULL) {
       if (debug_mode) {
          printf("closing S3 connection object\n");
       }
 
       authenticated = false;
-      list_containers = null;
-      conn = NULL;
+      client = NULL;
    }
-   */
 }
 
 vector<string> S3StorageSystem::list_account_containers() {
    if (debug_mode) {
       printf("list_account_containers\n");
    }
-   /*
-   if (conn != NULL) {
-      var listResponse = do_list_account_containers(conn);
-      log_api_call(listResponse.HttpStatusCode, "ListBuckets");
 
-      if (listResponse.HttpStatusCode == HttpStatusCode.OK) {
-         vector<string> list_container_names;
-
-         foreach (S3Bucket bucket in listResponse.Buckets)
-         {
-            list_container_names.push_back(un_prefixed_container(bucket.BucketName));
+   if (client != NULL) {
+      minio::s3::ListBucketsResponse resp = client->ListBuckets();
+      if (resp) {
+         vector<string> list_containers;
+         for (auto& bucket : resp.buckets) {
+            list_containers.push_back(bucket.name);
          }
-
-         return list_container_names;
+      } else {
+         printf("error: unable to list containers - %s\n", resp.Error().String().c_str());
       }
    }
-   */
 
    return vector<string>();
 }
@@ -98,25 +94,17 @@ bool S3StorageSystem::create_container(const string& container_name) {
    }
 
    bool container_created = false;
-   /*
-   if (conn != NULL) {
-      try
-      {
-         PutBucketRequest request = new PutBucketRequest();
-         request.BucketName = container_name;
-         var putBucketResponse = do_create_container(conn, request);
-         log_api_call(putBucketResponse.HttpStatusCode, "PutBucket: " + container_name);
-         if (putBucketResponse.HttpStatusCode == HttpStatusCode.OK) {
-            add_container(container_name);
-            container_created = true;
-         }
-      }
-      catch (Exception e)
-      {
-         printf("PutBucket exception: " + e);
+
+   if (client != NULL) {
+      minio::s3::MakeBucketArgs args;
+      args.bucket = container_name;
+      minio::s3::MakeBucketResponse resp = client->MakeBucket(args);
+      if (resp) {
+         container_created = true;
+      } else {
+         printf("error: unable to create container - %s\n", resp.Error().String().c_str());
       }
    }
-   */
 
    return container_created;
 }
@@ -127,27 +115,17 @@ bool S3StorageSystem::delete_container(const string& container_name) {
    }
 
    bool container_deleted = false;
-   /*
-   if (conn != NULL) {
-      try
-      {
-         string bucket_name = prefixed_container(container_name);
-         DeleteBucketRequest request = new DeleteBucketRequest();
-         request.BucketName = bucket_name;
-         var deleteResponse = do_delete_container(conn, request);
-         log_api_call(deleteResponse.HttpStatusCode, "DeleteBucket: " + bucket_name);
+   if (client != NULL) {
+      minio::s3::RemoveBucketArgs args;
+      args.bucket = container_name;
 
-         if (deleteResponse.HttpStatusCode == HttpStatusCode.OK) {
-            remove_container(container_name);
-            container_deleted = true;
-         }
-      }
-      catch (Exception e)
-      {
-         printf("DeleteBucket exception: " + e);
+      minio::s3::RemoveBucketResponse resp = client->RemoveBucket(args);
+      if (resp) {
+         container_deleted = true;
+      } else {
+         printf("error: unable to delete container - %s\n", resp.Error().String().c_str());
       }
    }
-   */
 
    return container_deleted;
 }
@@ -157,33 +135,21 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
       printf("list_container_contents: %s\n", container_name.c_str());
    }
 
-   /*
-   if (conn != NULL) {
-      try
-      {
-         ListObjectsRequest request = new ListObjectsRequest();
-         request.BucketName = container_name;
-         var listResponse = do_list_container_contents(conn, request);
-         log_api_call(listResponse.HttpStatusCode, "ListObjects: " + container_name);
-         if (listResponse.HttpStatusCode == HttpStatusCode.OK) {
-            vector<string> list_contents;
+   vector<string> list_objects;
 
-            foreach (S3Object obj in listResponse.S3Objects)
-            {
-               list_contents.push_back(obj.Key);
-            }
-
-            return list_contents;
-         }
-      }
-      catch (Exception e)
-      {
-         printf("ListObjects exception: {0}", e);
+   if (client != NULL) {
+      minio::s3::ListObjectsArgs args;
+      args.bucket = container_name;
+      minio::s3::ListObjectsResult result = client->ListObjects(args);
+      for (; result; result++) {
+         minio::s3::Item item = *result;
+	 if (item) {
+            list_objects.push_back(item.name);
+	 }
       }
    }
-   */
 
-   return vector<string>();
+   return list_objects;
 }
 
 bool S3StorageSystem::get_object_metadata(const string& container_name,
@@ -194,32 +160,53 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
              container_name.c_str(), object_name.c_str());
    }
 
-   /*
-   if (conn != NULL && container_name.length() > 0 && object_name.length() > 0) {
-      try
-      {
-         var getObjectMetadataResponse = do_get_object_metadata(conn, container_name, object_name);
-         log_api_call(getObjectMetadataResponse.HttpStatusCode, "GetObjectMetadata: " + container_name + ":" + object_name);
+   if (client != NULL) {
+      minio::s3::StatObjectArgs args;
+      args.bucket = "my-bucket";
+      args.object = "my-object";
 
-         if (getObjectMetadataResponse.HttpStatusCode == HttpStatusCode.OK) {
-            foreach (var header_key in getObjectMetadataResponse.Headers.Keys)
-            {
-               string header_value = getObjectMetadataResponse.Headers[header_key];
-               if (header_value != null) {
-                  dict_headers[header_key] = header_value;
-               }
-            }
-	    return true;
+      minio::s3::StatObjectResponse resp = client->StatObject(args);
+      if (resp) {
+         //TODO: populate metadata
+	 /*
+         std::cout << "Version ID: " << resp.version_id << std::endl;
+         std::cout << "ETag: " << resp.etag << std::endl;
+         std::cout << "Size: " << resp.size << std::endl;
+         std::cout << "Last Modified: " << resp.last_modified << std::endl;
+         std::cout << "Retention Mode: ";
+         if (minio::s3::IsRetentionModeValid(resp.retention_mode)) {
+            std::cout << minio::s3::RetentionModeToString(resp.retention_mode)
+                << std::endl;
+         } else {
+            std::cout << "-" << std::endl;
          }
+         std::cout << "Retention Retain Until Date: ";
+         if (resp.retention_retain_until_date) {
+            std::cout << resp.retention_retain_until_date.ToHttpHeaderValue()
+                << std::endl;
+         } else {
+            std::cout << "-" << std::endl;
+         }
+         std::cout << "Legal Hold: ";
+         if (minio::s3::IsLegalHoldValid(resp.legal_hold)) {
+            std::cout << minio::s3::LegalHoldToString(resp.legal_hold) << std::endl;
+         } else {
+            std::cout << "-" << std::endl;
+         }
+         std::cout << "Delete Marker: "
+              << minio::utils::BoolToString(resp.delete_marker) << std::endl;
+         std::cout << "User Metadata: " << std::endl;
+         std::list<std::string> keys = resp.user_metadata.Keys();
+         for (auto& key : keys) {
+            std::cout << "  " << key << ": " << resp.user_metadata.GetFront(key)
+                << std::endl;
+         }
+	 */
+         return true;
+      } else {
+         printf("error: unable to retrieve metadata - %s\n", resp.Error().String().c_str());
       }
-      catch (Exception e)
-      {
-         printf("GetObjectMetadata exception: " + e);
-      }
-
-      return false;
    }
-   */
 
    return false;
 }
@@ -231,40 +218,21 @@ bool S3StorageSystem::put_object(const string& container_name,
 
    bool object_added = false;
 
-   /*
-   if (conn != NULL && container_name.length() > 0 &&
-       object_name.length() > 0 && file_contents.size() > 0) {
+   if (client != NULL) {
+      //PutObjectArgs(std::istream &stream, long object_size, long part_size)
+      std::istrstream stream(reinterpret_cast<const char*>(file_contents.data()), file_contents.size());
+      minio::s3::PutObjectArgs args(stream, file_contents.size(), 0);
+      args.bucket = container_name;
+      args.object = object_name;
 
-      try
-      {
-         string bucket = container_name;
-         PutObjectRequest request = new PutObjectRequest();
-         request.BucketName = container_name;
-         request.Key = object_name;
-         request.InputStream = new MemoryStream(file_contents);
-         //request.Headers = ;  //TODO: (2) add headers (put_object)
+      minio::s3::PutObjectResponse resp = client->PutObject(args);
 
-         if (headers != null) {
-            if (headers.ContainsKey("ContentType")) {
-               string contentType = (string) headers["ContentType"];
-               if (contentType != null && contentType.Length > 0) {
-                  request.ContentType = contentType;
-               }
-            }
-         }
-            
-         var putObjectResponse = do_put_object(conn, request);
-         log_api_call(putObjectResponse.HttpStatusCode, "PutObject: " + container_name + ":" + object_name);
-         if (putObjectResponse.HttpStatusCode == HttpStatusCode.OK) {
-            object_added = true;
-         }
-      }
-      catch (Exception e)
-      {
-         printf("PutObject exception: " + e);
+      if (resp) {
+         object_added = true;
+      } else {
+         printf("error: unable to put object - %s\n", resp.Error().String().c_str());
       }
    }
-   */
 
    return object_added;
 }
@@ -278,23 +246,18 @@ bool S3StorageSystem::delete_object(const string& container_name,
 
    bool object_deleted = false;
 
-   /*
-   if (conn != NULL && container_name.length() > 0 && object_name.length() > 0) {
-      try
-      {
-         DeleteObjectRequest request = new DeleteObjectRequest();
-         request.BucketName = container_name;
-         request.Key = object_name;
-         var deleteObjectResponse = do_delete_object(conn, request);
-         log_api_call(deleteObjectResponse.HttpStatusCode, "DeleteObject: " + container_name + ":" + object_name);
+   if (client != NULL) {
+      minio::s3::RemoveObjectArgs args;
+      args.bucket = container_name;
+      args.object = object_name;
+
+      minio::s3::RemoveObjectResponse resp = client->RemoveObject(args);
+      if (resp) {
          object_deleted = true;
-      }
-      catch (Exception e)
-      {
-         printf("DeleteObject exception: " + e);
+      } else {
+         printf("error: unable to delete object - %s\n", resp.Error().String().c_str());
       }
    }
-   */
 
    return object_deleted;
 }
@@ -310,39 +273,21 @@ int S3StorageSystem::get_object(const string& container_name,
 
    int bytes_retrieved = 0;
 
-   /*
-   if (conn != NULL && container_name.length() > 0 &&
-       object_name.length() > 0 && local_file_path.length() > 0) {
+   if (client != NULL) {
+      minio::s3::GetObjectArgs args;
+      args.bucket = container_name;
+      args.object = object_name;
+      args.datafunc = [](minio::http::DataFunctionArgs args) -> bool {
+         std::cout << args.datachunk;
+         return true;
+      };
 
-      try
-      {
-         GetObjectRequest request = new GetObjectRequest();
-         request.BucketName = container_name;
-         request.Key = object_name;
-         var getObjectResponse = do_get_object(conn, request);
-         log_api_call(getObjectResponse.HttpStatusCode, "GetObject: " + container_name + ":" + object_name);
-         if (getObjectResponse.HttpStatusCode == HttpStatusCode.OK) {
-            // AWS SDK BUG: according to Amazon's docs, the following should
-            // work, but it's a compilation error.
-            //getObjectResponse.WriteResponseStreamToFile(local_file_path);
-
-            // Workaround: we'll do the same thing ourselves
-            using(Stream outStream = File.OpenWrite(local_file_path))
-            {
-               getObjectResponse.ResponseStream.CopyTo(outStream);
-            }
-
-            if (Utils::path_exists(local_file_path)) {
-               bytes_retrieved = (int) Utils.get_file_size(local_file_path);
-            }
-         }
-      }
-      catch (Exception e)
-      {
-         printf("GetObject exception: " + e);
+      minio::s3::GetObjectResponse resp = client->GetObject(args);
+      if (resp) {
+      } else {
+         printf("error: unable to get object - %s\n", resp.Error().String().c_str());
       }
    }
-   */
 
    return bytes_retrieved;
 }

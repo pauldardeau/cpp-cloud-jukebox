@@ -1,5 +1,9 @@
 cpp-cloud-jukebox
 jukebox_db.sqlite3
+s3_creds.txt
+azure_creds.txt
+swift_creds.txt
+fs_creds.txt
 
 # Prerequisites
 *.d
