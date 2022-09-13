@@ -16,6 +16,7 @@ jukebox_db.o \
 jukebox_main.o \
 main.o \
 property_set.o \
+s3_storage_system.o \
 utils.o
 
 

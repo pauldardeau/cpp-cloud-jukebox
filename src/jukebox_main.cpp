@@ -6,6 +6,7 @@
 #include "property_set.h"
 #include "jukebox_options.h"
 #include "jukebox.h"
+#include "s3_storage_system.h"
 #include "utils.h"
 #include "OSUtils.h"
 #include "StringTokenizer.h"
@@ -97,63 +98,62 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                               bool in_debug_mode,
                                               bool in_update_mode)
 {
-      //if (!s3.is_available()) {
-      //   printf("error: s3 is not supported on this system. please install boto3 (s3 client) first.");
-      //   Utils::sys_exit(1);
-      //}
+   //if (!s3.is_available()) {
+   //   printf("error: s3 is not supported on this system. please install boto3 (s3 client) first.");
+   //   Utils::sys_exit(1);
+   //}
 
-      string aws_access_key = "";
-      string aws_secret_key = "";
-      string update_aws_access_key = "";
-      string update_aws_secret_key = "";
+   string aws_access_key = "";
+   string aws_secret_key = "";
+   string update_aws_access_key = "";
+   string update_aws_secret_key = "";
 
-      if (credentials.contains("aws_access_key")) {
-         aws_access_key = credentials.get_string_value("aws_access_key");
+   if (credentials.contains("aws_access_key")) {
+      aws_access_key = credentials.get_string_value("aws_access_key");
+   }
+   if (credentials.contains("aws_secret_key")) {
+      aws_secret_key = credentials.get_string_value("aws_secret_key");
+   }
+
+   if (credentials.contains("update_aws_access_key") &&
+       credentials.contains("update_aws_secret_key")) {
+
+      update_aws_access_key = credentials.get_string_value("update_aws_access_key");
+      update_aws_secret_key = credentials.get_string_value("update_aws_secret_key");
+   }
+
+   if (in_debug_mode) {
+      printf("aws_access_key=%s\n", aws_access_key.c_str());
+      printf("aws_secret_key=%s\n", aws_secret_key.c_str());
+      if (update_aws_access_key.length() > 0 && update_aws_secret_key.length() > 0) {
+         printf("update_aws_access_key=%s\n", update_aws_access_key.c_str());
+         printf("update_aws_secret_key=%s\n", update_aws_secret_key.c_str());
       }
-      if (credentials.contains("aws_secret_key")) {
-         aws_secret_key = credentials.get_string_value("aws_secret_key");
-      }
+   }
 
-      if (credentials.contains("update_aws_access_key") &&
-          credentials.contains("update_aws_secret_key")) {
-
-         update_aws_access_key = credentials.get_string_value("update_aws_access_key");
-         update_aws_secret_key = credentials.get_string_value("update_aws_secret_key");
-      }
-
-      if (in_debug_mode) {
-         printf("aws_access_key=%s\n", aws_access_key.c_str());
-         printf("aws_secret_key=%s\n", aws_secret_key.c_str());
-         if (update_aws_access_key.length() > 0 && update_aws_secret_key.length() > 0) {
-            printf("update_aws_access_key=%s\n", update_aws_access_key.c_str());
-            printf("update_aws_secret_key=%s\n", update_aws_secret_key.c_str());
-         }
-      }
-
-      if (aws_access_key.length() == 0 || aws_secret_key.length() == 0) {
-         printf("error: no s3 credentials given. please specify aws_access_key "
-                "and aws_secret_key in credentials file\n");
-         return NULL;
-      } else {
-         string access_key = "";
-         string secret_key = "";
-
-         if (in_update_mode) {
-            access_key = update_aws_access_key;
-            secret_key = update_aws_secret_key;
-         } else {
-            access_key = aws_access_key;
-            secret_key = aws_secret_key;
-         }
-
-         //TODO: (2) hookup S3StorageSystem (connect_s3_system)
-         //printf("Creating S3StorageSystem\n");
-         //return new S3StorageSystem(access_key,
-         //                           secret_key,
-         //                           prefix,
-         //                           in_debug_mode);
-      }
+   if (aws_access_key.length() == 0 || aws_secret_key.length() == 0) {
+      printf("error: no s3 credentials given. please specify aws_access_key "
+             "and aws_secret_key in credentials file\n");
       return NULL;
+   } else {
+      string access_key = "";
+      string secret_key = "";
+
+      if (in_update_mode) {
+         access_key = update_aws_access_key;
+         secret_key = update_aws_secret_key;
+      } else {
+         access_key = aws_access_key;
+         secret_key = aws_secret_key;
+      }
+
+      printf("Creating S3StorageSystem\n");
+      return new S3StorageSystem(access_key,
+                                 secret_key,
+                                 prefix,
+                                 in_debug_mode);
+   }
+   return NULL;
 }
 
 StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
