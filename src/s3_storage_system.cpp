@@ -180,41 +180,20 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
 
       minio::s3::StatObjectResponse resp = client->StatObject(args);
       if (resp) {
-         //TODO: populate metadata
-	 /*
-         std::cout << "Version ID: " << resp.version_id << std::endl;
-         std::cout << "ETag: " << resp.etag << std::endl;
-         std::cout << "Size: " << resp.size << std::endl;
-         std::cout << "Last Modified: " << resp.last_modified << std::endl;
-         std::cout << "Retention Mode: ";
-         if (minio::s3::IsRetentionModeValid(resp.retention_mode)) {
-            std::cout << minio::s3::RetentionModeToString(resp.retention_mode)
-                << std::endl;
-         } else {
-            std::cout << "-" << std::endl;
-         }
-         std::cout << "Retention Retain Until Date: ";
-         if (resp.retention_retain_until_date) {
-            std::cout << resp.retention_retain_until_date.ToHttpHeaderValue()
-                << std::endl;
-         } else {
-            std::cout << "-" << std::endl;
-         }
-         std::cout << "Legal Hold: ";
-         if (minio::s3::IsLegalHoldValid(resp.legal_hold)) {
-            std::cout << minio::s3::LegalHoldToString(resp.legal_hold) << std::endl;
-         } else {
-            std::cout << "-" << std::endl;
-         }
-         std::cout << "Delete Marker: "
-              << minio::utils::BoolToString(resp.delete_marker) << std::endl;
-         std::cout << "User Metadata: " << std::endl;
-         std::list<std::string> keys = resp.user_metadata.Keys();
+         properties.add("version_id", new StrPropertyValue(resp.version_id));
+	 properties.add("etag", new StrPropertyValue(resp.etag));
+	 properties.add("size", new ULongPropertyValue(resp.size));
+	 properties.add("delete_marker", new BoolPropertyValue(resp.delete_marker));
+
+	 string last_modified = resp.last_modified.ToISO8601UTC();
+	 properties.add("last_modified", new StrPropertyValue(last_modified));
+
+	 std::list<std::string> keys = resp.user_metadata.Keys();
          for (auto& key : keys) {
-            std::cout << "  " << key << ": " << resp.user_metadata.GetFront(key)
-                << std::endl;
+            const string& user_metadata_value = resp.user_metadata.GetFront(key);
+	    properties.add(key, new StrPropertyValue(user_metadata_value));
          }
-	 */
+
          return true;
       } else {
          printf("error: unable to retrieve metadata - %s\n", resp.Error().String().c_str());
@@ -232,7 +211,6 @@ bool S3StorageSystem::put_object(const string& container_name,
    bool object_added = false;
 
    if (client != NULL) {
-      //PutObjectArgs(std::istream &stream, long object_size, long part_size)
       std::istrstream stream(reinterpret_cast<const char*>(file_contents.data()), file_contents.size());
       minio::s3::PutObjectArgs args(stream, file_contents.size(), 0);
       args.bucket = container_name;
