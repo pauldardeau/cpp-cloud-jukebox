@@ -1,20 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
 
 #include "utils.h"
 #include "DateTime.h"
 
 using namespace std;
 
+static const string EMPTY = "";
 
 string Utils::datetime_datetime_fromtimestamp(double ts) {
    // python datetime.datetime.fromtimestamp
 
    //TODO: (1) implement (datetime_datetime_fromtimestamp)
-   return string("");
+   return EMPTY;
 }
 
 void Utils::time_sleep(int seconds) {
@@ -96,7 +100,7 @@ bool Utils::file_read_all_text(const string& file_path,
       }
       delete [] buffer;
    } else {
-      file_text = "";
+      file_text = EMPTY;
       success = true;
    }
 
@@ -135,8 +139,8 @@ vector<string> Utils::path_splitext(const string& path) {
    // splitext(".cshrc") -> (".cshrc", "")
    // splitext("/foo/....jpg") -> ("/foo/....jpg", "")
 
-   string root = "";
-   string ext = "";
+   string root = EMPTY;
+   string ext = EMPTY;
 
    if (path.length() > 0) {
       int pos_last_dot = find_last_index(path, '.');
@@ -313,20 +317,60 @@ bool Utils::file_write_all_bytes(const string& file_path,
 }
 
 string Utils::md5_for_file(const string& path_to_file) {
-   //TODO: implement md5_for_file
-   /*
-   byte[] file_bytes = File.ReadAllBytes(path_to_file);
-   if (file_bytes != null && file_bytes.Length > 0) {
-      MD5 md5 = MD5.Create();
-      byte[] hash = md5.ComputeHash(file_bytes);
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < hash.Length; i++) {
-         sb.Append(hash[i].ToString("X2"));
-      }
-      return sb.ToString();
+   if (!file_exists(path_to_file)) {
+      printf("error (md5_for_file): file does not exist '%s'\n", path_to_file.c_str());
+      return EMPTY;
    }
-   */
 
-   return string("");
+   vector<unsigned char> file_contents;
+   if (!file_read_all_bytes(path_to_file, file_contents)) {
+      printf("error (md5_for_file): unable to read file '%s'\n", path_to_file.c_str());
+      return EMPTY;
+   }
+
+   EVP_MD_CTX* ctx = EVP_MD_CTX_create();
+   if (ctx == NULL) {
+      printf("error (md5_for_file): failed to create EVP_MD_CTX\n");
+      return EMPTY;
+   }
+
+   if (1 != EVP_DigestInit_ex(ctx, EVP_md5(), NULL)) {
+      printf("error (md5_for_file): failed to init MD5 digest\n");
+      return EMPTY;
+   }
+
+   if (1 != EVP_DigestUpdate(ctx, file_contents.data(), file_contents.size())) {
+      printf("error (md5_for_file): failed to update digest\n");
+      return EMPTY;
+   }
+
+   unsigned int length = EVP_MD_size(EVP_md5());
+   unsigned char* digest = (unsigned char*)OPENSSL_malloc(length);
+   if (digest == NULL) {
+      printf("error (md5_for_file) failed to allocate memory for hash value\n");
+      return EMPTY;
+   }
+
+   if (1 != EVP_DigestFinal_ex(ctx, digest, &length)) {
+      OPENSSL_free(digest);
+      printf("error (md5_for_file): failed to finalize digest\n");
+      return EMPTY;
+   }
+
+   EVP_MD_CTX_destroy(ctx);
+
+   string hash = string((const char*)digest, length);
+   OPENSSL_free(digest);
+
+   string hex_formatted_hash;
+   char hex_char[3];
+   memset(hex_char, 0, sizeof(hex_char));
+
+   for (size_t i = 0; i < hash.length(); i++) {
+      sprintf(hex_char, "%02x", hash[i]);
+      hex_formatted_hash += hex_char;
+   }
+
+   return hex_formatted_hash;
 }
 
