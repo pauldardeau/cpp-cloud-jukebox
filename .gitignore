@@ -1,4 +1,5 @@
 cpp-cloud-jukebox
+test_cpp_cloud_jukebox
 jukebox_db.sqlite3
 s3_creds.txt
 azure_creds.txt

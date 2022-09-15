@@ -2,7 +2,9 @@ CC = c++
 CC_OPTS = -c -I../src -I../../chaudiere/src -I../../poivre
 
 EXE_NAME = test_cpp_cloud_jukebox
-LIB_NAMES = ../../poivre/poivre.so ../../chaudiere/src/libchaudiere.so
+LIB_NAMES = ../../poivre/poivre.so ../../chaudiere/src/libchaudiere.so -L../lib -lssl -lcrypto
+
+PROJ_OBJS = ../src/utils.o
 
 OBJS = test_utils.o \
 tests.o
@@ -14,7 +16,7 @@ clean :
 	rm -f $(EXE_NAME)
 	
 $(EXE_NAME) : $(OBJS)
-	$(CC) $(OBJS) -o $(EXE_NAME) $(LIB_NAMES)
+	$(CC) $(OBJS) $(PROJ_OBJS) -o $(EXE_NAME) $(LIB_NAMES)
 
 %.o : %.cpp
 	$(CC) $(CC_OPTS) $< -o $@

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -9,6 +10,7 @@
 
 #include "utils.h"
 #include "DateTime.h"
+#include "StrUtils.h"
 
 using namespace std;
 
@@ -24,6 +26,16 @@ string Utils::datetime_datetime_fromtimestamp(double ts) {
 void Utils::time_sleep(int seconds) {
    // python time.sleep
    sleep(seconds);
+}
+
+void Utils::time_sleep_millis(int millis) {
+   struct timespec req;
+   struct timespec rem;
+   req.tv_sec = 0;
+   req.tv_nsec = millis * 1000000;
+   rem.tv_sec = 0;
+   rem.tv_nsec = 0;
+   nanosleep(&req, &rem);
 }
 
 double Utils::time_time() {
@@ -106,6 +118,16 @@ bool Utils::file_read_all_text(const string& file_path,
 
    fclose(f);
    return success;
+}
+
+vector<string> Utils::file_read_lines(const string& file_path) {
+   string file_text;
+   if (file_read_all_text(file_path, file_text)) {
+      if (file_text.length() > 0) {
+         return chaudiere::StrUtils::split(file_text, "\n");
+      }
+   }
+   return vector<string>();
 }
 
 bool Utils::path_isfile(const string& path) {
