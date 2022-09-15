@@ -4,9 +4,11 @@ CC_OPTS = -c -I../src -I../../chaudiere/src -I../../poivre
 EXE_NAME = test_cpp_cloud_jukebox
 LIB_NAMES = ../../poivre/poivre.so ../../chaudiere/src/libchaudiere.so -L../lib -lssl -lcrypto
 
-PROJ_OBJS = ../src/utils.o
+PROJ_OBJS = ../src/utils.o \
+../src/property_set.o
 
 OBJS = test_utils.o \
+test_property_set.o \
 tests.o
 
 all : $(EXE_NAME)

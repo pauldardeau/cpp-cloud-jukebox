@@ -1,6 +1,8 @@
 #include <string.h>
 #include "property_set.h"
 #include "StringTokenizer.h"
+#include "StrUtils.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -35,6 +37,7 @@ void PropertySet::clear() {
    for (; it != it_end; it++) {
       delete it->second;
    }
+   map_props.erase(map_props.begin(), map_props.end());
 }
 
 bool PropertySet::contains(const std::string& prop_name) const {
@@ -61,7 +64,7 @@ const PropertyValue* PropertySet::get(const std::string& prop_name) const {
 
 int PropertySet::get_int_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv->is_int()) {
+   if (pv != NULL && pv->is_int()) {
       return pv->get_int_value();
    } else {
       return 0;
@@ -70,7 +73,7 @@ int PropertySet::get_int_value(const std::string& prop_name) const {
 
 long PropertySet::get_long_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv->is_long()) {
+   if (pv != NULL && pv->is_long()) {
       return pv->get_long_value();
    } else {
       return 0L;
@@ -79,7 +82,7 @@ long PropertySet::get_long_value(const std::string& prop_name) const {
 
 unsigned long PropertySet::get_ulong_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv->is_ulong()) {
+   if (pv != NULL && pv->is_ulong()) {
       return pv->get_ulong_value();
    } else {
       return 0L;
@@ -88,7 +91,7 @@ unsigned long PropertySet::get_ulong_value(const std::string& prop_name) const {
 
 bool PropertySet::get_bool_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv->is_bool()) {
+   if (pv != NULL && pv->is_bool()) {
       return pv->get_bool_value();
    } else {
       return false;
@@ -97,7 +100,7 @@ bool PropertySet::get_bool_value(const std::string& prop_name) const {
 
 const std::string& PropertySet::get_string_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv->is_string()) {
+   if (pv != NULL && pv->is_string()) {
       return pv->get_string_value();
    } else {
       return EMPTY;
@@ -133,49 +136,62 @@ bool PropertySet::write_to_file(const std::string& file_path) const {
 	 }
       }
       fclose(f);
+      success = true;
    }
    return success;
 }
 
 bool PropertySet::read_from_file(const std::string& file_path) {
    bool success = false;
-   FILE* f = fopen(file_path.c_str(), "r");
-   if (f != NULL) {
-      char* line = NULL;
-      size_t len = 0;
-      ssize_t read;
+   string file_contents;
+   if (Utils::file_read_all_text(file_path, file_contents)) {
+      if (file_contents.length() > 0) {
+         vector<string> file_lines = chaudiere::StrUtils::split(file_contents, "\n");
+	 auto it = file_lines.begin();
+	 const auto it_end = file_lines.end();
+	 for (; it != it_end; it++) {
+            const string& file_line = *it;
+	    string stripped_line = chaudiere::StrUtils::strip(file_line);
+	    if (stripped_line.length() > 0) {
+               vector<string> fields = chaudiere::StrUtils::split(stripped_line, "|");
+	       if (fields.size() == 3) {
+                  const string& data_type = fields[0];
+		  const string& prop_name = fields[1];
+		  const string& prop_value = fields[2];
 
-      while ((read = getline(&line, &len, f)) != -1) {
-         if (strlen(line) > 0) {
-            chaudiere::StringTokenizer st(line, "|");
-	    int num_tokens = st.countTokens();
-	    if (num_tokens == 3) {
-               const string& data_type = st.nextToken();
-	       const string& key = st.nextToken();
-	       const string& value = st.nextToken();
-	       if (data_type == TYPE_BOOL) {
-                  if (value == VALUE_TRUE) {
-                     add(key, new BoolPropertyValue(true)); 
-                  } else if (value == VALUE_FALSE) {
-                     add(key, new BoolPropertyValue(false));
-                  } else {
-                     printf("warning: invalid value for bool property (%s), skipping it\n", key.c_str());
-                  } 
-               } else if (data_type == TYPE_STRING) {
-                  add(key, new StrPropertyValue(value));
-               } else if (data_type == TYPE_INT) {
-                  add(key, new IntPropertyValue(atoi(value.c_str())));
-               } else if (data_type == TYPE_LONG) {
-                  add(key, new LongPropertyValue(atol(value.c_str())));
-               } else if (data_type == TYPE_ULONG) {
-                  unsigned long ul_value = (unsigned long) atol(value.c_str());
-		  add(key, new ULongPropertyValue(ul_value));
+		  if (data_type.length() > 0 &&
+                      prop_name.length() > 0 &&
+                      prop_value.length() > 0) {
+
+                     if (data_type == TYPE_BOOL) {
+                        if (prop_value == VALUE_TRUE || prop_value == VALUE_FALSE) {
+                           bool bool_value = (prop_value == VALUE_TRUE);
+			   add(prop_name, new BoolPropertyValue(bool_value));
+                        } else {
+                           printf("error: invalid value for type bool '%s'\n", data_type.c_str());
+                           printf("skipping\n");
+                        }
+                     } else if (data_type == TYPE_STRING) {
+                        add(prop_name, new StrPropertyValue(prop_value));
+                     } else if (data_type == TYPE_INT) {
+                        int int_value = chaudiere::StrUtils::parseInt(prop_value);
+			add(prop_name, new IntPropertyValue(int_value));
+                     } else if (data_type == TYPE_LONG) {
+                        long long_value = chaudiere::StrUtils::parseLong(prop_value);
+			add(prop_name, new LongPropertyValue(long_value));
+                     } else if (data_type == TYPE_ULONG) {
+                        long long_value = chaudiere::StrUtils::parseLong(prop_value);
+			unsigned long ul_value = (unsigned long) long_value;
+			add(prop_name, new ULongPropertyValue(ul_value));
+                     } else {
+                        printf("error: unrecognized data type '%s', skipping\n", data_type.c_str());
+                     }
+		  }
                }
-	    }
+            }
          }
+	 success = true;
       }
-      free(line);
-      fclose(f);
    }
    return success;
 }
