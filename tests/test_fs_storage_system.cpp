@@ -151,10 +151,22 @@ void TestFSStorageSystem::test_put_object() {
    FSTestCase fs_test_case(*this, test_dir);
    FSStorageSystem fs(test_dir, false);
    require(fs.enter(), "enter must return true");
-   //TODO: non-existing container
-   //TODO: existing container, non-existing object
-   //TODO: existing container, existing object
-   //TODO: implement test_put_object
+
+   // non-existing container
+   string object_contents = "It was the best of times. It was the worst of times.";
+   std::vector<unsigned char> v_obj_contents;
+   std::copy(object_contents.begin(), object_contents.end(), std::back_inserter(v_obj_contents));
+   requireFalse(fs.put_object("books", "book.txt", v_obj_contents, NULL), "put object for non-existing container must return false");
+
+   // existing container, non-existing object
+   require(fs.create_container("books"), "create container should return true");
+   require(fs.put_object("books", "book.txt", v_obj_contents, NULL), "put object for existing container must return true");
+
+   // existing container, existing object
+   string upd_object_contents = "Now is the time for all good men to come to the aid of their country.";
+   std::vector<unsigned char> v_upd_obj_contents;
+   std::copy(upd_object_contents.begin(), upd_object_contents.end(), std::back_inserter(v_upd_obj_contents));
+   require(fs.put_object("books", "book.txt", v_upd_obj_contents, NULL), "put object over existing object should return true");
 }
 
 void TestFSStorageSystem::test_delete_object() {
@@ -171,9 +183,15 @@ void TestFSStorageSystem::test_delete_object() {
    require(fs.create_container("books"), "create container should return true");
    requireFalse(fs.delete_object("books", "book.txt"), "non existing object should return false");
 
-   //TODO: existing container, existing object
+   // existing container, existing object
+   string object_contents = "It was the best of times. It was the worst of times.";
+   std::vector<unsigned char> v_obj_contents;
+   std::copy(object_contents.begin(), object_contents.end(), std::back_inserter(v_obj_contents));
+   require(fs.put_object("books", "book.txt", v_obj_contents, NULL), "put object must work");
+   require(fs.delete_object("books", "book.txt"), "delete of existing object should return true");
 
-   //TODO: existing container, just deleted object (double-delete)
+   // existing container, just deleted object (double-delete)
+   requireFalse(fs.delete_object("books", "book.txt"), "2nd delete of object should return false");
 }
 
 void TestFSStorageSystem::test_get_object() {
@@ -193,7 +211,7 @@ void TestFSStorageSystem::test_get_object() {
    ret_val = fs.get_object("books", "book.txt", local_file_path);
    require(ret_val == 0, "non-existing object should return 0");
 
-   //TODO: existing container, existing object
+   // existing container, existing object
    string object_contents = "It was the best of times. It was the worst of times.";
    std::vector<unsigned char> v_obj_contents;
    std::copy(object_contents.begin(), object_contents.end(), std::back_inserter(v_obj_contents));
