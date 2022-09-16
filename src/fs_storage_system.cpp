@@ -38,19 +38,17 @@ bool FSStorageSystem::create_container(const string& container_name) {
 
 bool FSStorageSystem::delete_container(const string& container_name) {
    bool container_deleted = false;
-   if (has_container(container_name)) {
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      container_deleted = Utils::directory_delete_directory(container_dir);
-      if (container_deleted) {
-	 list_containers.erase(container_name);
+   string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
+   container_deleted = Utils::directory_delete_directory(container_dir);
+   if (container_deleted) {
+      list_containers.erase(container_name);
 
-         auto it = list_container_names.begin();
-	 const auto it_end = list_container_names.end();
-	 for (; it != it_end; it++) {
-            if (*it == container_name) {
-               list_container_names.erase(it);
-	       break;
-            }
+      auto it = list_container_names.begin();
+      const auto it_end = list_container_names.end();
+      for (; it != it_end; it++) {
+         if (*it == container_name) {
+            list_container_names.erase(it);
+            break;
          }
       }
    }
