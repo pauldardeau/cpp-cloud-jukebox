@@ -1,6 +1,9 @@
 #include "test_jukebox.h"
 #include "jukebox.h"
 
+using namespace std;
+
+
 TestJukebox::TestJukebox() :
    TestSuite("TestJukebox") {
 }
@@ -76,22 +79,35 @@ void TestJukebox::test_get_metadata_db_file_path() {
 
 void TestJukebox::test_components_from_file_name() {
    TEST_CASE("test_components_from_file_name");
-   //TODO: implement test_components_from_file_name
+   string file_name = "The-Who--Whos-Next--My-Wife.flac";
+   vector<string> components = Jukebox::components_from_file_name(file_name);
+   require(components.size() == 3, "file name has 3 components");
+   if (components.size() == 3) {
+      requireStringEquals("The Who", components[0]);
+      requireStringEquals("Whos Next", components[1]);
+      requireStringEquals("My Wife", components[2]);
+   }
 }
 
 void TestJukebox::test_artist_from_file_name() {
    TEST_CASE("test_artist_from_file_name");
-   //TODO: implement test_artist_from_file_name
+   string file_name = "The-Who--Whos-Next--My-Wife.flac";
+   string artist_name = Jukebox::artist_from_file_name(file_name);
+   requireStringEquals("The Who", artist_name);
 }
 
 void TestJukebox::test_album_from_file_name() {
    TEST_CASE("test_album_from_file_name");
-   //TODO: implement test_album_from_file_name
+   string file_name = "The-Who--Whos-Next--My-Wife.flac";
+   string album_name = Jukebox::album_from_file_name(file_name);
+   requireStringEquals("Whos Next", album_name);
 }
 
 void TestJukebox::test_song_from_file_name() {
    TEST_CASE("test_song_from_file_name");
-   //TODO: implement test_song_from_file_name
+   string file_name = "The-Who--Whos-Next--My-Wife.flac";
+   string song_name = Jukebox::song_from_file_name(file_name);
+   requireStringEquals("My Wife", song_name);
 }
 
 void TestJukebox::test_store_song_metadata() {
