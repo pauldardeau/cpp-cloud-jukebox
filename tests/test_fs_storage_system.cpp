@@ -90,7 +90,7 @@ void TestFSStorageSystem::test_create_container() {
    list_containers = fs.list_account_containers();
    require(list_containers.size() == 1, "created containers must be listed");
 
-   //TODO: test attempt to call create_container with name of existing
+   requireFalse(fs.create_container("foo"), "call to create container with existing name must return false");
 }
 
 void TestFSStorageSystem::test_delete_container() {
@@ -127,8 +127,25 @@ void TestFSStorageSystem::test_list_container_contents() {
    require(fs.create_container("foo"), "create container must work");
    list_contents = fs.list_container_contents("foo");
    require(list_contents.size() == 0, "new container must be empty");
-   //TODO: create 1 object and verify in listing
-   //TODO: create 2 more objects and verify in listing
+
+   vector<unsigned char> v_obj_contents;
+   // create 1 object and verify in listing
+   string obj1_contents = "moe\nlarry\ncurly\n";
+   std::copy(obj1_contents.begin(), obj1_contents.end(), std::back_inserter(v_obj_contents)); 
+   require(fs.put_object("foo", "stooges.txt", , NULL), "create object must return true");
+   list_contents = fs.list_container_contents("foo");
+   require(list_contents.size() == 1, "container must have 1 object");
+
+   // create 2 more objects and verify in listing
+   string obj2_contents = "ford\nchevy\ndodge\n";
+   v_obj_contents.erase(v_obj_contents.begin(), v_obj_contents.end());
+   std::copy(obj2_contents.begin(), obj2_contents.end(), std::back_inserter(v_obj_contents));
+   require(fs.put_object("foo", "cars.txt", , NULL), "create object must return true");
+   string obj3_contents = "coke\npepsi\nsprite\n";
+   require(fs.put_object("foo", "drinks.txt", , NULL), "create object must return true");
+   list_contents = fs.list_container_contents("foo");
+   require(list_contents.size() == 3, "container must have 3 objects");
+
 }
 
 void TestFSStorageSystem::test_get_object_metadata() {
@@ -137,12 +154,38 @@ void TestFSStorageSystem::test_get_object_metadata() {
    FSTestCase fs_test_case(*this, test_dir);
    FSStorageSystem fs(test_dir, false);
    require(fs.enter(), "enter must return true");
-   //TODO: non-existing container
-   //TODO: existing container, non-existing object
-   //TODO: existing container, existing object, no metadata
-   //TODO: existing container, existing object, with metadata
-   //TODO: existing container, deleted object
-   //TODO: implement test_get_object_metadata
+
+   // non-existing container
+   PropertySet props;
+   requireFalse(fs.get_object_metadata("asdf", "foo.txt", props), "get_object_metadata must return false for non-existing container");
+
+   // existing container, non-existing object
+   require(fs.create_container("books"), "create container must return true");
+   requireFalse(fs.get_object_metadata("books", "book.txt", props), "get_object_metadata must return false for non-existing object");
+
+   // existing container, existing object, no metadata
+   vector<unsigned char> v_obj_contents;
+   string s = "It was the best of times. It was the worst of times.";
+   std::copy(s.begin(), s.end(), std::back_inserter(v_obj_contents));
+   require(fs.put_object("books", "book.txt", v_obj_contents, NULL), "put_object must return true for valid args");
+   requireFalse(fs.get_object_metadata("books", "book.txt", props), "get_object_metadata must return false for object without metadata");
+
+   // existing container, existing object, with metadata
+   PropertySet psPut;
+   psPut.add("author", new StrPropertyValue("Charles Dickens"));
+   psPut.add("category", new StrPropertyValue("Fiction"));
+   psPut.add("subject", new StrPropertyValue("French Revolution"));
+   psPut.add("date", new StrPropertyValue("1800s"));
+   psPut.add("copyright_expired", new BoolPropertyValue(true));
+   require(fs.put_object("books", "tale_of_two_cities.txt", v_obj_contens, &psPut), "put_object with metadata must return true");
+   require(fs.get_object_metadata("books", "tale_of_two_cities.txt", props), "get_object_metadata for object with metadata must return true");
+   require(props.count() == 5, "retrieved properties must be complete");
+   
+   // existing container, deleted object
+   require(fs.delete_object("books", "tale_of_two_cities.txt"), "delete_object must return true");
+   PropertySet psDeleted;
+   requireFalse(fs.get_object_metadata("books", "tale_of_two_cities.txt", psDeleted), "get_object_metadata must return false for deleted object");
+   require(psDeleted.count() == 0, "no properties must be returned for deleted object");
 }
 
 void TestFSStorageSystem::test_put_object() {
