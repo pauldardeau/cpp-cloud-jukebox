@@ -132,7 +132,7 @@ void TestFSStorageSystem::test_list_container_contents() {
    // create 1 object and verify in listing
    string obj1_contents = "moe\nlarry\ncurly\n";
    std::copy(obj1_contents.begin(), obj1_contents.end(), std::back_inserter(v_obj_contents)); 
-   require(fs.put_object("foo", "stooges.txt", , NULL), "create object must return true");
+   require(fs.put_object("foo", "stooges.txt", v_obj_contents, NULL), "create object must return true");
    list_contents = fs.list_container_contents("foo");
    require(list_contents.size() == 1, "container must have 1 object");
 
@@ -140,12 +140,11 @@ void TestFSStorageSystem::test_list_container_contents() {
    string obj2_contents = "ford\nchevy\ndodge\n";
    v_obj_contents.erase(v_obj_contents.begin(), v_obj_contents.end());
    std::copy(obj2_contents.begin(), obj2_contents.end(), std::back_inserter(v_obj_contents));
-   require(fs.put_object("foo", "cars.txt", , NULL), "create object must return true");
+   require(fs.put_object("foo", "cars.txt", v_obj_contents, NULL), "create object must return true");
    string obj3_contents = "coke\npepsi\nsprite\n";
-   require(fs.put_object("foo", "drinks.txt", , NULL), "create object must return true");
+   require(fs.put_object("foo", "drinks.txt", v_obj_contents, NULL), "create object must return true");
    list_contents = fs.list_container_contents("foo");
    require(list_contents.size() == 3, "container must have 3 objects");
-
 }
 
 void TestFSStorageSystem::test_get_object_metadata() {
@@ -177,7 +176,7 @@ void TestFSStorageSystem::test_get_object_metadata() {
    psPut.add("subject", new StrPropertyValue("French Revolution"));
    psPut.add("date", new StrPropertyValue("1800s"));
    psPut.add("copyright_expired", new BoolPropertyValue(true));
-   require(fs.put_object("books", "tale_of_two_cities.txt", v_obj_contens, &psPut), "put_object with metadata must return true");
+   require(fs.put_object("books", "tale_of_two_cities.txt", v_obj_contents, &psPut), "put_object with metadata must return true");
    require(fs.get_object_metadata("books", "tale_of_two_cities.txt", props), "get_object_metadata for object with metadata must return true");
    require(props.count() == 5, "retrieved properties must be complete");
    

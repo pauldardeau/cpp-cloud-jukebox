@@ -96,7 +96,7 @@ void TestArgumentParser::test_add_required_argument() {
    PropertySet* ps = ap.parse_args(args);
    require(ps != NULL, "parse_args must return non-NULL");
    if (ps != NULL) {
-      requireFalse(ps->contains("command", "property not provided should not exist");
+      requireFalse(ps->contains("command"), "property not provided should not exist");
    }
 
    args.push_back("play");
@@ -134,7 +134,7 @@ void TestArgumentParser::test_parse_args() {
       require(ps->contains("command"), "command should exist");
       int logLevel = ps->get_int_value("logLevel");
       string user = ps->get_string_value("user");
-      bool debug = ps->get_bool-value("debug");
+      bool debug = ps->get_bool_value("debug");
       string command = ps->get_string_value("command");
       require(logLevel == 6);
       requireStringEquals("tomjones", user);
