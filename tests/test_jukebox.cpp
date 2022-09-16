@@ -1,7 +1,64 @@
 #include "test_jukebox.h"
 #include "jukebox.h"
+#include "storage_system.h"
 
 using namespace std;
+
+class DummyStorageSystem : public StorageSystem {
+public:
+   DummyStorageSystem() :
+      StorageSystem("Dummy") {
+   }
+
+   virtual ~DummyStorageSystem() {}
+
+   virtual std::vector<std::string> list_account_containers() {
+      return vector<string>();
+   }
+
+   virtual bool create_container(const std::string& container_name) {
+      return false;
+   }
+
+   virtual bool delete_container(const std::string& container_name) {
+      return false;
+   }
+
+   virtual std::vector<std::string> list_container_contents(const std::string& container_name) {
+      return vector<string>();
+   }
+
+   virtual bool get_object_metadata(const std::string& container_name,
+                                    const std::string& object_name,
+				    PropertySet& dict_props) {
+      return false;
+   }
+
+   virtual bool put_object(const std::string& container_name,
+		           const std::string& object_name,
+		           const std::vector<unsigned char>& object_bytes,
+		           const PropertySet* headers=NULL) {
+      return false;
+   }
+
+   virtual bool delete_object(const std::string& container_name,
+                              const std::string& object_name) {
+      return false;
+   }
+
+   virtual int get_object(const std::string& container_name,
+                          const std::string& object_name,
+			  const std::string& local_file_path) {
+      return 0;
+   }
+
+   virtual bool enter() {
+      return false;
+   }
+
+   virtual void exit() {
+   }
+};
 
 
 TestJukebox::TestJukebox() :
@@ -127,17 +184,114 @@ void TestJukebox::test_get_encryptor() {
 
 void TestJukebox::test_get_container_suffix() {
    TEST_CASE("test_get_container_suffix");
-   //TODO: implement test_get_container_suffix
+
+   DummyStorageSystem dss;
+
+   // no encryption, no compression
+   {
+      JukeboxOptions jb_options;
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.get_container_suffix();
+      requireStringEquals("", suffix);
+   }
+
+   // no encryption, yes compression
+   {
+      JukeboxOptions jb_options;
+      jb_options.use_encryption = false;
+      jb_options.use_compression = true;
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.get_container_suffix();
+      requireStringEquals("-z", suffix);
+   }
+
+   // yes encryption, no compression
+   {
+      JukeboxOptions jb_options;
+      jb_options.use_encryption = true;
+      jb_options.use_compression = false;
+      jb_options.encryption_key = "asdf";
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.get_container_suffix();
+      requireStringEquals("-e", suffix);
+   }
+
+   // yes encryption, yes compression
+   {
+      JukeboxOptions jb_options;
+      jb_options.use_encryption = true;
+      jb_options.use_compression = true;
+      jb_options.encryption_key = "asdf";
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.get_container_suffix();
+      requireStringEquals("-ez", suffix);
+   }
 }
 
 void TestJukebox::test_object_file_suffix() {
    TEST_CASE("test_object_file_suffix");
-   //TODO: implement test_object_file_suffix
+   DummyStorageSystem dss;
+
+   // no encryption, no compression
+   {  
+      JukeboxOptions jb_options;
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.object_file_suffix();
+      requireStringEquals("", suffix);
+   }
+
+   // no encryption, yes compression
+   {
+      JukeboxOptions jb_options;
+      jb_options.use_encryption = false;
+      jb_options.use_compression = true;
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.object_file_suffix();
+      requireStringEquals(".gz", suffix);
+   }
+
+   // yes encryption, no compression
+   {
+      JukeboxOptions jb_options;
+      jb_options.use_encryption = true;
+      jb_options.use_compression = false;
+      jb_options.encryption_key = "asdf";
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.object_file_suffix();
+      requireStringEquals(".e", suffix);
+   }
+
+   // yes encryption, yes compression
+   {
+      JukeboxOptions jb_options;
+      jb_options.use_encryption = true;
+      jb_options.use_compression = true;
+      jb_options.encryption_key = "asdf";
+      Jukebox jukebox(jb_options, dss);
+      string suffix = jukebox.object_file_suffix();
+      requireStringEquals(".egz", suffix);
+   }
 }
 
 void TestJukebox::test_container_for_song() {
    TEST_CASE("test_container_for_song");
-   //TODO: implement test_container_for_song
+
+   DummyStorageSystem dss;
+   string container;
+
+   // no encryption, no compression
+   {  
+      JukeboxOptions jb_options;
+      Jukebox jukebox(jb_options, dss);
+      container = jukebox.container_for_song("The-Who--Whos-Next--My-Wife");
+      requireStringEquals("w-artist-songs", container);
+      container = jukebox.container_for_song("A-Flock-of-Seagulls--Best-Of--I-Ran.flac");
+      requireStringEquals("f-artist-songs", container);
+      container = jukebox.container_for_song("10000-Maniacs--In-My-Tribe--Gun-Shy.flac");
+      requireStringEquals("1-artist-songs", container);
+      container = jukebox.container_for_song("Kansas--Leftoverture--The-Wall.mp3");
+      requireStringEquals("k-artist-songs", container);
+   }
 }
 
 void TestJukebox::test_import_songs() {
