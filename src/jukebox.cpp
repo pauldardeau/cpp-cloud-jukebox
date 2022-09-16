@@ -193,12 +193,12 @@ vector<string> Jukebox::components_from_file_name(const string& file_name) {
       base_file_name = file_name;
    }
 
-   chaudiere::StringTokenizer st(base_file_name, "--");
-   if (st.countTokens() == 3) {
+   vector<string> tokens = chaudiere::StrUtils::split(base_file_name, "--");
+   if (tokens.size() == 3) {
       vector<string> ret_vet;
-      ret_vet.push_back(JBUtils::unencode_value(st.nextToken()));
-      ret_vet.push_back(JBUtils::unencode_value(st.nextToken()));
-      ret_vet.push_back(JBUtils::unencode_value(st.nextToken()));
+      ret_vet.push_back(JBUtils::unencode_value(tokens[0]));
+      ret_vet.push_back(JBUtils::unencode_value(tokens[1]));
+      ret_vet.push_back(JBUtils::unencode_value(tokens[2]));
       return ret_vet;
    } else {
       return vector<string>();
