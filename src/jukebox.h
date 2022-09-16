@@ -14,8 +14,6 @@ class JukeboxDB;
 class ReadFileResults {
 private:
    ReadFileResults();
-   ReadFileResults(const ReadFileResults&);
-   ReadFileResults& operator=(const ReadFileResults&);
 
 public:
    bool read_success;
@@ -30,12 +28,28 @@ public:
       num_file_bytes(num_bytes) {
    }
 
+   ReadFileResults(const ReadFileResults& copy) :
+      read_success(copy.read_success),
+      file_bytes(copy.file_bytes),
+      num_file_bytes(copy.num_file_bytes) {
+   }
+
    ReadFileResults(bool success) :
       read_success(success),
       num_file_bytes(0L) {
    }
 
    ~ReadFileResults() {
+   }
+
+   ReadFileResults& operator=(const ReadFileResults& copy) {
+      if (this == &copy) {
+         return *this;
+      }
+
+      read_success = copy.read_success;
+      file_bytes = copy.file_bytes;
+      num_file_bytes = copy.num_file_bytes;
    }
 };
 
