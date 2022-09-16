@@ -2,13 +2,23 @@ CC = c++
 CC_OPTS = -c -I../src -I../../chaudiere/src -I../../poivre
 
 EXE_NAME = test_cpp_cloud_jukebox
-LIB_NAMES = ../../poivre/poivre.so ../../chaudiere/src/libchaudiere.so -L../lib -lssl -lcrypto
+LIB_NAMES = ../../poivre/poivre.so ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so -L../lib -lsqlite3 -lssl -lcrypto
 
 PROJ_OBJS = ../src/utils.o \
-../src/property_set.o
+../src/property_set.o \
+../src/argument_parser.o \
+../src/jukebox_db.o \
+../src/jb_utils.o \
+../src/fs_storage_system.o \
+../src/jukebox.o
 
 OBJS = test_utils.o \
 test_property_set.o \
+test_argument_parser.o \
+test_jukebox_db.o \
+test_s3_storage_system.o \
+test_fs_storage_system.o \
+test_jukebox.o \
 tests.o
 
 all : $(EXE_NAME)
