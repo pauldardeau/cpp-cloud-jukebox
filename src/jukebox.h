@@ -84,10 +84,10 @@ public:
 
    std::string get_metadata_db_file_path();
 
-   std::vector<std::string> components_from_file_name(const std::string& file_name);
-   std::string artist_from_file_name(const std::string& file_name);
-   std::string album_from_file_name(const std::string& file_name);
-   std::string song_from_file_name(const std::string& file_name);
+   static std::vector<std::string> components_from_file_name(const std::string& file_name);
+   static std::string artist_from_file_name(const std::string& file_name);
+   static std::string album_from_file_name(const std::string& file_name);
+   static std::string song_from_file_name(const std::string& file_name);
 
    bool store_song_metadata(const SongMetadata& fs_song);
    bool store_song_playlist(const std::string& file_name,
