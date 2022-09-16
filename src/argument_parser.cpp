@@ -62,14 +62,12 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
          const string& arg_type = it->second;
          string the_arg = arg.substr(2, arg.length()-2);
          if (arg_type == TYPE_BOOL) {
-            printf("adding key=%s value=true\n", the_arg.c_str());
             pset->add(the_arg, new BoolPropertyValue(true));
          } else if (arg_type == TYPE_INT) {
             i++;
             if (i < num_args) { 
                const string& next_arg = args[i];
                int int_value = atoi(next_arg.c_str());
-               printf("adding key=%s value=%d\n", the_arg.c_str(), int_value);
                pset->add(the_arg, new IntPropertyValue(int_value));
             } else {
                // missing int value
@@ -78,7 +76,6 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
             i++;
             if (i < num_args) {
                const string& next_arg = args[i];
-               printf("adding key=%s value=%s\n", the_arg.c_str(), next_arg.c_str());
                pset->add(the_arg, new StrPropertyValue(next_arg));
             } else {
                // missing string value
@@ -93,7 +90,6 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
          } else {
             if (commands_found < list_commands.size()) {
                const string& command_name = list_commands[commands_found];
-               printf("adding key=%s value=%s\n", command_name.c_str(), arg.c_str());
                pset->add(command_name, new StrPropertyValue(arg));
                commands_found++;
             } else {
