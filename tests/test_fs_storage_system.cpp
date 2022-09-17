@@ -115,6 +115,10 @@ void TestFSStorageSystem::test_list_container_contents() {
    TEST_CASE("test_list_container_contents");
    string test_dir = "/tmp/test_cpp_fsstoragesystem_list_container_contents";
    FSTestCase fs_test_case(*this, test_dir);
+   //if (chaudiere::OSUtils::directoryExists(test_dir)) {
+   //   std::filesystem::remove_all(test_dir);
+   //}
+
    FSStorageSystem fs(test_dir, false);
    require(fs.enter(), "enter must return true");
    vector<string> list_containers = fs.list_account_containers();
@@ -131,7 +135,11 @@ void TestFSStorageSystem::test_list_container_contents() {
    vector<unsigned char> v_obj_contents;
    // create 1 object and verify in listing
    string obj1_contents = "moe\nlarry\ncurly\n";
-   std::copy(obj1_contents.begin(), obj1_contents.end(), std::back_inserter(v_obj_contents)); 
+   auto it = obj1_contents.begin();
+   auto it_end = obj1_contents.end();
+   for (; it != it_end; it++) {
+      v_obj_contents.push_back(*it);
+   }
    require(fs.put_object("foo", "stooges.txt", v_obj_contents, NULL), "create object must return true");
    list_contents = fs.list_container_contents("foo");
    require(list_contents.size() == 1, "container must have 1 object");
@@ -139,9 +147,19 @@ void TestFSStorageSystem::test_list_container_contents() {
    // create 2 more objects and verify in listing
    string obj2_contents = "ford\nchevy\ndodge\n";
    v_obj_contents.erase(v_obj_contents.begin(), v_obj_contents.end());
-   std::copy(obj2_contents.begin(), obj2_contents.end(), std::back_inserter(v_obj_contents));
+   it = obj2_contents.begin();
+   it_end = obj2_contents.end();
+   for (; it != it_end; it++) {
+      v_obj_contents.push_back(*it);
+   }
    require(fs.put_object("foo", "cars.txt", v_obj_contents, NULL), "create object must return true");
    string obj3_contents = "coke\npepsi\nsprite\n";
+   v_obj_contents.erase(v_obj_contents.begin(), v_obj_contents.end());
+   it = obj3_contents.begin();
+   it_end = obj3_contents.end();
+   for (; it != it_end; it++) {
+      v_obj_contents.push_back(*it);
+   }
    require(fs.put_object("foo", "drinks.txt", v_obj_contents, NULL), "create object must return true");
    list_contents = fs.list_container_contents("foo");
    require(list_contents.size() == 3, "container must have 3 objects");
@@ -151,6 +169,9 @@ void TestFSStorageSystem::test_get_object_metadata() {
    TEST_CASE("test_get_object_metadata");
    string test_dir = "/tmp/test_cpp_fsstoragesystem_get_object_metadata";
    FSTestCase fs_test_case(*this, test_dir);
+   //if (chaudiere::OSUtils::directoryExists(test_dir)) {
+   //   std::filesystem::remove_all(test_dir);
+   //}
    FSStorageSystem fs(test_dir, false);
    require(fs.enter(), "enter must return true");
 
