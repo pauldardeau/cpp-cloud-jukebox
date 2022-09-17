@@ -39,7 +39,14 @@ void TestJukeboxDB::runTests() {
 
 void TestJukeboxDB::test_is_open() {
    TEST_CASE("test_is_open");
-   //TODO: implement test_is_open
+   string test_dir = "/tmp/test_cpp_jukeboxdb_is_open";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   requireFalse(jbdb.is_open(), "is_open must return false when DB is closed");
+   require(jbdb.open(), "open must return true");
+   require(jbdb.is_open(), "is_open must return true when DB is open");
+   jbdb.close();
 }
 
 void TestJukeboxDB::test_open() {
@@ -49,15 +56,18 @@ void TestJukeboxDB::test_open() {
    string db_file = "jukebox_db.sqlite3";
    JukeboxDB jbdb(db_file);
    require(jbdb.open(), "open must return true");
-   if (jbdb.is_open()) {
-      jbdb.close();
-   }
-   //TODO: implement test_open
+   jbdb.close();
 }
 
 void TestJukeboxDB::test_close() {
    TEST_CASE("test_close");
-   //TODO: implement test_close
+   string test_dir = "/tmp/test_cpp_jukeboxdb_open";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   jbdb.close();
+   require(jbdb.open(), "open must return true");
+   jbdb.close();
 }
 
 void TestJukeboxDB::test_create_table() {
