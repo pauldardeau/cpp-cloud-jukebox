@@ -1,5 +1,10 @@
-#include "test_jukebox_db.h"
+#include <string>
 
+#include "test_jukebox_db.h"
+#include "jukebox_db.h"
+#include "fs_test_case.h"
+
+using namespace std;
 
 TestJukeboxDB::TestJukeboxDB() :
    TestSuite("TestJukeboxDB") {
@@ -39,6 +44,14 @@ void TestJukeboxDB::test_is_open() {
 
 void TestJukeboxDB::test_open() {
    TEST_CASE("test_open");
+   string test_dir = "/tmp/test_cpp_jukeboxdb_open";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open(), "open must return true");
+   if (jbdb.is_open()) {
+      jbdb.close();
+   }
    //TODO: implement test_open
 }
 

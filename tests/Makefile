@@ -1,5 +1,5 @@
 CC = c++
-CC_OPTS = -c -I../src -I../../chaudiere/src -I../../poivre
+CC_OPTS = -c -I../src -I../../chaudiere/src -I../../chapeau/src -I../../poivre
 
 EXE_NAME = test_cpp_cloud_jukebox
 LIB_NAMES = ../../poivre/poivre.so ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so -L../lib -lsqlite3 -lssl -lcrypto
@@ -13,6 +13,7 @@ PROJ_OBJS = ../src/utils.o \
 ../src/jukebox.o
 
 OBJS = test_utils.o \
+fs_test_case.o \
 test_property_set.o \
 test_argument_parser.o \
 test_jukebox_db.o \
