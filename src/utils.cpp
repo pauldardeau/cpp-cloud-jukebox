@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -300,8 +301,10 @@ bool Utils::file_read_all_bytes(const string& file_path,
 
 bool Utils::file_write_all_bytes(const string& file_path,
                                  const vector<unsigned char>& file_bytes) {
-   FILE* f = fopen(file_path.c_str(), "rb");
+   FILE* f = fopen(file_path.c_str(), "wb");
    if (f == NULL) {
+      printf("error: file_write_all_bytes unable to open file '%s', errno=%d\n",
+             file_path.c_str(), errno);
       return false;
    }
 
@@ -321,6 +324,8 @@ bool Utils::file_write_all_bytes(const string& file_path,
 
       buff_offset = 0;
 
+      memset(buffer, 0, sizeof(buffer));
+
       // fill up the buffer
       for (unsigned long j = 0; j < loop_bytes_to_write; j++) {
          buffer[buff_offset++] = file_bytes[file_offset++];
@@ -328,8 +333,13 @@ bool Utils::file_write_all_bytes(const string& file_path,
 
       size_t items_written = fwrite(buffer, loop_bytes_to_write, 1, f);
       if (items_written < 1) {
+         printf("attempted to write 1 item of %ld bytes, wrote %ld items\n",
+                loop_bytes_to_write,
+                items_written);
          write_success = false;
          break;
+      } else {
+         num_bytes_to_write -= loop_bytes_to_write;
       }
    }
 
