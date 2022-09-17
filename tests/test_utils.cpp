@@ -350,20 +350,21 @@ void TestUtils::test_file_write_all_bytes() {
    string test_dir = "/tmp/test_cpp_file_write_all_bytes";
 
    UtilsTestCase test(*this, "test_file_write_all_bytes", test_dir);
-   //TEST_CASE("test_file_write_all_bytes");
+   TEST_CASE("test_file_write_all_bytes");
 
-   //TODO: convert string to vector<unsigned char>
-   /*
+   string file_contents = "Ford\nChevy\nNissan\nToyota";
+   vector<unsigned char> v_file_contents;
+   std::copy(file_contents.begin(),
+             file_contents.end(),
+             std::back_inserter(v_file_contents));
    string file_path = OSUtils::pathJoin(test_dir, "autos.txt");
-   require(Utils::file_write_all_bytes(file_path,
-                                "Ford\nChevy\nNissan\nToyota".as_bytes()));
+   require(Utils::file_write_all_bytes(file_path, v_file_contents));
    vector<string> file_lines = Utils::file_read_lines(file_path);
    require(file_lines.size() > 3);
    requireStringEquals(file_lines[0], "Ford");
    requireStringEquals(file_lines[1], "Chevy");
    requireStringEquals(file_lines[2], "Nissan");
    requireStringEquals(file_lines[3], "Toyota");
-   */
 }
 
 //******************************************************************************
