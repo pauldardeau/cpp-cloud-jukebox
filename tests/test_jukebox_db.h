@@ -10,6 +10,7 @@ protected:
    void runTests();
 
    void test_is_open();
+   void test_open_db();
    void test_open();
    void test_close();
 
