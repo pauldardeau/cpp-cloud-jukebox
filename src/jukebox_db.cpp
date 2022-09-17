@@ -29,17 +29,21 @@ bool JukeboxDB::open() {
    close();
    bool open_success = false;
    db_connection = new SQLiteDatabase(metadata_db_file_path);
-   db_is_open = true;
-   if (!have_tables()) {
-      open_success = create_tables();
-      if (!open_success) {
-         printf("error: unable to create all tables\n");
-         db_connection->close();
-         db_connection = NULL;
-         db_is_open = false;
+   if (db_connection->open()) {
+      db_is_open = true;
+      if (!have_tables()) {
+         open_success = create_tables();
+         if (!open_success) {
+            printf("error: unable to create all tables\n");
+            db_connection->close();
+            db_connection = NULL;
+            db_is_open = false;
+         }
+      } else {
+         open_success = true;
       }
    } else {
-      open_success = true;
+      printf("error: unable to open database\n");
    }
    return open_success;
 }
@@ -62,7 +66,7 @@ bool JukeboxDB::create_table(const string& sql) {
    }
    bool table_created = db_connection->executeUpdate(sql);
    if (!table_created) {
-      printf("table create failed\n");
+      printf("table create failed: %s\n", sql.c_str());
    }
    return table_created;
 }
