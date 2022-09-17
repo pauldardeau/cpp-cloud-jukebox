@@ -68,64 +68,64 @@ bool JukeboxDB::create_table(const string& sql) {
 }
 
 bool JukeboxDB::create_tables() {
-      if (db_is_open) {
-         if (debug_print) {
-            printf("creating tables\n");
-         }
-
-         string create_genre_table = "CREATE TABLE genre ("
-                                        "genre_uid TEXT UNIQUE NOT NULL,"
-                                        "genre_name TEXT UNIQUE NOT NULL,"
-                                        "genre_description TEXT)";
-
-         string create_artist_table = "CREATE TABLE artist ("
-                                         "artist_uid TEXT UNIQUE NOT NULL,"
-                                         "artist_name TEXT UNIQUE NOT NULL,"
-                                         "artist_description TEXT)";
-
-         string create_album_table = "CREATE TABLE album ("
-                                        "album_uid TEXT UNIQUE NOT NULL,"
-                                        "album_name TEXT UNIQUE NOT NULL,"
-                                        "album_description TEXT,"
-                                        "artist_uid TEXT NOT NULL REFERENCES artist(artist_uid),"
-                                        "genre_uid TEXT REFERENCES genre(genre_uid))";
-
-         string create_song_table = "CREATE TABLE song ("
-                                       "song_uid TEXT UNIQUE NOT NULL,"
-                                       "file_time TEXT,"
-                                       "origin_file_size INTEGER,"
-                                       "stored_file_size INTEGER,"
-                                       "pad_char_count INTEGER,"
-                                       "artist_name TEXT,"
-                                       "artist_uid TEXT REFERENCES artist(artist_uid),"
-                                       "song_name TEXT NOT NULL,"
-                                       "md5_hash TEXT NOT NULL,"
-                                       "compressed INTEGER,"
-                                       "encrypted INTEGER,"
-                                       "container_name TEXT NOT NULL,"
-                                       "object_name TEXT NOT NULL,"
-                                       "album_uid TEXT REFERENCES album(album_uid))";
-
-         string create_playlist_table = "CREATE TABLE playlist ("
-                                           "playlist_uid TEXT UNIQUE NOT NULL,"
-                                           "playlist_name TEXT UNIQUE NOT NULL,"
-                                           "playlist_description TEXT)";
-
-         string create_playlist_song_table = "CREATE TABLE playlist_song ("
-                                                "playlist_song_uid TEXT UNIQUE NOT NULL,"
-                                                "playlist_uid TEXT NOT NULL REFERENCES playlist(playlist_uid),"
-                                                "song_uid TEXT NOT NULL REFERENCES song(song_uid))";
-
-         return create_table(create_genre_table) &&
-                create_table(create_artist_table) &&
-                create_table(create_album_table) &&
-                create_table(create_song_table) &&
-                create_table(create_playlist_table) &&
-                create_table(create_playlist_song_table);
-      } else {
-         printf("create_tables: db_is_open is false\n");
-         return false;
+   if (db_is_open) {
+      if (debug_print) {
+         printf("creating tables\n");
       }
+
+      string create_genre_table = "CREATE TABLE genre ("
+                                     "genre_uid TEXT UNIQUE NOT NULL,"
+                                     "genre_name TEXT UNIQUE NOT NULL,"
+                                     "genre_description TEXT)";
+
+      string create_artist_table = "CREATE TABLE artist ("
+                                      "artist_uid TEXT UNIQUE NOT NULL,"
+                                      "artist_name TEXT UNIQUE NOT NULL,"
+                                      "artist_description TEXT)";
+
+      string create_album_table = "CREATE TABLE album ("
+                                     "album_uid TEXT UNIQUE NOT NULL,"
+                                     "album_name TEXT UNIQUE NOT NULL,"
+                                     "album_description TEXT,"
+                                     "artist_uid TEXT NOT NULL REFERENCES artist(artist_uid),"
+                                     "genre_uid TEXT REFERENCES genre(genre_uid))";
+
+      string create_song_table = "CREATE TABLE song ("
+                                    "song_uid TEXT UNIQUE NOT NULL,"
+                                    "file_time TEXT,"
+                                    "origin_file_size INTEGER,"
+                                    "stored_file_size INTEGER,"
+                                    "pad_char_count INTEGER,"
+                                    "artist_name TEXT,"
+                                    "artist_uid TEXT REFERENCES artist(artist_uid),"
+                                    "song_name TEXT NOT NULL,"
+                                    "md5_hash TEXT NOT NULL,"
+                                    "compressed INTEGER,"
+                                    "encrypted INTEGER,"
+                                    "container_name TEXT NOT NULL,"
+                                    "object_name TEXT NOT NULL,"
+                                    "album_uid TEXT REFERENCES album(album_uid))";
+
+      string create_playlist_table = "CREATE TABLE playlist ("
+                                        "playlist_uid TEXT UNIQUE NOT NULL,"
+                                        "playlist_name TEXT UNIQUE NOT NULL,"
+                                        "playlist_description TEXT)";
+
+      string create_playlist_song_table = "CREATE TABLE playlist_song ("
+                                             "playlist_song_uid TEXT UNIQUE NOT NULL,"
+                                             "playlist_uid TEXT NOT NULL REFERENCES playlist(playlist_uid),"
+                                             "song_uid TEXT NOT NULL REFERENCES song(song_uid))";
+
+      return create_table(create_genre_table) &&
+             create_table(create_artist_table) &&
+             create_table(create_album_table) &&
+             create_table(create_song_table) &&
+             create_table(create_playlist_table) &&
+             create_table(create_playlist_song_table);
+   } else {
+      printf("create_tables: db_is_open is false\n");
+      return false;
+   }
 }
 
 bool JukeboxDB::have_tables() {
@@ -355,49 +355,49 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
 }
 
 bool JukeboxDB::update_song(const SongMetadata& song) {
-      bool update_success = false;
+   bool update_success = false;
 
-      if (db_is_open && song.fm.file_uid.length() > 0) {
-         string sql = "UPDATE song "
-                      "SET file_time = ?,"
-                          "origin_file_size = ?,"
-                          "stored_file_size = ?,"
-                          "pad_char_count = ?,"
-                          "artist_name = ?,"
-                          "artist_uid = ?,"
-                          "song_name = ?,"
-                          "md5_hash = ?,"
-                          "compressed = ?,"
-                          "encrypted = ?,"
-                          "container_name = ?,"
-                          "object_name = ?,"
-                          "album_uid = ? "
-                      "WHERE song_uid = ?";
-         DBStatementArgs args;
-         args.add(new DBString(song.fm.file_time));
-         args.add(new DBLong(song.fm.origin_file_size));
-         args.add(new DBLong(song.fm.stored_file_size));
-         args.add(new DBLong(song.fm.pad_char_count));
-         args.add(new DBString(song.artist_name));
-         args.add(new DBString(""));
-         args.add(new DBString(song.song_name));
-         args.add(new DBString(song.fm.md5_hash));
-         args.add(new DBInt(song.fm.compressed));
-         args.add(new DBInt(song.fm.encrypted));
-         args.add(new DBString(song.fm.container_name));
-         args.add(new DBString(song.fm.object_name));
-         args.add(new DBString(song.album_uid));
-         args.add(new DBString(song.fm.file_uid));
+   if (db_is_open && song.fm.file_uid.length() > 0) {
+      string sql = "UPDATE song "
+                   "SET file_time = ?,"
+                       "origin_file_size = ?,"
+                       "stored_file_size = ?,"
+                       "pad_char_count = ?,"
+                       "artist_name = ?,"
+                       "artist_uid = ?,"
+                       "song_name = ?,"
+                       "md5_hash = ?,"
+                       "compressed = ?,"
+                       "encrypted = ?,"
+                       "container_name = ?,"
+                       "object_name = ?,"
+                       "album_uid = ? "
+                   "WHERE song_uid = ?";
+      DBStatementArgs args;
+      args.add(new DBString(song.fm.file_time));
+      args.add(new DBLong(song.fm.origin_file_size));
+      args.add(new DBLong(song.fm.stored_file_size));
+      args.add(new DBLong(song.fm.pad_char_count));
+      args.add(new DBString(song.artist_name));
+      args.add(new DBString(""));
+      args.add(new DBString(song.song_name));
+      args.add(new DBString(song.fm.md5_hash));
+      args.add(new DBInt(song.fm.compressed));
+      args.add(new DBInt(song.fm.encrypted));
+      args.add(new DBString(song.fm.container_name));
+      args.add(new DBString(song.fm.object_name));
+      args.add(new DBString(song.album_uid));
+      args.add(new DBString(song.fm.file_uid));
 
-         bool success = db_connection->executeUpdate(sql, args);
-         if (success) {
-            update_success = true;
-         } else {
-            printf("error updating song\n");
-         }
+      bool success = db_connection->executeUpdate(sql, args);
+      if (success) {
+         update_success = true;
+      } else {
+         printf("error updating song\n");
       }
+   }
 
-      return update_success;
+   return update_success;
 }
 
 bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
