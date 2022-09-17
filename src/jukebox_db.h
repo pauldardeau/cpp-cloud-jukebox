@@ -21,6 +21,7 @@ public:
 
    bool is_open() const;
    bool open();
+   bool open_db();
    bool close();
 
    bool create_table(const std::string& sql);
