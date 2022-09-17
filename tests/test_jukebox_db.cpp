@@ -135,12 +135,52 @@ void TestJukeboxDB::test_retrieve_song() {
 
 void TestJukeboxDB::test_insert_playlist() {
    TEST_CASE("test_insert_playlist");
-   //TODO: implement test_insert_playlist
+   string test_dir = "/tmp/test_cpp_jukeboxdb_insert_playlist";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open(), "open must return true");
+
+   // normal insert
+   string pl_uid = "70s-rock.json";
+   string pl_name = "70s Rock";
+   string pl_desc = "Favorite rock songs from the 70s";
+   require(jbdb.insert_playlist(pl_uid, pl_name, pl_desc), "insert_playlist must return true");
+
+   // 2nd insert with same data
+   requireFalse(jbdb.insert_playlist(pl_uid, pl_name, pl_desc), "2nd insert attempt must return false");
+
+   // insert with empty strings
+   pl_uid = "";
+   pl_name = "";
+   pl_desc = "";
+   requireFalse(jbdb.insert_playlist(pl_uid, pl_name, pl_desc), "insert attempt with empty strings must return false");
 }
 
 void TestJukeboxDB::test_delete_playlist() {
    TEST_CASE("test_delete_playlist");
-   //TODO: implement test_delete_playlist
+   string test_dir = "/tmp/test_cpp_jukeboxdb_delete_playlist";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open(), "open must return true");
+
+   string pl_name = "Rock-Jazz-Funk";
+
+   // delete record that doesn't exist
+   requireFalse(jbdb.delete_playlist(pl_name), "attempt to delete non-existing playlist must return false");
+
+   // insert one
+   require(jbdb.insert_playlist("Rock-Jazz-Funk", "Rock-Jazz-Funk"), "insert must return true");
+
+   // delete with empty playlist name
+   requireFalse(jbdb.delete_playlist(""), "delete playlist with empty string for name must return false");
+
+   // normal delete
+   require(jbdb.delete_playlist(pl_name), "normal delete must return true");
+
+   // 2nd delete
+   requireFalse(jbdb.delete_playlist(pl_name), "2nd delete attempt must return false");
 }
 
 void TestJukeboxDB::test_insert_song() {
