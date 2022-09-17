@@ -110,12 +110,29 @@ void TestJukeboxDB::test_create_table() {
 
 void TestJukeboxDB::test_create_tables() {
    TEST_CASE("test_create_tables");
-   //TODO: implement test_create_tables
+   string test_dir = "/tmp/test_cpp_jukeboxdb_create_tables";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open_db(), "open_db must return true");
+
+   require(jbdb.create_tables(), "normal create_tables must return true");
+
+   // 2nd attempt
+   requireFalse(jbdb.create_tables(), "2nd call to create_tables must return false");
 }
 
 void TestJukeboxDB::test_have_tables() {
    TEST_CASE("test_have_tables");
-   //TODO: implement test_have_tables
+   string test_dir = "/tmp/test_cpp_jukeboxdb_have_tables";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open_db(), "open_db must return true");
+
+   requireFalse(jbdb.have_tables(), "have_tables must return false before they're created");
+   require(jbdb.create_tables(), "normal create_tables must return true");
+   require(jbdb.have_tables(), "have_tables must return true when they exist");
 }
 
 void TestJukeboxDB::test_get_playlist() {
