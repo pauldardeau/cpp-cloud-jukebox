@@ -565,145 +565,145 @@ void Jukebox::batch_download_complete() {
 }
 
 bool Jukebox::download_song(const SongMetadata& song) {
-      if (exit_requested) {
-         return false;
-      }
+   if (exit_requested) {
+      return false;
+   }
 
-         string file_path = song_path_in_playlist(song);
-         double download_start_time = Utils::time_time();
-         int song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
-         if (exit_requested) {
+   string file_path = song_path_in_playlist(song);
+   double download_start_time = Utils::time_time();
+   int song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
+   if (exit_requested) {
+      return false;
+   }
+
+   if (debug_print) {
+      printf("bytes retrieved: %d\n", song_bytes_retrieved);
+   }
+
+   if (song_bytes_retrieved > 0) {
+      double download_end_time = Utils::time_time();
+      double download_elapsed_time = download_end_time - download_start_time;
+      cumulative_download_time += download_elapsed_time;
+      cumulative_download_bytes += song_bytes_retrieved;
+
+      // are we checking data integrity?
+      // if so, verify that the storage system retrieved the same length that has been stored
+      if (jukebox_options.check_data_integrity) {
+         if (debug_print) {
+            printf("verifying data integrity\n");
+         }
+
+         if (song_bytes_retrieved != song.fm.stored_file_size) {
+            printf("error: data integrity check failed for %s\n", file_path.c_str());
             return false;
          }
+      }
 
-         if (debug_print) {
-            printf("bytes retrieved: %d\n", song_bytes_retrieved);
-         }
+      // is it encrypted? if so, unencrypt it
+      //int encrypted = song.fm.encrypted;
+      //int compressed = song.fm.compressed;
 
-         if (song_bytes_retrieved > 0) {
-            double download_end_time = Utils::time_time();
-            double download_elapsed_time = download_end_time - download_start_time;
-            cumulative_download_time += download_elapsed_time;
-            cumulative_download_bytes += song_bytes_retrieved;
+      //TODO: (3) encryption and compression (download_song)
+      //if (encrypted == 1 || compressed == 1) {
+      //     try:
+      //         with open(file_path, 'rb') as content_file:
+      //             file_contents = content_file.read()
+      //     except IOError:
+      //         printf("error: unable to read file %s\n", file_path.c_str())
+      //         return false
 
-            // are we checking data integrity?
-            // if so, verify that the storage system retrieved the same length that has been stored
-            if (jukebox_options.check_data_integrity) {
-               if (debug_print) {
-                  printf("verifying data integrity\n");
-               }
+      //     if (encrypted) {
+      //        encryption = get_encryptor()
+      //        file_contents = encryption.decrypt(file_contents)
+      //     }
+      //     if (compressed) {
+      //        file_contents = zlib.decompress(file_contents)
+      //     }
 
-               if (song_bytes_retrieved != song.fm.stored_file_size) {
-                  printf("error: data integrity check failed for %s\n", file_path.c_str());
-                  return false;
-               }
-            }
+           // re-write out the uncompressed, unencrypted file contents
+      //     try:
+      //         with open(file_path, 'wb') as content_file:
+      //             content_file.write(file_contents)
+      //     except IOError:
+      //         print("error: unable to write unencrypted/uncompressed file '%s'\n", file_path.c_str())
+      //         return false
+      //}
 
-            // is it encrypted? if so, unencrypt it
-            //int encrypted = song.fm.encrypted;
-            //int compressed = song.fm.compressed;
-
-            //TODO: (3) encryption and compression (download_song)
-            //if (encrypted == 1 || compressed == 1) {
-            //     try:
-            //         with open(file_path, 'rb') as content_file:
-            //             file_contents = content_file.read()
-            //     except IOError:
-            //         printf("error: unable to read file %s\n", file_path.c_str())
-            //         return false
-
-            //     if (encrypted) {
-            //        encryption = get_encryptor()
-            //        file_contents = encryption.decrypt(file_contents)
-            //     }
-            //     if (compressed) {
-            //        file_contents = zlib.decompress(file_contents)
-            //     }
-
-                 // re-write out the uncompressed, unencrypted file contents
-            //     try:
-            //         with open(file_path, 'wb') as content_file:
-            //             content_file.write(file_contents)
-            //     except IOError:
-            //         print("error: unable to write unencrypted/uncompressed file '%s'\n", file_path.c_str())
-            //         return false
-            //}
-
-            if (check_file_integrity(song)) {
+      if (check_file_integrity(song)) {
                return true;
-            } else {
-               // we retrieved the file, but it failed our integrity check
-               // if file exists, remove it
-               if (Utils::file_exists(file_path)) {
-                  chaudiere::OSUtils::deleteFile(file_path);
-               }
-            }
+      } else {
+         // we retrieved the file, but it failed our integrity check
+         // if file exists, remove it
+         if (Utils::file_exists(file_path)) {
+            chaudiere::OSUtils::deleteFile(file_path);
          }
+      }
+   }
 
-      return false;
+   return false;
 }
 
 void Jukebox::play_song(const string& song_file_path) {
-      if (Utils::path_exists(song_file_path)) {
-         printf("playing %s\n", song_file_path.c_str());
+   if (Utils::path_exists(song_file_path)) {
+      printf("playing %s\n", song_file_path.c_str());
 
-         if (audio_player_command_args.length() > 0) {
-            string cmd_args = audio_player_command_args + song_file_path;
-            int exit_code = -1;
-            bool started_audio_player = false;
-            /*
-            try
-            {
-               ProcessStartInfo psi = new ProcessStartInfo();
-               psi.FileName = audio_player_exe_file_name;
-               psi.Arguments = cmd_args;
-               psi.UseShellExecute = false;
-               psi.RedirectStandardError = false;
-               psi.RedirectStandardOutput = false;
+      if (audio_player_command_args.length() > 0) {
+         string cmd_args = audio_player_command_args + song_file_path;
+         int exit_code = -1;
+         bool started_audio_player = false;
+         /*
+         try
+         {
+            ProcessStartInfo psi = new ProcessStartInfo();
+            psi.FileName = audio_player_exe_file_name;
+            psi.Arguments = cmd_args;
+            psi.UseShellExecute = false;
+            psi.RedirectStandardError = false;
+            psi.RedirectStandardOutput = false;
 
-               audio_player_process = new Process();
-               audio_player_process.StartInfo = psi;
-               audio_player_process.Start();
+            audio_player_process = new Process();
+            audio_player_process.StartInfo = psi;
+            audio_player_process.Start();
 
-               if (audio_player_process != NULL) {
-                  started_audio_player = true;
-                  song_start_time = Utils::time_time();
-                  audio_player_process.WaitForExit();
-                  if (audio_player_process.HasExited) {
-                     exit_code = audio_player_process.ExitCode;
-                  }
-                  audio_player_process = NULL;
+            if (audio_player_process != NULL) {
+               started_audio_player = true;
+               song_start_time = Utils::time_time();
+               audio_player_process.WaitForExit();
+               if (audio_player_process.HasExited) {
+                  exit_code = audio_player_process.ExitCode;
                }
+               audio_player_process = NULL;
             }
-            catch (Exception)
-            {
-               // audio player not available
-               audio_player_exe_file_name = "";
-               audio_player_command_args = "";
-               //audio_player_process = NULL;
-               exit_code = -1;
-            }
-            */
+         }
+         catch (Exception)
+         {
+            // audio player not available
+            audio_player_exe_file_name = "";
+            audio_player_command_args = "";
+            //audio_player_process = NULL;
+            exit_code = -1;
+         }
+         */
 
-            // if the audio player failed or is not present, just sleep
-            // for the length of time that audio would be played
-            if (!started_audio_player && exit_code != 0) {
-               Utils::time_sleep(song_play_length_seconds);
-            }
-         } else {
-            // we don't know about an audio player, so simulate a
-            // song being played by sleeping
+         // if the audio player failed or is not present, just sleep
+         // for the length of time that audio would be played
+         if (!started_audio_player && exit_code != 0) {
             Utils::time_sleep(song_play_length_seconds);
          }
-
-         if (!is_paused) {
-            // delete the song file from the play list directory
-            chaudiere::OSUtils::deleteFile(song_file_path);
-         }
       } else {
-         printf("song file doesn't exist: %s\n", song_file_path.c_str());
-         Utils::file_append_all_text("404.txt", song_file_path);
+         // we don't know about an audio player, so simulate a
+         // song being played by sleeping
+         Utils::time_sleep(song_play_length_seconds);
       }
+
+      if (!is_paused) {
+         // delete the song file from the play list directory
+         chaudiere::OSUtils::deleteFile(song_file_path);
+      }
+   } else {
+      printf("song file doesn't exist: %s\n", song_file_path.c_str());
+      Utils::file_append_all_text("404.txt", song_file_path);
+   }
 }
 
 void Jukebox::download_songs() {
