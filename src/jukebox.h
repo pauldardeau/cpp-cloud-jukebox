@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "jukebox_options.h"
 #include "song_metadata.h"
@@ -75,7 +77,7 @@ public:
    int song_index;
    std::string audio_player_exe_file_name;
    std::string audio_player_command_args;
-   //Process audio_player_process;
+   pid_t audio_player_process;
    int song_play_length_seconds;
    int cumulative_download_bytes;
    double cumulative_download_time;

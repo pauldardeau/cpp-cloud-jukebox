@@ -51,6 +51,7 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    album_art_container("album-art"),
    number_songs(0),
    song_index(-1),
+   audio_player_process(-1),
    song_play_length_seconds(20),
    cumulative_download_bytes(0),
    cumulative_download_time(0.0),
@@ -66,7 +67,6 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    playlist_import_dir = chaudiere::OSUtils::pathJoin(current_dir, "playlist-import");
    song_play_dir = chaudiere::OSUtils::pathJoin(current_dir, "song-play");
    album_art_import_dir = chaudiere::OSUtils::pathJoin(current_dir, "album-art-import");
-   //audio_player_process = NULL;
 
    if (jb_options.debug_mode) {
       debug_print = true;
@@ -165,10 +165,11 @@ void Jukebox::toggle_pause_play() {
    is_paused = !is_paused;
    if (is_paused) {
       printf("paused\n");
-      //if (audio_player_process != NULL) {
+      if (audio_player_process > 0) {
          // capture current song position (seconds into song)
-      //   audio_player_process.Kill();
-      //}
+         kill(audio_player_process, SIGTERM);
+         audio_player_process = -1;
+      }
    } else {
       printf("resuming play\n");
    }
@@ -176,9 +177,10 @@ void Jukebox::toggle_pause_play() {
 
 void Jukebox::advance_to_next_song() {
    printf("advancing to next song\n");
-   //if (audio_player_process != NULL) {
-   //   audio_player_process.Kill();
-   //}
+   if (audio_player_process > 0) {
+      kill(audio_player_process, SIGTERM);
+      audio_player_process = -1;
+   }
 }
 
 string Jukebox::get_metadata_db_file_path() {
@@ -677,7 +679,7 @@ void Jukebox::play_song(const string& song_file_path) {
                if (audio_player_process.HasExited) {
                   exit_code = audio_player_process.ExitCode;
                }
-               audio_player_process = NULL;
+               audio_player_process = -1;
             }
          }
          catch (Exception)
@@ -685,7 +687,7 @@ void Jukebox::play_song(const string& song_file_path) {
             // audio player not available
             audio_player_exe_file_name = "";
             audio_player_command_args = "";
-            //audio_player_process = NULL;
+            audio_player_process = -1;
             exit_code = -1;
          }
          */
