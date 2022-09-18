@@ -1040,13 +1040,13 @@ void Jukebox::import_playlists() {
          // ignore it if it's not a file
          if (Utils::file_exists(full_path)) {
             string object_name = listing_entry;
-            //TODO: (2) read playlist (import_playlists)
-            /*
-            file_read, file_contents, _ = read_file_contents(full_path)
-            if (file_read && file_contents != NULL) {
+	    string file_contents;
+	    if (Utils::file_read_all_text(full_path, file_contents)) {
+               vector<unsigned char> v_file_contents;
+	       std::copy(file_contents.begin(), file_contents.end(), std::back_inserter(v_file_contents));
                if (storage_system.put_object(playlist_container,
                                              object_name,
-                                             file_contents,
+                                             v_file_contents,
                                              NULL)) {
                   printf("put of playlist succeeded\n");
                   if (!store_song_playlist(object_name, file_contents)) {
@@ -1058,7 +1058,6 @@ void Jukebox::import_playlists() {
                   }
                }
             }
-            */
          }
       }
 
