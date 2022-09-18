@@ -147,6 +147,24 @@ void TestJukeboxDB::test_songs_for_query() {
 
 void TestJukeboxDB::test_retrieve_song() {
    TEST_CASE("test_retrieve_song");
+   string test_dir = "/tmp/test_cpp_jukeboxdb_retrieve_song";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open(), "open must return true");
+
+   SongMetadata* result_song;
+
+   //TODO: insert some songs
+
+   // empty song file
+   result_song = jbdb.retrieve_song("");
+   require(result_song == NULL, "retrieve_song must return NULL when empty string given for song file");
+
+   // no songs in DB
+   result_song = jbdb.retrieve_song("The-Who--Whos-Next--My-Wife.flac");
+   require(result_song == NULL, "retrieve_song must return NULL when no songs exist");
+
    //TODO: implement test_retrieve_song
 }
 
@@ -248,7 +266,36 @@ void TestJukeboxDB::test_sql_where_clause() {
 
 void TestJukeboxDB::test_retrieve_album_songs() {
    TEST_CASE("test_retrieve_album_songs");
-   //TODO: implement test_retrieve_album_songs
+   string test_dir = "/tmp/test_cpp_jukeboxdb_retrieve_album_songs";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open(), "open must return true");
+
+   vector<SongMetadata*> songs;
+   SongMetadata song;
+
+   //TODO: add some songs
+
+   // empty string for artist
+   songs = jbdb.retrieve_album_songs("", "1984");
+   require(songs.size() == 0, "retrieve_album_songs must return empty list when artist name is missing");
+
+   // empty string for both artist and album
+   songs = jbdb.retrieve_album_songs("", "");
+   require(songs.size() == 0, "retrieve_album_songs must return empty list when artist name and album name are missing");
+
+   // empty string for album
+   songs = jbdb.retrieve_album_songs("Van Halen", "");
+   require(songs.size() == 0, "retrieve_album_songs must return empty list when album name is missing");
+
+   // non-matching artist and album
+   songs = jbdb.retrieve_album_songs("Led Zeppelin", "Houses of the Holy");
+   require(songs.size() == 0, "retrieve_album_songs must return empty list when no matching artist and album songs");
+
+   // matching artist and album
+   songs = jbdb.retrieve_album_songs("Steely Dan", "Aja");
+   require(songs.size() == 7, "retrieve_album_songs must return 7 songs");
 }
 
 void TestJukeboxDB::test_songs_for_artist() {
@@ -259,8 +306,14 @@ void TestJukeboxDB::test_songs_for_artist() {
    JukeboxDB jbdb(db_file);
    require(jbdb.open(), "open must return true");
 
+   vector<SongMetadata*> songs;
+
+   // empty string for artist
+   songs = jbdb.songs_for_artist("");
+   require(songs.size() == 0, "songs_for_artist must return empty list when artist name is missing");
+
    // no songs in DB
-   vector<SongMetadata*> songs = jbdb.songs_for_artist("Van Halen");
+   songs = jbdb.songs_for_artist("Van Halen");
    require(songs.size() == 0, "songs_for_artist must return empty list when there are none");
 
    // no matching artist songs in DB
