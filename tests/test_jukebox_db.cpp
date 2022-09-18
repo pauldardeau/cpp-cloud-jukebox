@@ -253,7 +253,61 @@ void TestJukeboxDB::test_retrieve_album_songs() {
 
 void TestJukeboxDB::test_songs_for_artist() {
    TEST_CASE("test_songs_for_artist");
-   //TODO: implement test_songs_for_artist
+   string test_dir = "/tmp/test_cpp_jukeboxdb_songs_for_artist";
+   FSTestCase test_case(*this, test_dir);
+   string db_file = "jukebox_db.sqlite3";
+   JukeboxDB jbdb(db_file);
+   require(jbdb.open(), "open must return true");
+
+   // no songs in DB
+   vector<SongMetadata*> songs = jbdb.songs_for_artist("Van Halen");
+   require(songs.size() == 0, "songs_for_artist must return empty list when there are none");
+
+   // no matching artist songs in DB
+   SongMetadata song;
+   song.fm.file_uid = "The-Who--Whos-Next--My-Wife.flac";
+   song.fm.file_name = "The-Who--Whos-Next--My-Wife.flac";
+   song.fm.origin_file_size = 23827669L;
+   song.fm.stored_file_size = 23827669L;
+   song.fm.pad_char_count = 0L;
+   song.fm.file_time = "2022-09-17 08:56:0.000";
+   song.fm.md5_hash = "asdf";
+   song.fm.compressed = 0;
+   song.fm.encrypted = 0;
+   song.fm.container_name = "w-artist-songs";
+   song.fm.object_name = "The-Who--Whos-Next--My-Wife.flac";
+   song.artist_uid = "The-Who";
+   song.artist_name = "The Who";
+   song.album_uid = "Whos-Next";
+   song.song_name = "My Wife";
+   require(jbdb.insert_song(song), "insert_song must return true");
+
+   songs = jbdb.songs_for_artist("Van Halen");
+   require(songs.size() == 0, "songs_for_artist must return empty list when no matching artist songs");
+
+   // add a matching artist song
+   SongMetadata song2;
+   song2.fm.file_uid = "Van-Halen--1984--Ill-Wait.flac";
+   song2.fm.file_name = "Van-Halen--1984--Ill-Wait.flac";
+   song2.fm.origin_file_size = 34648958L;
+   song2.fm.stored_file_size = 34648958L;
+   song2.fm.pad_char_count = 0L;
+   song2.fm.file_time = "2022-09-18 08:05:0.000";
+   song2.fm.md5_hash = "asdf";
+   song2.fm.compressed = 0;
+   song2.fm.encrypted = 0;
+   song2.fm.container_name = "v-artist-songs";
+   song2.fm.object_name = "Van-Halen--1984--Ill-Wait.flac";
+   song2.artist_uid = "Van-Halen";
+   song2.artist_name = "Van Halen";
+   song2.album_uid = "1984";
+   song2.song_name = "I'll Wait";
+   require(jbdb.insert_song(song2), "insert_song must return true");
+
+   songs = jbdb.songs_for_artist("Van Halen");
+   require(songs.size() == 0, "songs_for_artist must return 1 song");
+
+   //TODO: multiple matching and non-matching artist songs
 }
 
 void TestJukeboxDB::test_show_listings() {
