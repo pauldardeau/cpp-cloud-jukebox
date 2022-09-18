@@ -56,8 +56,6 @@ public:
 
 class Jukebox {
 public:
-   static Jukebox* g_jukebox_instance;
-
    JukeboxOptions jukebox_options;
    StorageSystem& storage_system;
    bool debug_print;

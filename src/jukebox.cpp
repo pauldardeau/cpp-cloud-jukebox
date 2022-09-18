@@ -1,4 +1,7 @@
+#include <stdio.h>
+#include <signal.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "jukebox.h"
 #include "jukebox_db.h"
@@ -12,25 +15,27 @@
 
 using namespace std;
 
-/*
-def signal_handler(signum: int, frame):
-    if signum == signal.SIGUSR1:
-        if g_jukebox_instance != NULL:
-            g_jukebox_instance.toggle_pause_play()
-    elif signum == signal.SIGUSR2:
-        if g_jukebox_instance != NULL:
-            g_jukebox_instance.advance_to_next_song()
+static Jukebox* g_jukebox_instance = NULL;
 
+void signal_handler(int signum) {
+   if (signum == SIGUSR1) {
+      if (g_jukebox_instance != NULL) {
+         g_jukebox_instance->toggle_pause_play();
+      }
+   } else if (signum == SIGUSR2) {
+      if (g_jukebox_instance != NULL) {
+         g_jukebox_instance->advance_to_next_song();
+      }
+   }
+}
 
-def install_signal_handlers():
-    if os.name == 'posix':
-        signal.signal(signal.SIGUSR1, signal_handler)
-        signal.signal(signal.SIGUSR2, signal_handler)
-*/
+void install_signal_handlers() {
+//#if defined(__linux__)
+   signal(SIGUSR1, signal_handler);
+   signal(SIGUSR2, signal_handler);
+//#endif
+}
 
-
-
-Jukebox* Jukebox::g_jukebox_instance = NULL;
 
 Jukebox::Jukebox(const JukeboxOptions& jb_options,
                  StorageSystem& storage_sys,
@@ -802,8 +807,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
       }
 
       int song_index = 0;
-      //TODO: (2) set up signal handlers (play_songs)
-      //install_signal_handlers();
+      install_signal_handlers();
 
 #if defined(__APPLE__)
       audio_player_exe_file_name = "afplay";
