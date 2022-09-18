@@ -630,7 +630,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       //}
 
       if (check_file_integrity(song)) {
-               return true;
+         return true;
       } else {
          // we retrieved the file, but it failed our integrity check
          // if file exists, remove it
