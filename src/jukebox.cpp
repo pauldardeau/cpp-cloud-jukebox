@@ -1225,17 +1225,14 @@ void Jukebox::import_album_art() {
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string object_name = listing_entry;
-            //TODO: (3) album art import (import_album_art)
-            /*
-            file_read, file_contents, _ = read_file_contents(full_path);
-            if (file_read && file_contents != NULL) {
+            ReadFileResults read_results = read_file_contents(full_path);
+            if (read_results.read_success && read_results.file_bytes.size() > 0) {
                if (storage_system.put_object(album_art_container,
                                              object_name,
-                                             file_contents)) {
+                                             read_results.file_bytes)) {
                   file_import_count += 1;
                }
             }
-            */
          }
       }
 
