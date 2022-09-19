@@ -10,7 +10,8 @@ PROJ_OBJS = ../src/utils.o \
 ../src/jukebox_db.o \
 ../src/jb_utils.o \
 ../src/fs_storage_system.o \
-../src/jukebox.o
+../src/jukebox.o \
+../src/song_downloader.o
 
 OBJS = test_utils.o \
 fs_test_case.o \
