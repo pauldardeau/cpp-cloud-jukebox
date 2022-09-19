@@ -30,6 +30,42 @@ public:
       encrypted(0) {
    }
 
+   FileMetadata(const FileMetadata& copy) :
+      file_uid(copy.file_uid),
+      file_name(copy.file_name),
+      origin_file_size(copy.origin_file_size),
+      stored_file_size(copy.stored_file_size),
+      pad_char_count(copy.pad_char_count),
+      file_time(copy.file_time),
+      md5_hash(copy.md5_hash),
+      compressed(copy.compressed),
+      encrypted(copy.encrypted),
+      container_name(copy.container_name),
+      object_name(copy.object_name) {
+   }
+
+   ~FileMetadata() {}
+
+   FileMetadata& operator=(const FileMetadata& copy) {
+      if (this == &copy) {
+         return *this;
+      }
+
+      file_uid = copy.file_uid;
+      file_name = copy.file_name;
+      origin_file_size = copy.origin_file_size;
+      stored_file_size = copy.stored_file_size;
+      pad_char_count = copy.pad_char_count;
+      file_time = copy.file_time;
+      md5_hash = copy.md5_hash;
+      compressed = copy.compressed;
+      encrypted = copy.encrypted;
+      container_name = copy.container_name;
+      object_name = copy.object_name;
+
+      return *this;
+   }
+
    bool operator==(const FileMetadata& other) const {
       if (this == &other) {
          return true;

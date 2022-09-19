@@ -18,6 +18,30 @@ public:
    SongMetadata() {
    }
 
+   SongMetadata(const SongMetadata& copy) :
+      fm(copy.fm),
+      artist_uid(copy.artist_uid),
+      artist_name(copy.artist_name),
+      album_uid(copy.album_uid),
+      song_name(copy.song_name) {
+   }
+
+   ~SongMetadata() {}
+
+   SongMetadata& operator=(const SongMetadata& copy) {
+      if (this == &copy) {
+         return *this;
+      }
+
+      fm = copy.fm;
+      artist_uid = copy.artist_uid;
+      artist_name = copy.artist_name;
+      album_uid = copy.album_uid;
+      song_name = copy.song_name;
+
+      return *this;
+   }
+
    bool operator==(const SongMetadata& other) const {
       if (this == &other) {
          return true;
