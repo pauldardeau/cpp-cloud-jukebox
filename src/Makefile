@@ -1,7 +1,7 @@
 # Copyright Paul Dardeau, SwampBits LLC 2022
 
 CC = c++
-CC_OPTS = -c -Wall -fPIC -O2 -I../include -I../../chaudiere/src -I../../chapeau/src
+CC_OPTS = -c -Wall -fPIC -O2 -pthread -I../include -I../../chaudiere/src -I../../chapeau/src
 LINK_CMD = c++
 # remove -ldl for non-linux
 # libapps.a    libcrypto.a  libcurlpp.a   libinih.a    libminiocpp.a  libssl.a
