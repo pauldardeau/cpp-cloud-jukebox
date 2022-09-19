@@ -9,8 +9,10 @@
 #include "jukebox_options.h"
 #include "song_metadata.h"
 #include "storage_system.h"
+#include "PthreadsThread.h"
 
 class JukeboxDB;
+class SongDownloader;
 
 
 class ReadFileResults {
@@ -85,6 +87,9 @@ public:
    bool is_paused;
    double song_start_time;
    int song_seconds_offset;
+   SongDownloader* downloader;
+   chaudiere::PthreadsThread* download_thread;
+   bool player_active;
 
    Jukebox(const JukeboxOptions& jb_options,
            StorageSystem& storage_sys,

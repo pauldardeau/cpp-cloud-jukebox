@@ -64,7 +64,10 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    exit_requested(false),
    is_paused(false),
    song_start_time(0.0),
-   song_seconds_offset(0)
+   song_seconds_offset(0),
+   downloader(NULL),
+   download_thread(NULL),
+   player_active(false)
 {
    g_jukebox_instance = this;
 
@@ -586,6 +589,8 @@ void Jukebox::batch_download_complete() {
       }
       cumulative_download_bytes = 0;
       cumulative_download_time = 0.0;
+      downloader = NULL;
+      download_thread = NULL;
    }
 }
 
@@ -669,6 +674,10 @@ bool Jukebox::download_song(const SongMetadata& song) {
 }
 
 void Jukebox::play_song(const string& song_file_path) {
+   if (player_active) {
+      return;
+   }
+
    if (Utils::path_exists(song_file_path)) {
       printf("playing %s\n", song_file_path.c_str());
 
@@ -678,6 +687,7 @@ void Jukebox::play_song(const string& song_file_path) {
 	 pid_t pid = fork();
 	 if (pid == 0) {
             // child
+	    printf("++++++++++++++ child process created\n");
 	    string base_exe_name;
             vector<string> path_components = Utils::path_split(audio_player_exe_file_name);
             if (path_components.size() == 2) {
@@ -762,21 +772,34 @@ void Jukebox::play_song(const string& song_file_path) {
                rc = -1;
             }
 	    if (rc == -1) {
+               printf("+++++++******** ERROR: child process unable to start audio player\n");
                ::exit(1);
             }
          } else {
             // parent
+	    player_active = true;
             started_audio_player = true;
             song_start_time = Utils::time_time();
 	    int status = 0;
-	    int options = WEXITED;
-            pid_t rc_pid = waitpid(audio_player_process, &status, options);
-            if (rc_pid == audio_player_process) {
+	    int options = 0; //WEXITED;
+	    audio_player_process = pid;
+	    // errno 22 = EINVAL
+            pid_t rc_pid = waitpid(pid, &status, options);
+	    printf("############## audio player pid = %d\n", pid);
+            if (rc_pid == pid) {
                if (WIFEXITED(status)) {
                   exit_code = WEXITSTATUS(status);
+		  printf("player exited, exit_code = %d\n", exit_code);
+		  player_active = false;
+               } else {
+                  printf("waitpid returned, but player not exited\n");
                }
+            } else {
+               printf("waitpid return value (other than player pid) = %d\n", rc_pid);
+	       printf("errno = %d\n", errno);
             }
             audio_player_process = -1;
+	    ::exit(1);
          }
 
          // if the audio player failed or is not present, just sleep
@@ -835,7 +858,6 @@ void Jukebox::download_songs() {
             if (!Utils::file_exists(file_path)) {
                dl_songs.push_back(si);
                if (dl_songs.size() >= file_cache_count) {
-                  printf("DEBUG: dl_songs.size >= file_cache_count, breaking\n");
                   break;
                }
             }
@@ -844,12 +866,14 @@ void Jukebox::download_songs() {
       }
 
       if (dl_songs.size() > 0) {
-         printf("creating SongDownloader\n");
-         SongDownloader downloader(*this, dl_songs);
-         chaudiere::PthreadsThread download_thread(&downloader);
-         //chaudiere::StdThread download_thread(&downloader);
-         printf("starting thread to download songs\n");
-         download_thread.start();
+         if (downloader == NULL && download_thread == NULL) {
+            printf("creating SongDownloader\n");
+            downloader = new SongDownloader(*this, dl_songs);
+            download_thread = new chaudiere::PthreadsThread(downloader);
+            printf("starting thread to download songs\n");
+            download_thread->start();
+	 } else {
+         }
       }
    }
 }
@@ -895,7 +919,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
       audio_player_exe_file_name = "afplay";
       audio_player_command_args = "";
 #elif defined(__linux__) || defined(__unix__)
-      audio_player_exe_file_name = "mplayer";
+      audio_player_exe_file_name = "/usr/bin/mplayer";
       audio_player_command_args = "-novideo -nolirc -really-quiet ";
 #elif defined(_WIN32)
       // we really need command-line support for /play and /close arguments. unfortunately,
@@ -934,10 +958,14 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
 
             while (!exit_requested) {
                if (!is_paused) {
-                  printf("DEBUG: calling download_songs\n");
-                  download_songs();
-                  printf("DEBUG: back from download_songs, calling play_song\n");
-                  play_song(song_path_in_playlist(song_list[song_index]));
+                  if (downloader == NULL && download_thread == NULL) {
+                     printf("DEBUG: calling download_songs\n");
+                     download_songs();
+                     printf("DEBUG: back from download_songs, calling play_song\n");
+		     if (!player_active) {
+                        play_song(song_path_in_playlist(song_list[song_index]));
+		     }
+		  }
                }
                if (!is_paused) {
                   song_index++;
