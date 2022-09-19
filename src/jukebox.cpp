@@ -14,6 +14,7 @@
 #include "OSUtils.h"
 #include "StringTokenizer.h"
 #include "StrUtils.h"
+//#include "StdThread.h"
 #include "PthreadsThread.h"
 #include "nlohmann/json.hpp"
 
@@ -823,12 +824,8 @@ void Jukebox::download_songs() {
       vector<SongMetadata> dl_songs;
       // start looking at the next song in the list
       int check_index = song_index + 1;
-
-      printf("DEBUG: number_songs = %d\n", number_songs);
  
       for (int j = 0; j < number_songs; j++) {
-         printf("DEBUG: j = %d\n", j);
-
          if (check_index >= number_songs) {
             check_index = 0;
          }
@@ -836,7 +833,6 @@ void Jukebox::download_songs() {
             const SongMetadata& si = song_list[check_index];
             string file_path = song_path_in_playlist(si);
             if (!Utils::file_exists(file_path)) {
-               printf("adding song to dl_songs\n");
                dl_songs.push_back(si);
                if (dl_songs.size() >= file_cache_count) {
                   printf("DEBUG: dl_songs.size >= file_cache_count, breaking\n");
@@ -848,10 +844,10 @@ void Jukebox::download_songs() {
       }
 
       if (dl_songs.size() > 0) {
-         printf("dl_songs.size = %ld, not starting thread\n", dl_songs.size());
          printf("creating SongDownloader\n");
          SongDownloader downloader(*this, dl_songs);
          chaudiere::PthreadsThread download_thread(&downloader);
+         //chaudiere::StdThread download_thread(&downloader);
          printf("starting thread to download songs\n");
          download_thread.start();
       }
