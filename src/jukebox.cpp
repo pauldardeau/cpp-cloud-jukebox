@@ -955,7 +955,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
 }
 
 void Jukebox::show_list_containers() {
-   //TODO: implement show_list_containers
+   //TODO: (1) implement show_list_containers
    /*
    if (storage_system.list_containers != NULL) {
       foreach (var container_name in storage_system.list_containers) {

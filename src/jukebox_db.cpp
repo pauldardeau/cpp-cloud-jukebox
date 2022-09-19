@@ -245,6 +245,7 @@ bool JukeboxDB::songs_for_query(DBResultSet* rs,
          song->fm.object_name = *object_name;
          delete object_name;
       }
+      //TODO: (1) retrieve column for album uid
       //if (!rs->IsDBNull(13)) {
       //   song->album_uid = rs->stringForColumnIndex(13);
       //} else {
@@ -421,7 +422,7 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
 }
 
 bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
-   //TODO: implement store_song_metadata
+   //TODO: (1) implement store_song_metadata
    return false;
    /*
    SongMetadata* db_song = retrieve_song(song.fm.file_uid);
@@ -594,7 +595,7 @@ void JukeboxDB::show_genres() {
 }
 
 void JukeboxDB::show_artist_albums(const string& artist_name) {
-   //TODO: (3) implement (show_artist_albums)
+   //TODO: (2) implement (show_artist_albums)
 }
 
 void JukeboxDB::show_albums() {
