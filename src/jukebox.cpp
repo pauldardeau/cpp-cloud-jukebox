@@ -833,6 +833,7 @@ void Jukebox::download_songs() {
 
       if (dl_songs.size() > 0) {
          printf("dl_songs.size = %ld, not starting thread\n", dl_songs.size());
+	 //TODO: (1) add SongDownloader on separate thread
          /*
          printf("creating SongDownloader\n");
          SongDownloader downloader = new SongDownloader(this, dl_songs);
