@@ -371,12 +371,12 @@ void Jukebox::import_songs() {
 
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
-	 printf("DEBUG: %s\n", listing_entry.c_str());
+         //printf("DEBUG: %s\n", listing_entry.c_str());
          string full_path = chaudiere::OSUtils::pathJoin(song_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string file_name = listing_entry;
-	    printf("DEBUG: calling Utils::path_splitext with '%s'\n", full_path.c_str());
+	    //printf("DEBUG: calling Utils::path_splitext with '%s'\n", full_path.c_str());
             vector<string> path_elems = Utils::path_splitext(full_path);
             const string& extension = path_elems[1];
             if (extension.length() > 0) {
@@ -405,9 +405,9 @@ void Jukebox::import_songs() {
                   bool file_read = false;
                   vector<unsigned char> file_contents;
 
-		  printf("DEBUG: calling Utils::file_read_all_bytes\n");
+		  //printf("DEBUG: calling Utils::file_read_all_bytes\n");
                   if (Utils::file_read_all_bytes(full_path, file_contents)) {
-                     printf("DEBUG: file_read_all_bytes succeeded\n");
+                     //printf("DEBUG: file_read_all_bytes succeeded\n");
                      file_read = true;
                   } else {
                      printf("error: unable to read file %s\n", full_path.c_str());
@@ -454,20 +454,20 @@ void Jukebox::import_songs() {
                      fs_song.fm.stored_file_size = file_contents.size();
                      double start_upload_time = Utils::time_time();
 
-		     printf("DEBUG: calling storage_system.put_object\n");
+		     //printf("DEBUG: calling storage_system.put_object\n");
 
                      // store song file to storage system
                      if (storage_system.put_object(fs_song.fm.container_name,
                                                    fs_song.fm.object_name,
                                                    file_contents,
                                                    NULL)) {
-                        printf("DEBUG: put_object succeeded\n");
+                        //printf("DEBUG: put_object succeeded\n");
                         double end_upload_time = Utils::time_time();
                         double upload_elapsed_time = end_upload_time - start_upload_time;
                         cumulative_upload_time += upload_elapsed_time;
                         cumulative_upload_bytes += file_contents.size();
 
-			printf("DEBUG: calling store_song_metadata\n");
+			//printf("DEBUG: calling store_song_metadata\n");
 
                         // store song metadata in local database
                         if (!store_song_metadata(fs_song)) {
@@ -480,8 +480,8 @@ void Jukebox::import_songs() {
                            storage_system.delete_object(fs_song.fm.container_name,
                                                         fs_song.fm.object_name);
                         } else {
-                           printf("DEBUG: stored in DB successfully\n");
-			   printf("DEBUG: incrementing file_import_count\n");
+                           //printf("DEBUG: stored in DB successfully\n");
+			   //printf("DEBUG: incrementing file_import_count\n");
                            file_import_count += 1;
                         }
                      } else {
@@ -521,7 +521,7 @@ void Jukebox::import_songs() {
       }
 
       if (file_import_count > 0) {
-         printf("DEBUG: calling upload_metadata_db\n");
+         //printf("DEBUG: calling upload_metadata_db\n");
          upload_metadata_db();
       } else {
          printf("DEBUG: file_import_count == 0, not uploading metadata DB\n");
@@ -687,7 +687,7 @@ void Jukebox::play_song(const string& song_file_path) {
 	 pid_t pid = fork();
 	 if (pid == 0) {
             // child
-	    printf("++++++++++++++ child process created\n");
+	    //printf("++++++++++++++ child process created\n");
 	    string base_exe_name;
             vector<string> path_components = Utils::path_split(audio_player_exe_file_name);
             if (path_components.size() == 2) {
@@ -785,11 +785,11 @@ void Jukebox::play_song(const string& song_file_path) {
 	    audio_player_process = pid;
 	    // errno 22 = EINVAL
             pid_t rc_pid = waitpid(pid, &status, options);
-	    printf("############## audio player pid = %d\n", pid);
+	    //printf("############## audio player pid = %d\n", pid);
             if (rc_pid == pid) {
                if (WIFEXITED(status)) {
                   exit_code = WEXITSTATUS(status);
-		  printf("player exited, exit_code = %d\n", exit_code);
+		  //printf("player exited, exit_code = %d\n", exit_code);
 		  player_active = false;
                } else {
                   printf("waitpid returned, but player not exited\n");
@@ -799,7 +799,6 @@ void Jukebox::play_song(const string& song_file_path) {
 	       printf("errno = %d\n", errno);
             }
             audio_player_process = -1;
-	    ::exit(1);
          }
 
          // if the audio player failed or is not present, just sleep
@@ -867,10 +866,10 @@ void Jukebox::download_songs() {
 
       if (dl_songs.size() > 0) {
          if (downloader == NULL && download_thread == NULL) {
-            printf("creating SongDownloader\n");
+            //printf("creating SongDownloader\n");
             downloader = new SongDownloader(*this, dl_songs);
             download_thread = new chaudiere::PthreadsThread(downloader);
-            printf("starting thread to download songs\n");
+            //printf("starting thread to download songs\n");
             download_thread->start();
 	 } else {
          }
@@ -959,9 +958,9 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
             while (!exit_requested) {
                if (!is_paused) {
                   if (downloader == NULL && download_thread == NULL) {
-                     printf("DEBUG: calling download_songs\n");
+                     //printf("DEBUG: calling download_songs\n");
                      download_songs();
-                     printf("DEBUG: back from download_songs, calling play_song\n");
+                     //printf("DEBUG: back from download_songs, calling play_song\n");
 		     if (!player_active) {
                         play_song(song_path_in_playlist(song_list[song_index]));
 		     }
@@ -973,7 +972,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
                      song_index = 0;
                   }
                } else {
-                  printf("DEBUG: is_paused, sleeping\n");
+                  //printf("DEBUG: is_paused, sleeping\n");
                   Utils::time_sleep(1);
                }
             }

@@ -549,7 +549,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
                   Utils::sys_exit(1);
                }
 
-               printf("entering storage system\n");
+               //printf("entering storage system\n");
                storage_system->enter();
 
 	       if (command == "init-storage") {
@@ -557,9 +557,9 @@ void JukeboxMain::run(const vector<string>& console_args) {
                   Utils::sys_exit(0);
 	       }
 
-               printf("creating jukebox\n");
+               //printf("creating jukebox\n");
                Jukebox jukebox(options, *storage_system);
-               printf("entering jukebox\n");
+               //printf("entering jukebox\n");
                jukebox.enter();
 
                try {
