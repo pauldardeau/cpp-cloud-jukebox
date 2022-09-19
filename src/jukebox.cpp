@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "jukebox.h"
@@ -655,42 +656,110 @@ void Jukebox::play_song(const string& song_file_path) {
       printf("playing %s\n", song_file_path.c_str());
 
       if (audio_player_command_args.length() > 0) {
-         string cmd_args = audio_player_command_args + song_file_path;
          int exit_code = -1;
          bool started_audio_player = false;
-         /*
-         try
-         {
-            ProcessStartInfo psi = new ProcessStartInfo();
-            psi.FileName = audio_player_exe_file_name;
-            psi.Arguments = cmd_args;
-            psi.UseShellExecute = false;
-            psi.RedirectStandardError = false;
-            psi.RedirectStandardOutput = false;
-
-            audio_player_process = new Process();
-            audio_player_process.StartInfo = psi;
-            audio_player_process.Start();
-
-            if (audio_player_process != NULL) {
-               started_audio_player = true;
-               song_start_time = Utils::time_time();
-               audio_player_process.WaitForExit();
-               if (audio_player_process.HasExited) {
-                  exit_code = audio_player_process.ExitCode;
+	 pid_t pid = fork();
+	 if (pid == 0) {
+            // child
+	    string base_exe_name;
+            vector<string> path_components = Utils::path_split(audio_player_exe_file_name);
+            if (path_components.size() == 2) {
+               const string& tail = path_components[1];
+               if (tail.length() > 0) {
+                  base_exe_name = tail;
                }
-               audio_player_process = -1;
             }
-         }
-         catch (Exception)
-         {
-            // audio player not available
-            audio_player_exe_file_name = "";
-            audio_player_command_args = "";
+
+	    if (base_exe_name.length() == 0) {
+               base_exe_name = audio_player_exe_file_name;
+            }
+
+	    vector<string> vec_args;
+	    vec_args.push_back(base_exe_name);
+
+	    if (audio_player_command_args.length() > 0) {
+	       vector<string> vec_addl_args = chaudiere::StrUtils::split(audio_player_command_args, " ");
+	       std::copy(vec_addl_args.begin(), vec_addl_args.end(), std::back_inserter(vec_args));
+            }
+	    vec_args.push_back(song_file_path);
+	    int rc;
+	    const auto num_args = vec_args.size();
+	    if (num_args == 2) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+			  vec_args[1].c_str(),
+			  (char *) 0);
+            } else if (num_args == 3) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+                          vec_args[1].c_str(),
+			  vec_args[2].c_str(),
+                          (char *) 0);
+            } else if (num_args == 4) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+                          vec_args[1].c_str(),
+			  vec_args[2].c_str(),
+			  vec_args[3].c_str(),
+                          (char *) 0);
+            } else if (num_args == 5) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+                          vec_args[1].c_str(),
+                          vec_args[2].c_str(),
+                          vec_args[3].c_str(),
+			  vec_args[4].c_str(),
+                          (char *) 0);
+            } else if (num_args == 6) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+                          vec_args[1].c_str(),
+                          vec_args[2].c_str(),
+                          vec_args[3].c_str(),
+                          vec_args[4].c_str(),
+			  vec_args[5].c_str(),
+                          (char *) 0);
+            } else if (num_args == 7) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+                          vec_args[1].c_str(),
+                          vec_args[2].c_str(),
+                          vec_args[3].c_str(),
+                          vec_args[4].c_str(),
+                          vec_args[5].c_str(),
+			  vec_args[6].c_str(),
+                          (char *) 0);
+            } else if (num_args == 8) {
+               rc = execl(audio_player_exe_file_name.c_str(),
+                          vec_args[0].c_str(),
+                          vec_args[1].c_str(),
+                          vec_args[2].c_str(),
+                          vec_args[3].c_str(),
+                          vec_args[4].c_str(),
+                          vec_args[5].c_str(),
+			  vec_args[6].c_str(),
+			  vec_args[7].c_str(),
+                          (char *) 0);
+            } else {
+               rc = -1;
+            }
+	    if (rc == -1) {
+               ::exit(1);
+            }
+         } else {
+            // parent
+            started_audio_player = true;
+            song_start_time = Utils::time_time();
+	    int status = 0;
+	    int options = WEXITED;
+            pid_t rc_pid = waitpid(audio_player_process, &status, options);
+            if (rc_pid == audio_player_process) {
+               if (WIFEXITED(status)) {
+                  exit_code = WEXITSTATUS(status);
+               }
+            }
             audio_player_process = -1;
-            exit_code = -1;
          }
-         */
 
          // if the audio player failed or is not present, just sleep
          // for the length of time that audio would be played
