@@ -35,5 +35,6 @@ void SongDownloader::run() {
    } else {
       printf("SongDownloader.run: list_songs is empty\n");
    }
+   printf("************** SongDownloader thread completed\n");
 }
 
