@@ -248,9 +248,9 @@ string Jukebox::song_from_file_name(const string& file_name) {
 }
 
 bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
-   SongMetadata* db_song = jukebox_db->retrieve_song(fs_song.fm.file_uid);
-   if (db_song != NULL) {
-      if (fs_song != *db_song) {
+   SongMetadata db_song;
+   if (jukebox_db->retrieve_song(fs_song.fm.file_uid, db_song)) {
+      if (fs_song != db_song) {
          return jukebox_db->update_song(fs_song);
       } else {
          return true;  // no insert or update needed (already up-to-date)
@@ -833,7 +833,7 @@ void Jukebox::download_songs() {
             check_index = 0;
          }
          if (check_index != song_index) {
-            SongMetadata si = song_list[check_index];
+            const SongMetadata& si = song_list[check_index];
             string file_path = song_path_in_playlist(si);
             if (!Utils::file_exists(file_path)) {
                printf("adding song to dl_songs\n");
@@ -859,7 +859,7 @@ void Jukebox::download_songs() {
 }
 
 void Jukebox::play_songs(bool shuffle, string artist, string album) {
-   vector<SongMetadata*> song_list = jukebox_db->retrieve_album_songs(artist, album);
+   song_list = jukebox_db->retrieve_album_songs(artist, album);
    if (song_list.size() > 0) {
       number_songs = song_list.size();
 
@@ -925,7 +925,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
 
       try
       {
-         if (download_song(*song_list[0])) {
+         if (download_song(song_list[0])) {
             printf("first song downloaded. starting playing now.\n");
 
             // write PID to "jukebox.pid"
@@ -941,7 +941,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
                   printf("DEBUG: calling download_songs\n");
                   download_songs();
                   printf("DEBUG: back from download_songs, calling play_song\n");
-                  play_song(song_path_in_playlist(*song_list[song_index]));
+                  play_song(song_path_in_playlist(song_list[song_index]));
                }
                if (!is_paused) {
                   song_index++;
@@ -1189,17 +1189,17 @@ bool Jukebox::delete_song(const string& song_uid, bool upload_metadata) {
 bool Jukebox::delete_artist(const string& artist) {
    bool is_deleted = false;
    if (artist.length() > 0) {
-      vector<SongMetadata*> song_list = jukebox_db->songs_for_artist(artist);
-      if (song_list.size() == 0) {
-         printf("no songs in jukebox\n");
+      vector<SongMetadata> artist_song_list = jukebox_db->songs_for_artist(artist);
+      if (artist_song_list.size() == 0) {
+         printf("no artist songs in jukebox\n");
          return false;
       } else {
-         auto it = song_list.begin();
-         const auto it_end = song_list.end();
+         auto it = artist_song_list.begin();
+         const auto it_end = artist_song_list.end();
          for (; it != it_end; it++) {
-            SongMetadata* song = *it;
-            if (!delete_song(song->fm.object_name, false)) {
-               printf("error deleting song %s\n", song->fm.object_name.c_str());
+            const SongMetadata& song = *it;
+            if (!delete_song(song.fm.object_name, false)) {
+               printf("error deleting song %s\n", song.fm.object_name.c_str());
                return false;
             }
          }
@@ -1217,21 +1217,21 @@ bool Jukebox::delete_album(const string& album) {
       string artist = album.substr(0, pos_double_dash);
       int num_chars = album.length() - pos_double_dash - 2;
       string album_name = album.substr(pos_double_dash+2, num_chars);
-      vector<SongMetadata*> list_album_songs = jukebox_db->retrieve_album_songs(artist, album_name);
+      vector<SongMetadata> list_album_songs = jukebox_db->retrieve_album_songs(artist, album_name);
       if (list_album_songs.size() > 0) {
          int num_songs_deleted = 0;
          auto it = list_album_songs.begin();
          const auto it_end = list_album_songs.end();
          for (; it != it_end; it++) {
-            SongMetadata* song = *it;
-            printf("%s %s\n", song->fm.container_name.c_str(), song->fm.object_name.c_str());
+            const SongMetadata& song = *it;
+            printf("%s %s\n", song.fm.container_name.c_str(), song.fm.object_name.c_str());
             // delete each song audio file
-            if (storage_system.delete_object(song->fm.container_name, song->fm.object_name)) {
+            if (storage_system.delete_object(song.fm.container_name, song.fm.object_name)) {
                num_songs_deleted += 1;
                // delete song metadata
-               jukebox_db->delete_song(song->fm.object_name);
+               jukebox_db->delete_song(song.fm.object_name);
             } else {
-               printf("error: unable to delete song %s\n", song->fm.object_name.c_str());
+               printf("error: unable to delete song %s\n", song.fm.object_name.c_str());
                //TODO: (3) delete song metadata if we got 404 (delete_album)
             }
          }

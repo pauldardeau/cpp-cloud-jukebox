@@ -32,9 +32,9 @@ public:
    std::string get_playlist(const std::string& playlist_name);
 
    bool songs_for_query(chapeau::DBResultSet* rs,
-                        std::vector<SongMetadata*>& vec_songs);
+                        std::vector<SongMetadata>& vec_songs);
 
-   SongMetadata* retrieve_song(const std::string& file_name);
+   bool retrieve_song(const std::string& file_name, SongMetadata& song);
    bool insert_playlist(const std::string& pl_uid,
                         const std::string& pl_name,
 			std::string pl_desc = "");
@@ -44,9 +44,9 @@ public:
    bool store_song_metadata(const SongMetadata& song);
    std::string sql_where_clause(bool using_encryption = false,
                                 bool using_compression = false);
-   std::vector<SongMetadata*> retrieve_album_songs(const std::string& artist,
-                                                   const std::string& album);
-   std::vector<SongMetadata*> songs_for_artist(const std::string& artist_name);
+   std::vector<SongMetadata> retrieve_album_songs(const std::string& artist,
+                                                  const std::string& album);
+   std::vector<SongMetadata> songs_for_artist(const std::string& artist_name);
    void show_listings();
    void show_artists();
    void show_genres();

@@ -153,17 +153,17 @@ void TestJukeboxDB::test_retrieve_song() {
    JukeboxDB jbdb(db_file);
    require(jbdb.open(), "open must return true");
 
-   SongMetadata* result_song;
+   SongMetadata result_song;
 
    //TODO: insert some songs
 
    // empty song file
-   result_song = jbdb.retrieve_song("");
-   require(result_song == NULL, "retrieve_song must return NULL when empty string given for song file");
+   bool success = jbdb.retrieve_song("", result_song);
+   requireFalse(success, "retrieve_song must return false when empty string given for song file");
 
    // no songs in DB
-   result_song = jbdb.retrieve_song("The-Who--Whos-Next--My-Wife.flac");
-   require(result_song == NULL, "retrieve_song must return NULL when no songs exist");
+   success = jbdb.retrieve_song("The-Who--Whos-Next--My-Wife.flac", result_song);
+   requireFalse(success, "retrieve_song must return false when no songs exist");
 
    //TODO: implement test_retrieve_song
 }
@@ -272,7 +272,7 @@ void TestJukeboxDB::test_retrieve_album_songs() {
    JukeboxDB jbdb(db_file);
    require(jbdb.open(), "open must return true");
 
-   vector<SongMetadata*> songs;
+   vector<SongMetadata> songs;
    SongMetadata song;
 
    //TODO: add some songs
@@ -306,7 +306,7 @@ void TestJukeboxDB::test_songs_for_artist() {
    JukeboxDB jbdb(db_file);
    require(jbdb.open(), "open must return true");
 
-   vector<SongMetadata*> songs;
+   vector<SongMetadata> songs;
 
    // empty string for artist
    songs = jbdb.songs_for_artist("");
