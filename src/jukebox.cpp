@@ -367,10 +367,12 @@ void Jukebox::import_songs() {
 
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
+	 printf("DEBUG: %s\n", listing_entry.c_str());
          string full_path = chaudiere::OSUtils::pathJoin(song_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string file_name = listing_entry;
+	    printf("DEBUG: calling Utils::path_splitext with '%s'\n", full_path.c_str());
             vector<string> path_elems = Utils::path_splitext(full_path);
             const string& extension = path_elems[1];
             if (extension.length() > 0) {
@@ -387,7 +389,7 @@ void Jukebox::import_songs() {
                   fs_song.fm.file_time = Utils::datetime_datetime_fromtimestamp(Utils::path_getmtime(full_path));
                   fs_song.artist_name = artist;
                   fs_song.song_name = song;
-                  fs_song.fm.md5_hash = Utils::md5_for_file(full_path);
+                  fs_song.fm.md5_hash = ""; //Utils::md5_for_file(full_path);
                   fs_song.fm.compressed = jukebox_options.use_compression ? 1 : 0;
                   fs_song.fm.encrypted = jukebox_options.use_encryption ? 1 : 0;
                   fs_song.fm.object_name = object_name;
@@ -399,7 +401,9 @@ void Jukebox::import_songs() {
                   bool file_read = false;
                   vector<unsigned char> file_contents;
 
+		  printf("DEBUG: calling Utils::file_read_all_bytes\n");
                   if (Utils::file_read_all_bytes(full_path, file_contents)) {
+                     printf("DEBUG: file_read_all_bytes succeeded\n");
                      file_read = true;
                   } else {
                      printf("error: unable to read file %s\n", full_path.c_str());
@@ -446,15 +450,20 @@ void Jukebox::import_songs() {
                      fs_song.fm.stored_file_size = file_contents.size();
                      double start_upload_time = Utils::time_time();
 
+		     printf("DEBUG: calling storage_system.put_object\n");
+
                      // store song file to storage system
                      if (storage_system.put_object(fs_song.fm.container_name,
                                                    fs_song.fm.object_name,
                                                    file_contents,
                                                    NULL)) {
+                        printf("DEBUG: put_object succeeded\n");
                         double end_upload_time = Utils::time_time();
                         double upload_elapsed_time = end_upload_time - start_upload_time;
                         cumulative_upload_time += upload_elapsed_time;
                         cumulative_upload_bytes += file_contents.size();
+
+			printf("DEBUG: calling store_song_metadata\n");
 
                         // store song metadata in local database
                         if (!store_song_metadata(fs_song)) {
@@ -467,6 +476,8 @@ void Jukebox::import_songs() {
                            storage_system.delete_object(fs_song.fm.container_name,
                                                         fs_song.fm.object_name);
                         } else {
+                           printf("DEBUG: stored in DB successfully\n");
+			   printf("DEBUG: incrementing file_import_count\n");
                            file_import_count += 1;
                         }
                      } else {
@@ -506,7 +517,10 @@ void Jukebox::import_songs() {
       }
 
       if (file_import_count > 0) {
+         printf("DEBUG: calling upload_metadata_db\n");
          upload_metadata_db();
+      } else {
+         printf("DEBUG: file_import_count == 0, not uploading metadata DB\n");
       }
 
       printf("%d song files imported\n", file_import_count);
@@ -1046,40 +1060,33 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
 
 bool Jukebox::upload_metadata_db() {
    bool metadata_db_upload = false;
-   bool have_metadata_container = false;
 
-   if (!storage_system.has_container(metadata_container)) {
-      have_metadata_container = storage_system.create_container(metadata_container);
-   } else {
-      have_metadata_container = true;
+   if (debug_print) {
+      printf("uploading metadata db file to storage system\n");
    }
 
-   if (have_metadata_container) {
+   jukebox_db->close();
+   jukebox_db = NULL;
+
+   // upload metadata DB file
+   vector<unsigned char> db_file_contents;
+   if (Utils::file_read_all_bytes(get_metadata_db_file_path(),
+                                  db_file_contents)) {
+      printf("uploading metadata DB to storage system\n");
+      metadata_db_upload = storage_system.put_object(metadata_container,
+                                                     metadata_db_file,
+                                                     db_file_contents,
+                                                     NULL);
+
       if (debug_print) {
-         printf("uploading metadata db file to storage system\n");
-      }
-
-      jukebox_db->close();
-      jukebox_db = NULL;
-
-      // upload metadata DB file
-      vector<unsigned char> db_file_contents;
-      if (Utils::file_read_all_bytes(get_metadata_db_file_path(),
-                                     db_file_contents)) {
-         metadata_db_upload = storage_system.put_object(metadata_container,
-                                                        metadata_db_file,
-                                                        db_file_contents,
-                                                        NULL);
-
-         if (debug_print) {
-            if (metadata_db_upload) {
-               printf("metadata db file uploaded\n");
-            } else {
-               printf("unable to upload metadata db file\n");
-            }
+         if (metadata_db_upload) {
+            printf("metadata db file uploaded\n");
+         } else {
+            printf("unable to upload metadata db file\n");
          }
-      } else {
       }
+   } else {
+      printf("file read of metadata DB file failed\n");
    }
 
    return metadata_db_upload;
