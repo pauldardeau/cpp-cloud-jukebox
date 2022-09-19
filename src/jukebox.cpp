@@ -8,11 +8,13 @@
 #include "jukebox_db.h"
 #include "file_metadata.h"
 #include "song_metadata.h"
+#include "song_downloader.h"
 #include "jb_utils.h"
 #include "utils.h"
 #include "OSUtils.h"
 #include "StringTokenizer.h"
 #include "StrUtils.h"
+#include "PthreadsThread.h"
 
 using namespace std;
 
@@ -833,14 +835,11 @@ void Jukebox::download_songs() {
 
       if (dl_songs.size() > 0) {
          printf("dl_songs.size = %ld, not starting thread\n", dl_songs.size());
-	 //TODO: (1) add SongDownloader on separate thread
-         /*
          printf("creating SongDownloader\n");
-         SongDownloader downloader = new SongDownloader(this, dl_songs);
-         Thread download_thread = new Thread(new ThreadStart(downloader.run));
+         SongDownloader downloader(*this, dl_songs);
+         chaudiere::PthreadsThread download_thread(&downloader);
          printf("starting thread to download songs\n");
-         download_thread.Start();
-         */
+         download_thread.start();
       }
    }
 }
