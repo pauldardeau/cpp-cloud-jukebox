@@ -153,6 +153,38 @@ int Utils::find_last_index(const string& str, char x) {
    return index;
 }
 
+vector<string> Utils::path_split(const string& path) {
+   // python: os.path.split (returns tuple of head/tail)
+   //
+   // split('/home/user/Desktop/file.txt') -> ("/home/user/Desktop/", "file.txt")
+   // split('/home/user/Desktop/') -> ("/home/user/Desktop/", "")
+   // split('file.txt') -> ("", "file.txt")
+
+   string head = EMPTY;
+   string tail = EMPTY;
+
+   if (path.length() > 0) {
+      int pos_last_slash = find_last_index(path, '/');
+      if (pos_last_slash == -1) {
+         // no '/' exists in path (i.e., "file.txt")
+         tail = path;
+      } else {
+         // is '/' the last char in the path?
+         if (path[path.length()-1] == '/') {
+            head = path;
+         } else {
+            head = path.substr(0, pos_last_slash + 1);
+            tail = path.substr(pos_last_slash + 1);
+         }
+      }
+   }
+
+   vector<string> components;
+   components.push_back(head);
+   components.push_back(tail);
+   return components;
+}
+
 vector<string> Utils::path_splitext(const string& path) {
    // python: os.path.splitext
 

@@ -18,6 +18,7 @@ public:
    static bool path_exists(const std::string& path);
    static bool path_isfile(const std::string& path);
    static int find_last_index(const std::string& str, char x);
+   static std::vector<std::string> path_split(const std::string& path);
    static std::vector<std::string> path_splitext(const std::string& path);
    static double path_getmtime(const std::string& path);
    static int get_pid();
