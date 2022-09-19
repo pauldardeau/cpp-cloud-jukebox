@@ -682,6 +682,7 @@ void Jukebox::play_song(const string& song_file_path) {
 	       std::copy(vec_addl_args.begin(), vec_addl_args.end(), std::back_inserter(vec_args));
             }
 	    vec_args.push_back(song_file_path);
+	    //TODO: (1) convert to use of va_args
 	    int rc;
 	    const auto num_args = vec_args.size();
 	    if (num_args == 2) {
