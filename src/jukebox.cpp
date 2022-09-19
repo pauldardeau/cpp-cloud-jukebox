@@ -15,8 +15,10 @@
 #include "StringTokenizer.h"
 #include "StrUtils.h"
 #include "PthreadsThread.h"
+#include "nlohmann/json.hpp"
 
 using namespace std;
+using json = nlohmann::json;
 
 static Jukebox* g_jukebox_instance = NULL;
 
@@ -260,16 +262,14 @@ bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
 }
 
 bool Jukebox::store_song_playlist(const string& file_name, const string& file_contents) {
-   //TODO: (2) json deserialization (store_song_playlist)
-   //pl = json.loads(file_contents);
-   //if ("name" in pl.keys()) {
-   //    string pl_name = pl["name"];
-   //    string pl_uid = file_name;
-   //    return jukebox_db->insert_playlist(pl_uid, pl_name);
-   //} else {
-   //   return false;
-   //}
-   return false;
+   json pl = json::parse(file_contents);
+   if (pl.contains("name")) {
+      string pl_name = pl["name"];
+      string pl_uid = file_name;
+      return jukebox_db->insert_playlist(pl_uid, pl_name);
+   } else {
+      return false;
+   }
 }
 
 void Jukebox::get_encryptor() {
@@ -1154,7 +1154,7 @@ void Jukebox::show_playlists() {
 }
 
 void Jukebox::show_playlist(const string& playlist) {
-   printf("TODO: (2) implement (show_playlist)\n");
+   printf("TODO: (1) implement (show_playlist)\n");
 }
 
 void Jukebox::play_playlist(const string& playlist) {
