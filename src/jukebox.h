@@ -112,6 +112,7 @@ public:
    static std::string song_from_file_name(const std::string& file_name);
 
    static void string_to_vector(const std::string& s, std::vector<unsigned char>& v);
+   static void vector_to_string(const std::vector<unsigned char>& v, std::string& s);
 
    bool store_song_metadata(const SongMetadata& fs_song);
    bool store_song_playlist(const std::string& file_name,

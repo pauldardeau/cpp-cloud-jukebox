@@ -255,6 +255,21 @@ void Jukebox::string_to_vector(const string& s, vector<unsigned char>& v) {
    std::copy(s.begin(), s.end(), std::back_inserter(v));
 }
 
+void Jukebox::vector_to_string(const vector<unsigned char>& v, string& s) {
+   // ensure that string has required capacity
+   s.reserve(v.size());
+
+   // copy each character
+   auto it = v.begin();
+   const auto it_end = v.end();
+   for (; it != it_end; it++) {
+      unsigned char u_char = *it;
+      char s_char = (char) u_char;
+      // append character to string
+      s.push_back(s_char);
+   }
+}
+
 bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
    SongMetadata db_song;
    if (jukebox_db->retrieve_song(fs_song.fm.file_uid, db_song)) {
@@ -1190,8 +1205,51 @@ void Jukebox::show_playlists() {
    }
 }
 
-void Jukebox::show_playlist(const string& playlist) {
-   printf("TODO: (1) implement (show_playlist)\n");
+void Jukebox::show_playlist(const string& playlist_name) {
+   if (jukebox_db != NULL) {
+      // look up the playlist_uid in the DB
+      string playlist_uid = jukebox_db->get_playlist(playlist_name);
+
+      if (playlist_uid.length() > 0) {
+         // retrieve the playlist file from storage
+	 string local_file_path = chaudiere::OSUtils::pathJoin(chaudiere::OSUtils::getCurrentDirectory(), playlist_uid);
+	 if (storage_system.get_object(playlist_container, playlist_uid, local_file_path) > 0) {
+            string file_contents;
+            if (Utils::file_read_all_text(local_file_path, file_contents)) {
+               json pl_json = json::parse(file_contents);
+               // print the list of songs
+	       if (pl_json.contains("songs")) {
+                  json songs = pl_json["songs"];
+                  for (auto it = songs.begin(); it != songs.end(); it++) {
+                     json song_dict = it.value();
+		     if (song_dict.contains("artist") &&
+                         song_dict.contains("album") &&
+                         song_dict.contains("song")) {
+
+                        string artist = song_dict["artist"];
+                        string album = song_dict["album"];
+                        string song = song_dict["song"];
+
+			if (artist.length() > 0 && album.length() > 0 && song.length() > 0) {
+                           printf("%s (%s : %s)\n", song.c_str(), artist.c_str(), album.c_str());
+                        }
+                     }
+                  }
+               } else {
+                  printf("error: playlist json does not contain 'songs' element\n");
+               }
+            } else {
+               printf("error: unable to read file '%s'\n", local_file_path.c_str());
+            }
+	 } else {
+            printf("error: playlist not found '%s'\n", playlist_uid.c_str());
+         }
+      } else {
+         printf("error: playlist not found in DB: '%s'\n", playlist_name.c_str());
+      }
+   } else {
+      printf("error: DB is not open\n");
+   }
 }
 
 void Jukebox::play_playlist(const string& playlist) {
