@@ -828,7 +828,7 @@ void Jukebox::play_song(const string& song_file_path) {
          chaudiere::OSUtils::deleteFile(song_file_path);
       }
    } else {
-      printf("song file doesn't exist: %s\n", song_file_path.c_str());
+      printf("%s\n", song_file_path.c_str());
       Utils::file_append_all_text("404.txt", song_file_path);
    }
 }
