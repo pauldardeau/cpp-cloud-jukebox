@@ -1205,43 +1205,56 @@ void Jukebox::show_playlists() {
    }
 }
 
-void Jukebox::show_playlist(const string& playlist_name) {
+bool Jukebox::get_playlist_songs(const string& playlist_name, vector<SongMetadata>& list_songs) {
+   bool success = false;
    if (jukebox_db != NULL) {
       // look up the playlist_uid in the DB
       string playlist_uid = jukebox_db->get_playlist(playlist_name);
 
       if (playlist_uid.length() > 0) {
          // retrieve the playlist file from storage
-	 string local_file_path = chaudiere::OSUtils::pathJoin(chaudiere::OSUtils::getCurrentDirectory(), playlist_uid);
-	 if (storage_system.get_object(playlist_container, playlist_uid, local_file_path) > 0) {
+         string local_file_path = chaudiere::OSUtils::pathJoin(chaudiere::OSUtils::getCurrentDirectory(), playlist_uid);
+         if (storage_system.get_object(playlist_container, playlist_uid, local_file_path) > 0) {
             string file_contents;
             if (Utils::file_read_all_text(local_file_path, file_contents)) {
                json pl_json = json::parse(file_contents);
                // print the list of songs
-	       if (pl_json.contains("songs")) {
+               if (pl_json.contains("songs")) {
                   json songs = pl_json["songs"];
+		  int songs_added = 0;
                   for (auto it = songs.begin(); it != songs.end(); it++) {
                      json song_dict = it.value();
-		     if (song_dict.contains("artist") &&
+                     if (song_dict.contains("artist") &&
                          song_dict.contains("album") &&
                          song_dict.contains("song")) {
 
                         string artist = song_dict["artist"];
                         string album = song_dict["album"];
-                        string song = song_dict["song"];
+                        string song_name = song_dict["song"];
 
-			if (artist.length() > 0 && album.length() > 0 && song.length() > 0) {
-                           printf("%s (%s : %s)\n", song.c_str(), artist.c_str(), album.c_str());
+                        if (artist.length() > 0 && album.length() > 0 && song_name.length() > 0) {
+                           string dashes = "--";
+                           string encoded_song = JBUtils::encode_value(artist) + dashes +
+                                                 JBUtils::encode_value(album) + dashes +
+                                                 JBUtils::encode_value(song_name);
+			   SongMetadata song;
+			   if (jukebox_db->retrieve_song(encoded_song, song)) {
+			      list_songs.push_back(song);
+                              songs_added++;
+			   } else {
+                              printf("error: unable to retrieve metadata for '%s'\n", encoded_song.c_str());
+                           }
                         }
                      }
                   }
+		  success = (songs_added > 0);
                } else {
                   printf("error: playlist json does not contain 'songs' element\n");
                }
             } else {
                printf("error: unable to read file '%s'\n", local_file_path.c_str());
             }
-	 } else {
+         } else {
             printf("error: playlist not found '%s'\n", playlist_uid.c_str());
          }
       } else {
@@ -1250,10 +1263,30 @@ void Jukebox::show_playlist(const string& playlist_name) {
    } else {
       printf("error: DB is not open\n");
    }
+   return success;
 }
 
-void Jukebox::play_playlist(const string& playlist) {
+void Jukebox::show_playlist(const string& playlist_name) {
+   vector<SongMetadata> list_songs;
+   if (get_playlist_songs(playlist_name, list_songs)) {
+      auto it = list_songs.begin();
+      const auto it_end = list_songs.end();
+      for (; it != it_end; it++) {
+         const SongMetadata& song = *it;
+         printf("%s : %s\n", song.song_name.c_str(), song.artist_name.c_str());
+      }
+   }
+}
+
+void Jukebox::play_playlist(const string& playlist_name) {
    printf("TODO: (2) implement (play_playlist)\n");
+
+   vector<SongMetadata> list_songs;
+   if (get_playlist_songs(playlist_name, list_songs)) {
+      //TODO: (1) call play with list of playlist songs
+   } else {
+      printf("error: unable to retrieve playlist songs\n");
+   }
 }
 
 bool Jukebox::delete_song(const string& song_uid, bool upload_metadata) {
