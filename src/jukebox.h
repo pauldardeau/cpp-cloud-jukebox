@@ -10,6 +10,8 @@
 #include "song_metadata.h"
 #include "storage_system.h"
 #include "PthreadsThread.h"
+#include "Runnable.h"
+#include "RunCompletionObserver.h"
 
 class JukeboxDB;
 class SongDownloader;
@@ -58,7 +60,7 @@ public:
 };
 
 
-class Jukebox {
+class Jukebox : public chaudiere::RunCompletionObserver {
 public:
    JukeboxOptions jukebox_options;
    StorageSystem& storage_system;
@@ -90,6 +92,7 @@ public:
    SongDownloader* downloader;
    chaudiere::PthreadsThread* download_thread;
    bool player_active;
+   bool downloader_ready_to_delete;
 
    Jukebox(const JukeboxOptions& jb_options,
            StorageSystem& storage_sys,
@@ -128,9 +131,12 @@ public:
    void batch_download_start();
    void batch_download_complete();
 
+   virtual void notifyRunComplete(chaudiere::Runnable* runnable);
+
    bool download_song(const SongMetadata& song);
    void play_song(const std::string& song_file_path);
    void download_songs();
+   void downloader_cleanup();
    void play_songs(bool shuffle=false,
 		   std::string artist="",
 		   std::string album="");

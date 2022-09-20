@@ -67,7 +67,8 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    song_seconds_offset(0),
    downloader(NULL),
    download_thread(NULL),
-   player_active(false)
+   player_active(false),
+   downloader_ready_to_delete(false)
 {
    g_jukebox_instance = this;
 
@@ -593,13 +594,14 @@ void Jukebox::batch_download_complete() {
       }
       cumulative_download_bytes = 0;
       cumulative_download_time = 0.0;
+   }
+}
 
-      Utils::time_sleep(1);
-      delete downloader;
-      downloader = NULL;
-
-      delete download_thread;
-      download_thread = NULL;
+void Jukebox::notifyRunComplete(chaudiere::Runnable* runnable) {
+   printf("notifyRunComplete called\n");
+   if (runnable == downloader) {
+      printf("setting downloader_ready_to_delete to true\n");
+      downloader_ready_to_delete = true;
    }
 }
 
@@ -878,10 +880,33 @@ void Jukebox::download_songs() {
             //printf("creating SongDownloader\n");
             downloader = new SongDownloader(*this, dl_songs);
             download_thread = new chaudiere::PthreadsThread(downloader);
+	    chaudiere::RunCompletionObserver* observer = static_cast<chaudiere::RunCompletionObserver*>(this);
+	    if (observer != NULL) {
+               printf("setting jukebox as completion observer\n");
+	       downloader->setCompletionObserver(observer);
+            } else {
+               printf("jukebox NOT recognized as a completion observer!!!!\n");
+            }
             //printf("starting thread to download songs\n");
             download_thread->start();
 	 } else {
          }
+      }
+   }
+}
+
+void Jukebox::downloader_cleanup() {
+   if (downloader_ready_to_delete) {
+      printf("downloader_ready_to_delete is true\n");
+      if (downloader != NULL && download_thread != NULL) {
+         printf("deleting downloader and download thread\n");
+         downloader_ready_to_delete = false;
+         delete downloader;
+         downloader = NULL;
+         delete download_thread;
+         download_thread = NULL;
+      } else {
+         printf("NOT deleting b/c 1 or both is NULL\n");
       }
    }
 }
@@ -965,6 +990,8 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
             Utils::file_write_all_text("jukebox.pid", str_pid_text);
 
             while (!exit_requested) {
+               downloader_cleanup();
+
                if (!is_paused) {
                   if (downloader == NULL && download_thread == NULL) {
                      //printf("DEBUG: calling download_songs\n");
@@ -973,6 +1000,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
 		     if (!player_active) {
                         play_song(song_path_in_playlist(song_list[song_index]));
 		     }
+		     downloader_cleanup();
 		  }
                }
                if (!is_paused) {
