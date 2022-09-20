@@ -352,14 +352,12 @@ void Jukebox::import_songs() {
 
       if (!debug_print) {
          // setup progressbar
-         /*
-         string bar = new string('*', progressbar_width);
+	 string bar = chaudiere::StrUtils::makeStringOfChar('*', progressbar_width);
          string bar_text = "[" + bar + "]";
          Utils::sys_stdout_write(bar_text);
          Utils::sys_stdout_flush();
-         bar = new string('\b', progressbar_width + 1);
+	 bar = chaudiere::StrUtils::makeStringOfChar('\b', progressbar_width + 1);
          Utils::sys_stdout_write(bar);  // return to start of line, after '['
-         */
       }
 
       //TODO: (3) encryption support (import_songs)
