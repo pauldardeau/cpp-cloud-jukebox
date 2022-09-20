@@ -808,8 +808,8 @@ void Jukebox::play_song(const SongMetadata& song) {
          chaudiere::OSUtils::deleteFile(song_file_path);
       }
    } else {
-      printf("%s\n", song_file_path.c_str());
-      Utils::file_append_all_text("404.txt", song_file_path);
+      printf("file not found: %s\n", song.fm.file_uid.c_str());
+      Utils::file_append_all_text("404.txt", song.fm.file_uid);
    }
 }
 
@@ -870,7 +870,7 @@ void Jukebox::download_songs() {
 void Jukebox::downloader_cleanup() {
    if (downloader_ready_to_delete) {
       if (downloader != NULL && download_thread != NULL) {
-         printf("deleting downloader and download thread\n");
+         //printf("deleting downloader and download thread\n");
          downloader_ready_to_delete = false;
          delete downloader;
          downloader = NULL;
