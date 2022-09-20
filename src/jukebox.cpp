@@ -16,7 +16,6 @@
 #include "OSUtils.h"
 #include "StringTokenizer.h"
 #include "StrUtils.h"
-//#include "StdThread.h"
 #include "PthreadsThread.h"
 #include "nlohmann/json.hpp"
 
@@ -38,10 +37,8 @@ void signal_handler(int signum) {
 }
 
 void install_signal_handlers() {
-//#if defined(__linux__)
    signal(SIGUSR1, signal_handler);
    signal(SIGUSR2, signal_handler);
-//#endif
 }
 
 
@@ -376,12 +373,10 @@ void Jukebox::import_songs() {
 
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
-         //printf("DEBUG: %s\n", listing_entry.c_str());
          string full_path = chaudiere::OSUtils::pathJoin(song_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string file_name = listing_entry;
-	    //printf("DEBUG: calling Utils::path_splitext with '%s'\n", full_path.c_str());
             vector<string> path_elems = Utils::path_splitext(full_path);
             const string& extension = path_elems[1];
             if (extension.length() > 0) {
@@ -410,9 +405,7 @@ void Jukebox::import_songs() {
                   bool file_read = false;
                   vector<unsigned char> file_contents;
 
-		  //printf("DEBUG: calling Utils::file_read_all_bytes\n");
                   if (Utils::file_read_all_bytes(full_path, file_contents)) {
-                     //printf("DEBUG: file_read_all_bytes succeeded\n");
                      file_read = true;
                   } else {
                      printf("error: unable to read file %s\n", full_path.c_str());
@@ -459,20 +452,15 @@ void Jukebox::import_songs() {
                      fs_song.fm.stored_file_size = file_contents.size();
                      double start_upload_time = Utils::time_time();
 
-		     //printf("DEBUG: calling storage_system.put_object\n");
-
                      // store song file to storage system
                      if (storage_system.put_object(fs_song.fm.container_name,
                                                    fs_song.fm.object_name,
                                                    file_contents,
                                                    NULL)) {
-                        //printf("DEBUG: put_object succeeded\n");
                         double end_upload_time = Utils::time_time();
                         double upload_elapsed_time = end_upload_time - start_upload_time;
                         cumulative_upload_time += upload_elapsed_time;
                         cumulative_upload_bytes += file_contents.size();
-
-			//printf("DEBUG: calling store_song_metadata\n");
 
                         // store song metadata in local database
                         if (!store_song_metadata(fs_song)) {
@@ -485,8 +473,6 @@ void Jukebox::import_songs() {
                            storage_system.delete_object(fs_song.fm.container_name,
                                                         fs_song.fm.object_name);
                         } else {
-                           //printf("DEBUG: stored in DB successfully\n");
-			   //printf("DEBUG: incrementing file_import_count\n");
                            file_import_count += 1;
                         }
                      } else {
@@ -526,7 +512,6 @@ void Jukebox::import_songs() {
       }
 
       if (file_import_count > 0) {
-         //printf("DEBUG: calling upload_metadata_db\n");
          upload_metadata_db();
       } else {
          printf("DEBUG: file_import_count == 0, not uploading metadata DB\n");
@@ -598,9 +583,7 @@ void Jukebox::batch_download_complete() {
 }
 
 void Jukebox::notifyRunComplete(chaudiere::Runnable* runnable) {
-   //printf("notifyRunComplete called\n");
    if (runnable == downloader) {
-      //printf("setting downloader_ready_to_delete to true\n");
       downloader_ready_to_delete = true;
    }
 }
@@ -700,7 +683,6 @@ void Jukebox::play_song(const SongMetadata& song) {
 	 pid_t pid = fork();
 	 if (pid == 0) {
             // child
-	    //printf("++++++++++++++ child process created\n");
 	    string base_exe_name;
             vector<string> path_components = Utils::path_split(audio_player_exe_file_name);
             if (path_components.size() == 2) {
@@ -722,7 +704,6 @@ void Jukebox::play_song(const SongMetadata& song) {
 	       std::copy(vec_addl_args.begin(), vec_addl_args.end(), std::back_inserter(vec_args));
             }
 	    vec_args.push_back(song_file_path);
-	    //TODO: (1) convert to use of va_args
 	    int rc;
 	    const auto num_args = vec_args.size();
 	    if (num_args == 2) {
@@ -794,15 +775,12 @@ void Jukebox::play_song(const SongMetadata& song) {
             started_audio_player = true;
             song_start_time = Utils::time_time();
 	    int status = 0;
-	    int options = 0; //WEXITED;
+	    int options = 0;
 	    audio_player_process = pid;
-	    // errno 22 = EINVAL
             pid_t rc_pid = waitpid(pid, &status, options);
-	    //printf("############## audio player pid = %d\n", pid);
             if (rc_pid == pid) {
                if (WIFEXITED(status)) {
                   exit_code = WEXITSTATUS(status);
-		  //printf("player exited, exit_code = %d\n", exit_code);
 		  player_active = false;
                } else {
                   printf("waitpid returned, but player not exited\n");
@@ -879,11 +857,9 @@ void Jukebox::download_songs() {
 
       if (dl_songs.size() > 0) {
          if (downloader == NULL && download_thread == NULL) {
-            //printf("creating SongDownloader\n");
             downloader = new SongDownloader(*this, dl_songs);
             download_thread = new chaudiere::PthreadsThread(downloader);
 	    downloader->setCompletionObserver(this);
-            //printf("starting thread to download songs\n");
             download_thread->start();
 	 } else {
          }
@@ -893,7 +869,6 @@ void Jukebox::download_songs() {
 
 void Jukebox::downloader_cleanup() {
    if (downloader_ready_to_delete) {
-      //printf("downloader_ready_to_delete is true\n");
       if (downloader != NULL && download_thread != NULL) {
          printf("deleting downloader and download thread\n");
          downloader_ready_to_delete = false;
@@ -991,9 +966,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
 
                if (!is_paused) {
                   if (downloader == NULL && download_thread == NULL) {
-                     //printf("DEBUG: calling download_songs\n");
                      download_songs();
-                     //printf("DEBUG: back from download_songs, calling play_song\n");
 		     if (!player_active) {
                         play_song(song_list[song_index]);
 		     }
