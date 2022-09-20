@@ -134,7 +134,7 @@ public:
    virtual void notifyRunComplete(chaudiere::Runnable* runnable);
 
    bool download_song(const SongMetadata& song);
-   void play_song(const std::string& song_file_path);
+   void play_song(const SongMetadata& song);
    void download_songs();
    void downloader_cleanup();
    void play_songs(bool shuffle=false,

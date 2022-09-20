@@ -684,13 +684,15 @@ bool Jukebox::download_song(const SongMetadata& song) {
    return false;
 }
 
-void Jukebox::play_song(const string& song_file_path) {
+void Jukebox::play_song(const SongMetadata& song) {
    if (player_active) {
       return;
    }
 
+   string song_file_path = song_path_in_playlist(song);
+
    if (Utils::path_exists(song_file_path)) {
-      printf("playing %s\n", song_file_path.c_str());
+      printf("playing %s\n", song.fm.file_uid.c_str());
 
       if (audio_player_command_args.length() > 0) {
          int exit_code = -1;
@@ -993,7 +995,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
                      download_songs();
                      //printf("DEBUG: back from download_songs, calling play_song\n");
 		     if (!player_active) {
-                        play_song(song_path_in_playlist(song_list[song_index]));
+                        play_song(song_list[song_index]);
 		     }
 		     downloader_cleanup();
 		  }
