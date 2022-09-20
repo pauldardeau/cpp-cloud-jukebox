@@ -245,12 +245,13 @@ bool JukeboxDB::songs_for_query(DBResultSet* rs,
          song.fm.object_name = *object_name;
          delete object_name;
       }
-      //TODO: (1) retrieve column for album uid
-      //if (!rs->IsDBNull(13)) {
-      //   song.album_uid = rs->stringForColumnIndex(13);
-      //} else {
-      //   song.album_uid = "";
-      //}
+      string* album_uid = rs->stringForColumnIndex(13);
+      if (album_uid != NULL) {
+         song.album_uid = *album_uid;
+	 delete album_uid;
+      } else {
+         song.album_uid = "";
+      }
       vec_songs.push_back(song);
       num_songs++;
    }
@@ -332,7 +333,6 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
    bool insert_success = false;
 
    if (db_is_open) {
-      //TODO: (2) fix unidentified column for new song record (insert_song)
       string sql = "INSERT INTO song "
                    "VALUES (?,"
                            "?,"
@@ -356,7 +356,7 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
       args.add(new DBLong(song.fm.stored_file_size));
       args.add(new DBLong(song.fm.pad_char_count));
       args.add(new DBString(song.artist_name));
-      args.add(new DBString(""));
+      args.add(new DBString(song.artist_uid));
       args.add(new DBString(song.song_name));
       args.add(new DBString(song.fm.md5_hash));
       args.add(new DBInt(song.fm.compressed));
