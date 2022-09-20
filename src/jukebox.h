@@ -138,6 +138,7 @@ public:
    void play_song(const SongMetadata& song);
    void download_songs();
    void downloader_cleanup();
+   void play_retrieved_songs(bool shuffle);
    void play_songs(bool shuffle=false,
                    std::string artist="",
                    std::string album="");

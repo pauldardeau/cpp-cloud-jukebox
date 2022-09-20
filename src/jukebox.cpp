@@ -899,6 +899,10 @@ void Jukebox::downloader_cleanup() {
 
 void Jukebox::play_songs(bool shuffle, string artist, string album) {
    song_list = jukebox_db->retrieve_album_songs(artist, album);
+   play_retrieved_songs(shuffle);
+}
+
+void Jukebox::play_retrieved_songs(bool shuffle) {
    if (song_list.size() > 0) {
       number_songs = song_list.size();
 
@@ -1279,11 +1283,10 @@ void Jukebox::show_playlist(const string& playlist_name) {
 }
 
 void Jukebox::play_playlist(const string& playlist_name) {
-   printf("TODO: (2) implement (play_playlist)\n");
-
    vector<SongMetadata> list_songs;
    if (get_playlist_songs(playlist_name, list_songs)) {
-      //TODO: (1) call play with list of playlist songs
+      song_list = list_songs;
+      play_retrieved_songs(false);
    } else {
       printf("error: unable to retrieve playlist songs\n");
    }
