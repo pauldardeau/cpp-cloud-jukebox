@@ -393,7 +393,7 @@ void Jukebox::import_songs() {
                   fs_song.fm.file_time = Utils::datetime_datetime_fromtimestamp(Utils::path_getmtime(full_path));
                   fs_song.artist_name = artist;
                   fs_song.song_name = song;
-                  fs_song.fm.md5_hash = ""; //TODO: add Utils::md5_for_file(full_path);
+                  fs_song.fm.md5_hash = ""; //TODO: (1) add Utils::md5_for_file(full_path);
                   fs_song.fm.compressed = jukebox_options.use_compression ? 1 : 0;
                   fs_song.fm.encrypted = jukebox_options.use_encryption ? 1 : 0;
                   fs_song.fm.object_name = object_name;
