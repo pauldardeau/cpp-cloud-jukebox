@@ -595,13 +595,13 @@ bool Jukebox::download_song(const SongMetadata& song) {
 
    string file_path = song_path_in_playlist(song);
    double download_start_time = Utils::time_time();
-   int song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
+   unsigned long song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
    if (exit_requested) {
       return false;
    }
 
    if (debug_print) {
-      printf("bytes retrieved: %d\n", song_bytes_retrieved);
+      printf("bytes retrieved: %ld\n", song_bytes_retrieved);
    }
 
    if (song_bytes_retrieved > 0) {
