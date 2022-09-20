@@ -3,6 +3,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <random>
+#include <algorithm>
 
 #include "jukebox.h"
 #include "jukebox_db.h"
@@ -398,7 +400,7 @@ void Jukebox::import_songs() {
                   fs_song.fm.file_time = Utils::datetime_datetime_fromtimestamp(Utils::path_getmtime(full_path));
                   fs_song.artist_name = artist;
                   fs_song.song_name = song;
-                  fs_song.fm.md5_hash = ""; //Utils::md5_for_file(full_path);
+                  fs_song.fm.md5_hash = ""; //TODO: add Utils::md5_for_file(full_path);
                   fs_song.fm.compressed = jukebox_options.use_compression ? 1 : 0;
                   fs_song.fm.encrypted = jukebox_options.use_encryption ? 1 : 0;
                   fs_song.fm.object_name = object_name;
@@ -598,9 +600,9 @@ void Jukebox::batch_download_complete() {
 }
 
 void Jukebox::notifyRunComplete(chaudiere::Runnable* runnable) {
-   printf("notifyRunComplete called\n");
+   //printf("notifyRunComplete called\n");
    if (runnable == downloader) {
-      printf("setting downloader_ready_to_delete to true\n");
+      //printf("setting downloader_ready_to_delete to true\n");
       downloader_ready_to_delete = true;
    }
 }
@@ -880,13 +882,7 @@ void Jukebox::download_songs() {
             //printf("creating SongDownloader\n");
             downloader = new SongDownloader(*this, dl_songs);
             download_thread = new chaudiere::PthreadsThread(downloader);
-	    chaudiere::RunCompletionObserver* observer = static_cast<chaudiere::RunCompletionObserver*>(this);
-	    if (observer != NULL) {
-               printf("setting jukebox as completion observer\n");
-	       downloader->setCompletionObserver(observer);
-            } else {
-               printf("jukebox NOT recognized as a completion observer!!!!\n");
-            }
+	    downloader->setCompletionObserver(this);
             //printf("starting thread to download songs\n");
             download_thread->start();
 	 } else {
@@ -897,7 +893,7 @@ void Jukebox::download_songs() {
 
 void Jukebox::downloader_cleanup() {
    if (downloader_ready_to_delete) {
-      printf("downloader_ready_to_delete is true\n");
+      //printf("downloader_ready_to_delete is true\n");
       if (downloader != NULL && download_thread != NULL) {
          printf("deleting downloader and download thread\n");
          downloader_ready_to_delete = false;
@@ -972,8 +968,9 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
       printf("downloading first song...\n");
 
       if (shuffle) {
-         //TODO: (1) implement shuffling list (play_songs)
-         //song_list = random.sample(song_list, song_list.size());
+         std::random_device rd;
+         std::default_random_engine rng(rd());
+         std::shuffle(song_list.begin(), song_list.end(), rng);
       }
 
       try
