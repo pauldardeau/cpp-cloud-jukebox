@@ -251,6 +251,10 @@ string Jukebox::song_from_file_name(const string& file_name) {
    return string("");
 }
 
+void Jukebox::string_to_vector(const string& s, vector<unsigned char>& v) {
+   std::copy(s.begin(), s.end(), std::back_inserter(v));
+}
+
 bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
    SongMetadata db_song;
    if (jukebox_db->retrieve_song(fs_song.fm.file_uid, db_song)) {
@@ -589,7 +593,12 @@ void Jukebox::batch_download_complete() {
       }
       cumulative_download_bytes = 0;
       cumulative_download_time = 0.0;
+
+      Utils::time_sleep(1);
+      delete downloader;
       downloader = NULL;
+
+      delete download_thread;
       download_thread = NULL;
    }
 }
@@ -1149,7 +1158,7 @@ void Jukebox::import_playlists() {
 	    string file_contents;
 	    if (Utils::file_read_all_text(full_path, file_contents)) {
                vector<unsigned char> v_file_contents;
-	       std::copy(file_contents.begin(), file_contents.end(), std::back_inserter(v_file_contents));
+	       string_to_vector(file_contents, v_file_contents);
                if (storage_system.put_object(playlist_container,
                                              object_name,
                                              v_file_contents,
