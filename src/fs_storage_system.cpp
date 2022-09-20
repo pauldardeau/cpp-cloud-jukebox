@@ -95,7 +95,7 @@ bool FSStorageSystem::put_object(const string& container_name,
       if (chaudiere::OSUtils::directoryExists(container_dir)) {
          string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
          object_added = Utils::file_write_all_bytes(object_path, file_contents);
-	 if (object_added) {
+         if (object_added) {
             if (debug_mode) {
                printf("object added: %s/%s\n", container_name.c_str(), object_name.c_str());
             }

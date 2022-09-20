@@ -42,7 +42,7 @@ public:
 
    int get_object(const std::string& container_name,
                   const std::string& object_name,
-		  const std::string& local_file_path);
+                  const std::string& local_file_path);
 };
 
 #endif

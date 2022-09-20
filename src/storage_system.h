@@ -35,7 +35,7 @@ public:
    std::string un_prefixed_container(const std::string& container_name) {
       if (container_prefix.length() > 0 && container_name.length() > 0) {
          // does the container name begin with the prefix?
-	 if (container_name.rfind(container_prefix, 0) == 0) {
+         if (container_name.rfind(container_prefix, 0) == 0) {
             int unprefixed_len = container_name.length() - container_prefix.length();
             return container_name.substr(container_prefix.length(),
                                          unprefixed_len);
@@ -79,24 +79,23 @@ public:
       if (file_contents.size() > 0) {
          PropertySet dict_props;
          fm.to_dictionary(dict_props, metadata_prefix);
-         bool success = put_object(fm.container_name,
-                                   fm.object_name,
-                                   file_contents,
-                                   &dict_props);
-	 return success;
+         return put_object(fm.container_name,
+                           fm.object_name,
+                           file_contents,
+                           &dict_props);
       }
       return false;
    }
 
    bool add_file_from_path(const std::string& container_name,
                            const std::string& object_name,
-			   const std::string& file_path) {
+                           const std::string& file_path) {
       if (container_name.length() > 0 &&
           object_name.length() > 0 &&
-	  file_path.length() > 0) {
+          file_path.length() > 0) {
 
          std::vector<unsigned char> file_contents;
-	 bool success = Utils::file_read_all_bytes(file_path, file_contents);
+         bool success = Utils::file_read_all_bytes(file_path, file_contents);
          if (success && file_contents.size() > 0) {
             return put_object(container_name, object_name, file_contents, NULL);
          } else {
@@ -118,19 +117,19 @@ public:
 
    virtual bool get_object_metadata(const std::string& container_name,
                                     const std::string& object_name,
-				    PropertySet& dict_props) = 0;
+                                    PropertySet& dict_props) = 0;
 
    virtual bool put_object(const std::string& container_name,
-		           const std::string& object_name,
-		           const std::vector<unsigned char>& object_bytes,
-		           const PropertySet* headers=NULL) = 0;
+                           const std::string& object_name,
+                           const std::vector<unsigned char>& object_bytes,
+                           const PropertySet* headers=NULL) = 0;
 
    virtual bool delete_object(const std::string& container_name,
                               const std::string& object_name) = 0;
 
    virtual int get_object(const std::string& container_name,
                           const std::string& object_name,
-			  const std::string& local_file_path) = 0;
+                          const std::string& local_file_path) = 0;
 
    virtual bool enter() = 0;
    virtual void exit() = 0;

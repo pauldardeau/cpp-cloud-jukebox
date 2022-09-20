@@ -349,11 +349,11 @@ void Jukebox::import_songs() {
 
       if (!debug_print) {
          // setup progressbar
-	 string bar = chaudiere::StrUtils::makeStringOfChar('*', progressbar_width);
+         string bar = chaudiere::StrUtils::makeStringOfChar('*', progressbar_width);
          string bar_text = "[" + bar + "]";
          Utils::sys_stdout_write(bar_text);
          Utils::sys_stdout_flush();
-	 bar = chaudiere::StrUtils::makeStringOfChar('\b', progressbar_width + 1);
+         bar = chaudiere::StrUtils::makeStringOfChar('\b', progressbar_width + 1);
          Utils::sys_stdout_write(bar);  // return to start of line, after '['
       }
 
@@ -680,10 +680,10 @@ void Jukebox::play_song(const SongMetadata& song) {
       if (audio_player_command_args.length() > 0) {
          int exit_code = -1;
          bool started_audio_player = false;
-	 pid_t pid = fork();
-	 if (pid == 0) {
+         pid_t pid = fork();
+         if (pid == 0) {
             // child
-	    string base_exe_name;
+            string base_exe_name;
             vector<string> path_components = Utils::path_split(audio_player_exe_file_name);
             if (path_components.size() == 2) {
                const string& tail = path_components[1];
@@ -692,37 +692,37 @@ void Jukebox::play_song(const SongMetadata& song) {
                }
             }
 
-	    if (base_exe_name.length() == 0) {
+            if (base_exe_name.length() == 0) {
                base_exe_name = audio_player_exe_file_name;
             }
 
-	    vector<string> vec_args;
-	    vec_args.push_back(base_exe_name);
+            vector<string> vec_args;
+            vec_args.push_back(base_exe_name);
 
-	    if (audio_player_command_args.length() > 0) {
-	       vector<string> vec_addl_args = chaudiere::StrUtils::split(audio_player_command_args, " ");
-	       std::copy(vec_addl_args.begin(), vec_addl_args.end(), std::back_inserter(vec_args));
+            if (audio_player_command_args.length() > 0) {
+               vector<string> vec_addl_args = chaudiere::StrUtils::split(audio_player_command_args, " ");
+               std::copy(vec_addl_args.begin(), vec_addl_args.end(), std::back_inserter(vec_args));
             }
-	    vec_args.push_back(song_file_path);
-	    int rc;
-	    const auto num_args = vec_args.size();
-	    if (num_args == 2) {
+            vec_args.push_back(song_file_path);
+            int rc;
+            const auto num_args = vec_args.size();
+            if (num_args == 2) {
                rc = execl(audio_player_exe_file_name.c_str(),
                           vec_args[0].c_str(),
-			  vec_args[1].c_str(),
-			  (char *) 0);
+                          vec_args[1].c_str(),
+                          (char *) 0);
             } else if (num_args == 3) {
                rc = execl(audio_player_exe_file_name.c_str(),
                           vec_args[0].c_str(),
                           vec_args[1].c_str(),
-			  vec_args[2].c_str(),
+                          vec_args[2].c_str(),
                           (char *) 0);
             } else if (num_args == 4) {
                rc = execl(audio_player_exe_file_name.c_str(),
                           vec_args[0].c_str(),
                           vec_args[1].c_str(),
-			  vec_args[2].c_str(),
-			  vec_args[3].c_str(),
+                          vec_args[2].c_str(),
+                          vec_args[3].c_str(),
                           (char *) 0);
             } else if (num_args == 5) {
                rc = execl(audio_player_exe_file_name.c_str(),
@@ -730,7 +730,7 @@ void Jukebox::play_song(const SongMetadata& song) {
                           vec_args[1].c_str(),
                           vec_args[2].c_str(),
                           vec_args[3].c_str(),
-			  vec_args[4].c_str(),
+                          vec_args[4].c_str(),
                           (char *) 0);
             } else if (num_args == 6) {
                rc = execl(audio_player_exe_file_name.c_str(),
@@ -739,7 +739,7 @@ void Jukebox::play_song(const SongMetadata& song) {
                           vec_args[2].c_str(),
                           vec_args[3].c_str(),
                           vec_args[4].c_str(),
-			  vec_args[5].c_str(),
+                          vec_args[5].c_str(),
                           (char *) 0);
             } else if (num_args == 7) {
                rc = execl(audio_player_exe_file_name.c_str(),
@@ -749,7 +749,7 @@ void Jukebox::play_song(const SongMetadata& song) {
                           vec_args[3].c_str(),
                           vec_args[4].c_str(),
                           vec_args[5].c_str(),
-			  vec_args[6].c_str(),
+                          vec_args[6].c_str(),
                           (char *) 0);
             } else if (num_args == 8) {
                rc = execl(audio_player_exe_file_name.c_str(),
@@ -759,35 +759,35 @@ void Jukebox::play_song(const SongMetadata& song) {
                           vec_args[3].c_str(),
                           vec_args[4].c_str(),
                           vec_args[5].c_str(),
-			  vec_args[6].c_str(),
-			  vec_args[7].c_str(),
+                          vec_args[6].c_str(),
+                          vec_args[7].c_str(),
                           (char *) 0);
             } else {
                rc = -1;
             }
-	    if (rc == -1) {
+            if (rc == -1) {
                printf("+++++++******** ERROR: child process unable to start audio player\n");
                ::exit(1);
             }
          } else {
             // parent
-	    player_active = true;
+            player_active = true;
             started_audio_player = true;
             song_start_time = Utils::time_time();
-	    int status = 0;
-	    int options = 0;
-	    audio_player_process = pid;
+            int status = 0;
+            int options = 0;
+            audio_player_process = pid;
             pid_t rc_pid = waitpid(pid, &status, options);
             if (rc_pid == pid) {
                if (WIFEXITED(status)) {
                   exit_code = WEXITSTATUS(status);
-		  player_active = false;
+                  player_active = false;
                } else {
                   printf("waitpid returned, but player not exited\n");
                }
             } else {
                printf("waitpid return value (other than player pid) = %d\n", rc_pid);
-	       printf("errno = %d\n", errno);
+               printf("errno = %d\n", errno);
             }
             audio_player_process = -1;
          }
@@ -859,9 +859,9 @@ void Jukebox::download_songs() {
          if (downloader == NULL && download_thread == NULL) {
             downloader = new SongDownloader(*this, dl_songs);
             download_thread = new chaudiere::PthreadsThread(downloader);
-	    downloader->setCompletionObserver(this);
+            downloader->setCompletionObserver(this);
             download_thread->start();
-	 } else {
+         } else {
          }
       }
    }
@@ -967,11 +967,11 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
                if (!is_paused) {
                   if (downloader == NULL && download_thread == NULL) {
                      download_songs();
-		     if (!player_active) {
+                     if (!player_active) {
                         play_song(song_list[song_index]);
-		     }
-		     downloader_cleanup();
-		  }
+                     }
+                     downloader_cleanup();
+                  }
                }
                if (!is_paused) {
                   song_index++;
@@ -1153,10 +1153,10 @@ void Jukebox::import_playlists() {
          // ignore it if it's not a file
          if (Utils::file_exists(full_path)) {
             string object_name = listing_entry;
-	    string file_contents;
-	    if (Utils::file_read_all_text(full_path, file_contents)) {
+            string file_contents;
+            if (Utils::file_read_all_text(full_path, file_contents)) {
                vector<unsigned char> v_file_contents;
-	       string_to_vector(file_contents, v_file_contents);
+               string_to_vector(file_contents, v_file_contents);
                if (storage_system.put_object(playlist_container,
                                              object_name,
                                              v_file_contents,
@@ -1388,7 +1388,7 @@ bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
       const string& container_name = *it;
       if (!storage_sys.create_container(container_name)) {
          printf("error: unable to create container '%s'\n", container_name.c_str());
-	 return false;
+         return false;
       }
    }
 

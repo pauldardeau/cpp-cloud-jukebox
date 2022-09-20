@@ -446,13 +446,13 @@ void JukeboxMain::run(const vector<string>& console_args) {
          if (file_read && file_contents.length() > 0) {
             chaudiere::StringTokenizer st(file_contents, "\n");
 
-	    while (st.hasMoreTokens()) {
+            while (st.hasMoreTokens()) {
                const string& file_line = st.nextToken();
-	       vector<string> line_tokens = StrUtils::split(file_line, "=");
-	       if (line_tokens.size() == 2) {
+               vector<string> line_tokens = StrUtils::split(file_line, "=");
+               if (line_tokens.size() == 2) {
                   string key = chaudiere::StrUtils::strip(line_tokens[0]);
-		  string value = chaudiere::StrUtils::strip(line_tokens[1]);
-		  if (key.length() > 0 && value.length() > 0) {
+                  string value = chaudiere::StrUtils::strip(line_tokens[1]);
+                  if (key.length() > 0 && value.length() > 0) {
                      creds.add(key, new StrPropertyValue(value));
                   }
                }
@@ -554,10 +554,10 @@ void JukeboxMain::run(const vector<string>& console_args) {
                //printf("entering storage system\n");
                storage_system->enter();
 
-	       if (command == "init-storage") {
+               if (command == "init-storage") {
                   init_storage_system(storage_system);
                   Utils::sys_exit(0);
-	       }
+               }
 
                //printf("creating jukebox\n");
                Jukebox jukebox(options, *storage_system);
@@ -674,8 +674,8 @@ void JukeboxMain::run(const vector<string>& console_args) {
                jukebox.exit();
                if (storage_system != NULL) {
                   storage_system->exit();
-		  delete storage_system;
-		  storage_system = NULL;
+                  delete storage_system;
+                  storage_system = NULL;
                }
             }
             catch (exception& e)

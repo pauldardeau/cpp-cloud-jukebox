@@ -37,7 +37,7 @@ public:
    bool retrieve_song(const std::string& file_name, SongMetadata& song);
    bool insert_playlist(const std::string& pl_uid,
                         const std::string& pl_name,
-			std::string pl_desc = "");
+                        std::string pl_desc = "");
    bool delete_playlist(const std::string& pl_name);
    bool insert_song(const SongMetadata& song);
    bool update_song(const SongMetadata& song);

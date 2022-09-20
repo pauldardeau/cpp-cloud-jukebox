@@ -344,9 +344,9 @@ public:
          }
 
          const std::string& current = *it;
-	 combined += current;
+         combined += current;
 
-	 if (first_entry) {
+         if (first_entry) {
             first_entry = false;
          }
       }

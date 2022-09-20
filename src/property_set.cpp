@@ -116,10 +116,10 @@ bool PropertySet::write_to_file(const std::string& file_path) const {
 
       for (; it != it_end; it++) {
          const string& key = it->first;
-	 const PropertyValue* pv = it->second; 
-	 if (pv->is_bool()) {
+         const PropertyValue* pv = it->second; 
+         if (pv->is_bool()) {
             string value;
-	    if (pv->get_bool_value()) {
+            if (pv->get_bool_value()) {
                value = VALUE_TRUE;
             } else {
                value = VALUE_FALSE;
@@ -127,13 +127,13 @@ bool PropertySet::write_to_file(const std::string& file_path) const {
             fprintf(f, "%s|%s|%s\n", TYPE_BOOL.c_str(), key.c_str(), value.c_str());
          } else if (pv->is_string()) {
             fprintf(f, "%s|%s|%s\n", TYPE_STRING.c_str(), key.c_str(), pv->get_string_value().c_str());
-	 } else if (pv->is_int()) {
+         } else if (pv->is_int()) {
             fprintf(f, "%s|%s|%d\n", TYPE_INT.c_str(), key.c_str(), pv->get_int_value());
-	 } else if (pv->is_long()) {
+         } else if (pv->is_long()) {
             fprintf(f, "%s|%s|%ld\n", TYPE_LONG.c_str(), key.c_str(), pv->get_long_value());
-	 } else if (pv->is_ulong()) {
+         } else if (pv->is_ulong()) {
             fprintf(f, "%s|%s|%lu\n", TYPE_ULONG.c_str(), key.c_str(), pv->get_ulong_value());
-	 }
+         }
       }
       fclose(f);
       success = true;
@@ -147,26 +147,26 @@ bool PropertySet::read_from_file(const std::string& file_path) {
    if (Utils::file_read_all_text(file_path, file_contents)) {
       if (file_contents.length() > 0) {
          vector<string> file_lines = chaudiere::StrUtils::split(file_contents, "\n");
-	 auto it = file_lines.begin();
-	 const auto it_end = file_lines.end();
-	 for (; it != it_end; it++) {
+         auto it = file_lines.begin();
+         const auto it_end = file_lines.end();
+         for (; it != it_end; it++) {
             const string& file_line = *it;
-	    string stripped_line = chaudiere::StrUtils::strip(file_line);
-	    if (stripped_line.length() > 0) {
+            string stripped_line = chaudiere::StrUtils::strip(file_line);
+            if (stripped_line.length() > 0) {
                vector<string> fields = chaudiere::StrUtils::split(stripped_line, "|");
-	       if (fields.size() == 3) {
+               if (fields.size() == 3) {
                   const string& data_type = fields[0];
-		  const string& prop_name = fields[1];
-		  const string& prop_value = fields[2];
+                  const string& prop_name = fields[1];
+                  const string& prop_value = fields[2];
 
-		  if (data_type.length() > 0 &&
+                  if (data_type.length() > 0 &&
                       prop_name.length() > 0 &&
                       prop_value.length() > 0) {
 
                      if (data_type == TYPE_BOOL) {
                         if (prop_value == VALUE_TRUE || prop_value == VALUE_FALSE) {
                            bool bool_value = (prop_value == VALUE_TRUE);
-			   add(prop_name, new BoolPropertyValue(bool_value));
+                           add(prop_name, new BoolPropertyValue(bool_value));
                         } else {
                            printf("error: invalid value for type bool '%s'\n", data_type.c_str());
                            printf("skipping\n");
@@ -175,22 +175,22 @@ bool PropertySet::read_from_file(const std::string& file_path) {
                         add(prop_name, new StrPropertyValue(prop_value));
                      } else if (data_type == TYPE_INT) {
                         int int_value = chaudiere::StrUtils::parseInt(prop_value);
-			add(prop_name, new IntPropertyValue(int_value));
+                        add(prop_name, new IntPropertyValue(int_value));
                      } else if (data_type == TYPE_LONG) {
                         long long_value = chaudiere::StrUtils::parseLong(prop_value);
-			add(prop_name, new LongPropertyValue(long_value));
+                        add(prop_name, new LongPropertyValue(long_value));
                      } else if (data_type == TYPE_ULONG) {
                         long long_value = chaudiere::StrUtils::parseLong(prop_value);
-			unsigned long ul_value = (unsigned long) long_value;
-			add(prop_name, new ULongPropertyValue(ul_value));
+                        unsigned long ul_value = (unsigned long) long_value;
+                        add(prop_name, new ULongPropertyValue(ul_value));
                      } else {
                         printf("error: unrecognized data type '%s', skipping\n", data_type.c_str());
                      }
-		  }
+                  }
                }
             }
          }
-	 success = true;
+         success = true;
       }
    }
    return success;

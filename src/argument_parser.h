@@ -29,7 +29,7 @@ private:
 protected:
    void addOption(const std::string& o,
                   const std::string& option_type,
-		  const std::string& help);
+                  const std::string& help);
 
 public:
    ArgumentParser();

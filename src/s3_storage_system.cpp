@@ -158,9 +158,9 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
       minio::s3::ListObjectsResult result = client->ListObjects(args);
       for (; result; result++) {
          minio::s3::Item item = *result;
-	 if (item) {
+         if (item) {
             list_objects.push_back(item.name);
-	 }
+         }
       }
    }
 
@@ -183,17 +183,17 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
       minio::s3::StatObjectResponse resp = client->StatObject(args);
       if (resp) {
          properties.add("version_id", new StrPropertyValue(resp.version_id));
-	 properties.add("etag", new StrPropertyValue(resp.etag));
-	 properties.add("size", new ULongPropertyValue(resp.size));
-	 properties.add("delete_marker", new BoolPropertyValue(resp.delete_marker));
+         properties.add("etag", new StrPropertyValue(resp.etag));
+         properties.add("size", new ULongPropertyValue(resp.size));
+         properties.add("delete_marker", new BoolPropertyValue(resp.delete_marker));
 
-	 string last_modified = resp.last_modified.ToISO8601UTC();
-	 properties.add("last_modified", new StrPropertyValue(last_modified));
+         string last_modified = resp.last_modified.ToISO8601UTC();
+         properties.add("last_modified", new StrPropertyValue(last_modified));
 
-	 std::list<std::string> keys = resp.user_metadata.Keys();
+         std::list<std::string> keys = resp.user_metadata.Keys();
          for (auto& key : keys) {
             const string& user_metadata_value = resp.user_metadata.GetFront(key);
-	    properties.add(key, new StrPropertyValue(user_metadata_value));
+            properties.add(key, new StrPropertyValue(user_metadata_value));
          }
 
          return true;
@@ -257,7 +257,7 @@ bool S3StorageSystem::delete_object(const string& container_name,
 
 int S3StorageSystem::get_object(const string& container_name,
                                 const string& object_name,
-				const string& local_file_path) {
+                                const string& local_file_path) {
    if (debug_mode) {
       printf("get_object: container=%s, object=%s, local_file_path=%s\n",
              container_name.c_str(), object_name.c_str(),

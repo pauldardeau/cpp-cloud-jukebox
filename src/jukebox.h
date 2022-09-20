@@ -27,8 +27,8 @@ public:
    long num_file_bytes;
 
    ReadFileResults(bool success,
-		   const std::vector<unsigned char>& the_file_bytes,
-		   long num_bytes) :
+                   const std::vector<unsigned char>& the_file_bytes,
+                   long num_bytes) :
       read_success(success),
       file_bytes(the_file_bytes),
       num_file_bytes(num_bytes) {
@@ -138,8 +138,8 @@ public:
    void download_songs();
    void downloader_cleanup();
    void play_songs(bool shuffle=false,
-		   std::string artist="",
-		   std::string album="");
+                   std::string artist="",
+                   std::string album="");
 
    void show_list_containers();
    void show_listings();
