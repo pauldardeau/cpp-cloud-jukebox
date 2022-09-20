@@ -468,7 +468,9 @@ void JukeboxMain::run(const vector<string>& console_args) {
 
       options.encryption_iv = "sw4mpb1ts.juk3b0x";
 
-      const string& command = args->get_string_value("command");
+      string command = args->get_string_value("command");
+      delete args;
+      args = NULL;
 
       StringSet help_cmds;
       help_cmds.add("help");
@@ -672,6 +674,8 @@ void JukeboxMain::run(const vector<string>& console_args) {
                jukebox.exit();
                if (storage_system != NULL) {
                   storage_system->exit();
+		  delete storage_system;
+		  storage_system = NULL;
                }
             }
             catch (exception& e)
@@ -684,6 +688,10 @@ void JukeboxMain::run(const vector<string>& console_args) {
    } else {
       printf("Error: no command given\n");
       show_usage();
+   }
+   if (args != NULL) {
+      delete args;
+      args = NULL;
    }
    Utils::sys_exit(exit_code);
 }

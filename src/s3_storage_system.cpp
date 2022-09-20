@@ -71,6 +71,8 @@ void S3StorageSystem::exit() {
          printf("closing S3 connection object\n");
       }
 
+      delete client;
+
       authenticated = false;
       client = NULL;
    }

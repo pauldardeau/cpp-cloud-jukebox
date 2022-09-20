@@ -30,6 +30,8 @@ public:
       storage_system_type(system_type) {
    }
 
+   virtual ~StorageSystem() {}
+
    std::string un_prefixed_container(const std::string& container_name) {
       if (container_prefix.length() > 0 && container_name.length() > 0) {
          // does the container name begin with the prefix?

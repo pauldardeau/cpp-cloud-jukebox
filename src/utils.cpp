@@ -327,6 +327,7 @@ bool Utils::file_read_all_bytes(const string& file_path,
          }
          success = true;
       }
+      delete [] buffer;
    }
    return success;
 }
