@@ -423,14 +423,9 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
 }
 
 bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
-   //TODO: (1) implement store_song_metadata
-   return false;
-   /*
-   SongMetadata* db_song = retrieve_song(song.fm.file_uid);
-   if (db_song != NULL) {
-      SongMetadata& the_db_song = *db_song;
-      bool is_same_song = (song == the_db_song);
-      delete db_song;
+   SongMetadata db_song;
+   if (retrieve_song(song.fm.file_uid, db_song)) {
+      bool is_same_song = (song == db_song);
       if (!is_same_song) {
          return update_song(song);
       } else {
@@ -440,7 +435,6 @@ bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
       // song is not in the database, insert it
       return insert_song(song);
    }
-   */
 }
 
 string JukeboxDB::sql_where_clause(bool using_encryption,
