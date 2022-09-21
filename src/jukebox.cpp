@@ -941,7 +941,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
 #if defined(__APPLE__)
       audio_player_exe_file_name = "afplay";
       audio_player_command_args = "";
-#elif defined(__linux__) || defined(__unix__)
+#elif defined(__linux__) || defined(__unix__) || defined(__FreeBSD__)
       audio_player_exe_file_name = "/usr/bin/mplayer";
       audio_player_command_args = "-novideo -nolirc -really-quiet ";
 #elif defined(_WIN32)
