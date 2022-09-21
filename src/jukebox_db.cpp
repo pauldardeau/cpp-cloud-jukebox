@@ -248,7 +248,7 @@ bool JukeboxDB::songs_for_query(DBResultSet* rs,
       string* album_uid = rs->stringForColumnIndex(13);
       if (album_uid != NULL) {
          song.album_uid = *album_uid;
-	 delete album_uid;
+         delete album_uid;
       } else {
          song.album_uid = "";
       }
@@ -593,20 +593,20 @@ void JukeboxDB::show_artist_albums(const string& artist_name) {
    if (db_is_open) {
       string sql = "SELECT b.album_name "
                    "FROM artist a, album b "
-		   "WHERE a.artist_uid = b.artist_uid "
-		   "AND a.artist_name = ?";
+                   "WHERE a.artist_uid = b.artist_uid "
+                   "AND a.artist_name = ?";
       DBStatementArgs args;
       args.add(new DBString(artist_name));
       DBResultSet* rs = db_connection->executeQuery(sql, args);
       if (rs != NULL) {
          while (rs->next()) {
             string* album_name = rs->stringForColumnIndex(0);
-	    if (album_name != NULL) {
+            if (album_name != NULL) {
                printf("%s\n", album_name->c_str());
-	       delete album_name;
+               delete album_name;
             }
          }
-	 delete rs;
+         delete rs;
       }
    } else {
       printf("error: DB is not open\n");

@@ -1228,7 +1228,7 @@ bool Jukebox::get_playlist_songs(const string& playlist_name, vector<SongMetadat
                // print the list of songs
                if (pl_json.contains("songs")) {
                   json songs = pl_json["songs"];
-		  int songs_added = 0;
+                  int songs_added = 0;
                   for (auto it = songs.begin(); it != songs.end(); it++) {
                      json song_dict = it.value();
                      if (song_dict.contains("artist") &&
@@ -1244,17 +1244,17 @@ bool Jukebox::get_playlist_songs(const string& playlist_name, vector<SongMetadat
                            string encoded_song = JBUtils::encode_value(artist) + dashes +
                                                  JBUtils::encode_value(album) + dashes +
                                                  JBUtils::encode_value(song_name);
-			   SongMetadata song;
-			   if (jukebox_db->retrieve_song(encoded_song, song)) {
-			      list_songs.push_back(song);
+                           SongMetadata song;
+                           if (jukebox_db->retrieve_song(encoded_song, song)) {
+                              list_songs.push_back(song);
                               songs_added++;
-			   } else {
+                           } else {
                               printf("error: unable to retrieve metadata for '%s'\n", encoded_song.c_str());
                            }
                         }
                      }
                   }
-		  success = (songs_added > 0);
+                  success = (songs_added > 0);
                } else {
                   printf("error: playlist json does not contain 'songs' element\n");
                }
