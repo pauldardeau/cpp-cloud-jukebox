@@ -30,9 +30,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
 }
 
 S3StorageSystem::~S3StorageSystem() {
-   if (client != NULL) {
-      exit();
-   }
+   exit();
 }
 
 bool S3StorageSystem::enter() {
@@ -72,9 +70,9 @@ void S3StorageSystem::exit() {
       }
 
       delete client;
+      client = NULL;
 
       authenticated = false;
-      client = NULL;
    }
 }
 
