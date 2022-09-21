@@ -590,7 +590,27 @@ void JukeboxDB::show_genres() {
 }
 
 void JukeboxDB::show_artist_albums(const string& artist_name) {
-   //TODO: (2) implement (show_artist_albums)
+   if (db_is_open) {
+      string sql = "SELECT b.album_name "
+                   "FROM artist a, album b "
+		   "WHERE a.artist_uid = b.artist_uid "
+		   "AND a.artist_name = ?";
+      DBStatementArgs args;
+      args.add(new DBString(artist_name));
+      DBResultSet* rs = db_connection->executeQuery(sql, args);
+      if (rs != NULL) {
+         while (rs->next()) {
+            string* album_name = rs->stringForColumnIndex(0);
+	    if (album_name != NULL) {
+               printf("%s\n", album_name->c_str());
+	       delete album_name;
+            }
+         }
+	 delete rs;
+      }
+   } else {
+      printf("error: DB is not open\n");
+   }
 }
 
 void JukeboxDB::show_albums() {
