@@ -1019,14 +1019,17 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
 }
 
 void Jukebox::show_list_containers() {
-   //TODO: (1) implement show_list_containers
-   /*
-   if (storage_system.list_containers != NULL) {
-      foreach (var container_name in storage_system.list_containers) {
+   vector<string> containers = storage_system.list_account_containers();
+   if (containers.size() > 0) {
+      auto it = containers.begin();
+      const auto it_end = containers.end();
+      for (; it != it_end; it++) {
+         const string& container_name = *it;
          printf("%s\n", container_name.c_str());
       }
+   } else {
+      printf("no containers found\n");
    }
-   */
 }
 
 void Jukebox::show_listings() {
