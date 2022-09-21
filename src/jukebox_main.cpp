@@ -260,6 +260,7 @@ void JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
       printf("storage system successfully initialized\n");
    } else {
       printf("error: unable to initialize storage system\n");
+      delete storage_sys;
       Utils::sys_exit(1);
    }
 }
@@ -682,6 +683,12 @@ void JukeboxMain::run(const vector<string>& console_args) {
             {
                printf("exception caught: %s\n", e.what());
                exit_code = 1;
+            }
+
+            if (storage_system != NULL) {
+               storage_system->exit();
+               delete storage_system;
+               storage_system = NULL;
             }
          }
       }
