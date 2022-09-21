@@ -10,6 +10,9 @@ const string ArgumentParser::TYPE_STRING = "string";
 ArgumentParser::ArgumentParser() {
 }
 
+ArgumentParser::~ArgumentParser() {
+}
+
 void ArgumentParser::addOption(const string& o,
                                const string& option_type,
                                const string& help) {

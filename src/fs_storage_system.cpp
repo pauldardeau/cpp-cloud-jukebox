@@ -9,6 +9,10 @@ FSStorageSystem::FSStorageSystem(const string& the_root_dir, bool debug_mode) :
    root_dir(the_root_dir) {
 }
 
+FSStorageSystem::~FSStorageSystem() {
+   exit();
+}
+
 bool FSStorageSystem::enter() {
    if (!chaudiere::OSUtils::directoryExists(root_dir)) {
       chaudiere::OSUtils::createDirectory(root_dir);

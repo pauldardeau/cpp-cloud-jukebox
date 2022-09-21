@@ -21,6 +21,10 @@ JukeboxDB::JukeboxDB(const string& db_file_path, bool debug) :
    }
 }
 
+JukeboxDB::~JukeboxDB() {
+   close();
+}
+
 bool JukeboxDB::is_open() const {
    return db_is_open;
 }
@@ -62,8 +66,9 @@ bool JukeboxDB::open() {
 
 bool JukeboxDB::close() {
    bool did_close = false;
-   if (db_is_open && db_connection != NULL) {
+   if (db_connection != NULL) {
       db_connection->close();
+      delete db_connection;
       db_connection = NULL;
       db_is_open = false;
       did_close = true;

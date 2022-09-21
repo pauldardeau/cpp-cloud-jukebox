@@ -14,8 +14,12 @@ private:
    std::string root_dir;
    std::vector<std::string> list_container_names;
 
+   FSStorageSystem(const FSStorageSystem&);
+   FSStorageSystem& operator=(const FSStorageSystem&);
+
 public:
    FSStorageSystem(const std::string& the_root_dir, bool debug_mode = false);
+   ~FSStorageSystem();
 
    bool enter();
    void exit();

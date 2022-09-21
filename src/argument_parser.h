@@ -33,6 +33,7 @@ protected:
 
 public:
    ArgumentParser();
+   ~ArgumentParser();
 
    void addOptionalBoolFlag(const std::string& flag, const std::string& help);
    void addOptionalIntArgument(const std::string& arg, const std::string& help);

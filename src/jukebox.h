@@ -61,6 +61,10 @@ public:
 
 
 class Jukebox : public chaudiere::RunCompletionObserver {
+private:
+   Jukebox(const Jukebox&);
+   Jukebox& operator=(const Jukebox&);
+
 public:
    JukeboxOptions jukebox_options;
    StorageSystem& storage_system;
@@ -97,6 +101,7 @@ public:
    Jukebox(const JukeboxOptions& jb_options,
            StorageSystem& storage_sys,
            bool debug_print = false);
+   ~Jukebox();
 
    bool enter();
    void exit();

@@ -25,12 +25,10 @@ using json = nlohmann::json;
 static Jukebox* g_jukebox_instance = NULL;
 
 void signal_handler(int signum) {
-   if (signum == SIGUSR1) {
-      if (g_jukebox_instance != NULL) {
+   if (g_jukebox_instance != NULL) {
+      if (signum == SIGUSR1) {
          g_jukebox_instance->toggle_pause_play();
-      }
-   } else if (signum == SIGUSR2) {
-      if (g_jukebox_instance != NULL) {
+      } else if (signum == SIGUSR2) {
          g_jukebox_instance->advance_to_next_song();
       }
    }
@@ -85,6 +83,21 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
       printf("current_dir = %s\n", current_dir.c_str());
       printf("song_import_dir = %s\n", song_import_dir.c_str());
       printf("song_play_dir = %s\n", song_play_dir.c_str());
+   }
+}
+
+Jukebox::~Jukebox() {
+   g_jukebox_instance = NULL;
+
+   exit();
+
+   if (downloader != NULL) {
+      delete downloader;
+      downloader = NULL;
+   }
+   if (download_thread != NULL) {
+      delete download_thread;
+      download_thread = NULL;
    }
 }
 
@@ -166,6 +179,7 @@ void Jukebox::exit() {
       if (jukebox_db->is_open()) {
          jukebox_db->close();
       }
+      delete jukebox_db;
       jukebox_db = NULL;
    }
 }

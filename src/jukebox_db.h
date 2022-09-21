@@ -15,9 +15,13 @@ private:
    chapeau::Database* db_connection;
    std::string metadata_db_file_path;
 
+   JukeboxDB(const JukeboxDB&);
+   JukeboxDB& operator=(const JukeboxDB&);
+
 public:
    JukeboxDB(const std::string& metadata_db_file_path,
              bool debug_print=true);
+   ~JukeboxDB();
 
    bool is_open() const;
    bool open();
