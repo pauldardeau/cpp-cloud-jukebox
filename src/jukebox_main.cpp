@@ -85,7 +85,7 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
       }
 
       return NULL;
-      //TODO: (3) hookup SwiftStorageSystem (connect_swift_system)
+      //FUTURE: hookup SwiftStorageSystem (connect_swift_system)
       //return new SwiftStorageSystem(swift_auth_host,
       //                              swift_account,
       //                              user,
@@ -210,7 +210,7 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
             account_key = azure_account_key;
          }
 
-         //TODO: (3) hookup AzureStorageSystem (connect_azure_system)
+         //FUTURE: hookup AzureStorageSystem (connect_azure_system)
          //return new AzureStorageSystem(account_name,
          //                              account_key,
          //                              prefix,

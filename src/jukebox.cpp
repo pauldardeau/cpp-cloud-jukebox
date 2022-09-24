@@ -310,7 +310,7 @@ bool Jukebox::store_song_playlist(const string& file_name, const string& file_co
 }
 
 void Jukebox::get_encryptor() {
-   //TODO: (3) encryption (get_encryptor)
+   //FUTURE: encryption (get_encryptor)
    // key_block_size = 16  // AES-128
    // key_block_size = 24  // AES-192
    //int key_block_size = 32;  // AES-256
@@ -386,7 +386,7 @@ void Jukebox::import_songs() {
          Utils::sys_stdout_write(bar);  // return to start of line, after '['
       }
 
-      //TODO: (3) encryption support (import_songs)
+      //FUTURE: encryption support (import_songs)
       //if (jukebox_options != NULL && jukebox_options.use_encryption) {
       //   encryption = get_encryptor();
       //} else {
@@ -449,7 +449,7 @@ void Jukebox::import_songs() {
                               printf("compressing file\n");
                            }
 
-                           //TODO: (3) compression (import_songs)
+                           //FUTURE: compression (import_songs)
                            //file_bytes = bytes(file_contents, 'utf-8');
                            //file_contents = zlib.compress(file_bytes, 9);
                         }
@@ -459,7 +459,7 @@ void Jukebox::import_songs() {
                               printf("encrypting file\n");
                            }
 
-                           //TODO: (3) encryption (import_songs)
+                           //FUTURE: encryption (import_songs)
 
                            // the length of the data to encrypt must be a multiple of 16
                            //num_extra_chars = file_contents.Length % 16;
@@ -656,7 +656,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       //int encrypted = song.fm.encrypted;
       //int compressed = song.fm.compressed;
 
-      //TODO: (3) encryption and compression (download_song)
+      //FUTURE: encryption and compression (download_song)
       //if (encrypted == 1 || compressed == 1) {
       //     try:
       //         with open(file_path, 'rb') as content_file:
@@ -1087,7 +1087,7 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
          // for general purposes, it might be useful or helpful to have
          // a minimum size for compressing
          if (jukebox_options.use_compression) {
-            //TODO: (3) compression (read_file_contents)
+            //FUTURE: compression (read_file_contents)
      /*
             if (debug_print) {
                printf("compressing file\n");
@@ -1099,7 +1099,7 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
          }
 
          if (allow_encryption && jukebox_options.use_encryption) {
-            //TODO: (3) encryption (read_file_contents)
+            //FUTURE: encryption (read_file_contents)
       /*
             if (debug_print) {
                printf("encrypting file\n");
@@ -1373,7 +1373,7 @@ bool Jukebox::delete_album(const string& album) {
                jukebox_db->delete_song(song.fm.object_name);
             } else {
                printf("error: unable to delete song %s\n", song.fm.object_name.c_str());
-               //TODO: (3) delete song metadata if we got 404 (delete_album)
+               //FUTURE: delete song metadata if we got 404? (delete_album)
             }
          }
          if (num_songs_deleted > 0) {
