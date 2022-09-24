@@ -68,7 +68,7 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
             pset->add(the_arg, new BoolPropertyValue(true));
          } else if (arg_type == TYPE_INT) {
             i++;
-            if (i < num_args) { 
+            if (i < num_args) {
                const string& next_arg = args[i];
                int int_value = atoi(next_arg.c_str());
                pset->add(the_arg, new IntPropertyValue(int_value));

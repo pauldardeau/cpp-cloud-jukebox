@@ -182,7 +182,7 @@ public:
 
       return *this;
    }
-   
+
    bool operator==(const ULongPropertyValue& other) const {
       return value == other.value;
    }
@@ -305,7 +305,7 @@ public:
    bool operator==(const StringSet& other) const {
       return set_of_strings == other.set_of_strings;
    }
-   
+
    bool contains(const std::string& s) const {
       auto it = set_of_strings.find(s);
       return it != set_of_strings.end();

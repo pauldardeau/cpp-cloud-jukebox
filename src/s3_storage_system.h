@@ -29,7 +29,7 @@ public:
                    const std::string& aws_secret_key,
                    const std::string& container_prefix,
                    bool debug_mode=true);
-   virtual ~S3StorageSystem(); 
+   virtual ~S3StorageSystem();
 
    bool enter();
    void exit();

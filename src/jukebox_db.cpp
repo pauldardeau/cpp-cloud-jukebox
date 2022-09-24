@@ -685,7 +685,7 @@ bool JukeboxDB::delete_song(const string& song_uid) {
          args.add(new DBString(song_uid));
          unsigned long rowsAffectedCount = 0L;
          bool sql_success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
-	 if (sql_success) {
+         if (sql_success) {
             if (rowsAffectedCount == 1L) {
                was_deleted = true;
             }
@@ -693,7 +693,7 @@ bool JukeboxDB::delete_song(const string& song_uid) {
             printf("error deleting song %s\n", song_uid.c_str());
          }
       }
-   } 
+   }
 
    return was_deleted;
 }

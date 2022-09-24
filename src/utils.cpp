@@ -50,7 +50,7 @@ void Utils::sys_stdout_write(const string& s) {
 
    printf("%s", s.c_str());
 }
- 
+
 void Utils::sys_stdout_flush() {
    // python: sys.stdout.flush
 
@@ -212,7 +212,7 @@ vector<string> Utils::path_splitext(const string& path) {
             if (preceding == '.') {
                root = path;
             } else {
-               // splitext("foo.bar.exe") -> ("foo.bar", ".exe") 
+               // splitext("foo.bar.exe") -> ("foo.bar", ".exe")
                // splitext("/foo/bar.exe") -> ("/foo/bar", ".exe")
                root = path.substr(0, pos_last_dot);
                ext = path.substr(pos_last_dot);
@@ -295,7 +295,7 @@ bool Utils::file_write_all_text(const string& file_path,
    if (f == NULL) {
       return false;
    }
-   
+
    size_t elems_written = fwrite(file_text.c_str(),
                                  file_text.length(),
                                  1,
@@ -350,7 +350,7 @@ bool Utils::file_write_all_bytes(const string& file_path,
    bool write_success = true;
 
    while (num_bytes_to_write > 0) {
-      unsigned long loop_bytes_to_write = max_buff_offset;   
+      unsigned long loop_bytes_to_write = max_buff_offset;
       if (num_bytes_to_write < loop_bytes_to_write) {
          loop_bytes_to_write = num_bytes_to_write;
       }

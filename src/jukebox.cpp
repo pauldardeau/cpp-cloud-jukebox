@@ -143,7 +143,7 @@ bool Jukebox::enter() {
             // rename downloaded file
             if (debug_print) {
                printf("renaming %s to %s\n", download_file.c_str(), metadata_db_file_path.c_str());
-            } 
+            }
             Utils::rename_file(download_file, metadata_db_file_path);
          } else {
             if (debug_print) {
@@ -212,7 +212,7 @@ string Jukebox::get_metadata_db_file_path() {
 
 vector<string> Jukebox::components_from_file_name(const string& file_name) {
    if (file_name.length() == 0) {
-      return vector<string>(); 
+      return vector<string>();
    }
 
    size_t pos_extension = file_name.find('.');
@@ -498,7 +498,7 @@ void Jukebox::import_songs() {
                            // from the storage system since we won't have any way to access it
                            // since we can't store the song metadata locally.
                            printf("unable to store metadata, deleting obj %s\n", fs_song.fm.object_name.c_str());
-                                              
+
                            storage_system.delete_object(fs_song.fm.container_name,
                                                         fs_song.fm.object_name);
                         } else {
@@ -866,7 +866,7 @@ void Jukebox::download_songs() {
       vector<SongMetadata> dl_songs;
       // start looking at the next song in the list
       int check_index = song_index + 1;
- 
+
       for (int j = 0; j < number_songs; j++) {
          if (check_index >= number_songs) {
             check_index = 0;
@@ -1047,7 +1047,7 @@ void Jukebox::show_list_containers() {
 }
 
 void Jukebox::show_listings() {
-   if (jukebox_db != NULL) { 
+   if (jukebox_db != NULL) {
       jukebox_db->show_listings();
    }
 }
@@ -1059,7 +1059,7 @@ void Jukebox::show_artists() {
 }
 
 void Jukebox::show_genres() {
-   if (jukebox_db != NULL) { 
+   if (jukebox_db != NULL) {
       jukebox_db->show_genres();
    }
 }

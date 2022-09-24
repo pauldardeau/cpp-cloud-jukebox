@@ -116,7 +116,7 @@ bool PropertySet::write_to_file(const std::string& file_path) const {
 
       for (; it != it_end; it++) {
          const string& key = it->first;
-         const PropertyValue* pv = it->second; 
+         const PropertyValue* pv = it->second;
          if (pv->is_bool()) {
             string value;
             if (pv->get_bool_value()) {
