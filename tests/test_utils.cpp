@@ -87,7 +87,7 @@ void TestUtils::runTests() {
    test_file_read_all_text();
    test_file_read_lines();
    test_directory_delete_directory();
-   //test_md5_for_file();
+   //test_md5_for_file();  //TODO: re-enable test_md5_for_file
 }
 
 //******************************************************************************
