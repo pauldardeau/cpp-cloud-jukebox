@@ -83,7 +83,8 @@ bool JukeboxDB::create_table(const string& sql) {
       }
       return false;
    }
-   bool table_created = db_connection->executeUpdate(sql);
+   unsigned long rowsAffectedCount = 0L;
+   bool table_created = db_connection->executeUpdate(sql, rowsAffectedCount);
    if (!table_created) {
       if (debug_print) {
          printf("table create failed: %s\n", sql.c_str());
@@ -309,8 +310,11 @@ bool JukeboxDB::insert_playlist(const string& pl_uid,
       args.add(new DBString(pl_uid));
       args.add(new DBString(pl_name));
       args.add(new DBString(pl_desc));
-      if (db_connection->executeUpdate(sql, args)) {
-         insert_success = true;
+      unsigned long rowsAffectedCount = 0L;
+      if (db_connection->executeUpdate(sql, args, rowsAffectedCount)) {
+         if (rowsAffectedCount == 1L) {
+            insert_success = true;
+         }
       } else {
          printf("error inserting playlist\n");
       }
@@ -328,7 +332,12 @@ bool JukeboxDB::delete_playlist(const string& pl_name) {
                    "WHERE playlist_name = ?";
       DBStatementArgs args;
       args.add(new DBString(pl_name));
-      delete_success = db_connection->executeUpdate(sql, args);
+      unsigned long rowsAffectedCount = 0L;
+      if (db_connection->executeUpdate(sql, args, rowsAffectedCount)) {
+         if (rowsAffectedCount == 1L) {
+            delete_success = true;
+         }
+      }
    }
 
    return delete_success;
@@ -370,9 +379,12 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
       args.add(new DBString(song.fm.object_name));
       args.add(new DBString(song.album_uid));
 
-      bool success = db_connection->executeUpdate(sql, args);
+      unsigned long rowsAffectedCount = 0L;
+      bool success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
       if (success) {
-         insert_success = true;
+         if (rowsAffectedCount == 1L) {
+            insert_success = true;
+         }
       } else {
          printf("error inserting song\n");
       }
@@ -416,9 +428,12 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
       args.add(new DBString(song.album_uid));
       args.add(new DBString(song.fm.file_uid));
 
-      bool success = db_connection->executeUpdate(sql, args);
+      unsigned long rowsAffectedCount = 0L;
+      bool success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
       if (success) {
-         update_success = true;
+         if (rowsAffectedCount == 1L) {
+            update_success = true;
+         }
       } else {
          printf("error updating song\n");
       }
@@ -668,8 +683,13 @@ bool JukeboxDB::delete_song(const string& song_uid) {
          string sql = "DELETE FROM song WHERE song_uid = ?";
          DBStatementArgs args;
          args.add(new DBString(song_uid));
-         was_deleted = db_connection->executeUpdate(sql, args);
-         if (!was_deleted) {
+         unsigned long rowsAffectedCount = 0L;
+         bool sql_success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
+	 if (sql_success) {
+            if (rowsAffectedCount == 1L) {
+               was_deleted = true;
+            }
+         } else {
             printf("error deleting song %s\n", song_uid.c_str());
          }
       }

@@ -403,7 +403,7 @@ void TestJukeboxDB::test_delete_song() {
 
    string song_uid = "The-Who--Whos-Next--My-Wife.flac";
 
-   requireFalse(jbdb.delete_song(song_uid), "delete_song must return false for non-existing song");
+   requireFalse(jbdb.delete_song(song_uid), "delete_song must return false for empty DB");
 
    SongMetadata song;
    song.fm.file_uid = "The-Who--Whos-Next--My-Wife.flac";
