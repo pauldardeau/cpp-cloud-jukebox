@@ -439,3 +439,42 @@ string Utils::md5_for_file(const string& path_to_file) {
    return hex_formatted_hash;
 }
 
+int* Utils::create_random_index_list(int num_elements) {
+   if (num_elements < 1) {
+      return NULL;
+   }
+
+   // populate source_array with numbers from 0 to n-1
+   int* source_array = new int[num_elements];
+   int* result_list = new int[num_elements];
+
+   for (int i = 0; i < num_elements; i++) {
+      source_array[i] = i;
+   }
+
+   int n = num_elements;
+   int x;
+   int result_list_index = 0;
+
+   srand(time(NULL));
+
+   while (n > 0) {
+      // generate randome number x in range 0..n-1
+      x = rand() % n;
+      if (x == n) {
+         continue;
+      }
+
+      // add source_array[x] to the result list
+      result_list[result_list_index++] = source_array[x];
+
+      source_array[x] = source_array[n-1]; // replace number just used with last value
+
+      --n; // next time, one less number
+   }
+
+   delete [] source_array;
+
+   return result_list;
+}
+
