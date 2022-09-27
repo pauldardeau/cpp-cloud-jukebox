@@ -957,7 +957,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          }
       }
 
-      int song_index = 0;
+      song_index = 0;
       install_signal_handlers();
 
 #if defined(__APPLE__)
