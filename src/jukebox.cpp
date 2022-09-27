@@ -1511,6 +1511,15 @@ bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
       }
    }
 
+   // delete metadata DB file if present
+   string metadata_db_file = "jukebox_db.sqlite3";
+   if (Utils::path_exists(metadata_db_file)) {
+      //if (debug_print) {
+      //   printf("deleting existing metadata DB file\n");
+      //}
+      chaudiere::OSUtils::deleteFile(metadata_db_file);
+   }
+
    return true;
 }
 
