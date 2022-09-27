@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <string.h>
 #include "test_utils.h"
 #include "utils.h"
 #include "OSUtils.h"
@@ -88,6 +89,7 @@ void TestUtils::runTests() {
    test_file_read_lines();
    test_directory_delete_directory();
    //test_md5_for_file();  //TODO: re-enable test_md5_for_file
+   test_create_random_index_list();
 }
 
 //******************************************************************************
@@ -428,4 +430,34 @@ void TestUtils::test_md5_for_file() {
 }
 
 //******************************************************************************
+
+void TestUtils::test_create_random_index_list() {
+   TEST_CASE("test_create_random_index_list");
+   int* random_list;
+
+   random_list = Utils::create_random_index_list(-1);
+   require(random_list == NULL, "passing -1 should result in NULL");
+   random_list = Utils::create_random_index_list(0);
+   require(random_list == NULL, "passing 0 should result in NULL");
+
+   random_list = Utils::create_random_index_list(1);
+   require(random_list != NULL, "passing 1 should result in non-NULL");
+   require(random_list[0] == 0, "list of 1 should just have 0");
+   delete [] random_list;
+
+   char verify[1000];
+   memset(verify, '0', sizeof(verify));
+
+   random_list = Utils::create_random_index_list(1000);
+   for (int i = 0; i < 1000; i++) {
+      int index = random_list[i];
+      require(verify[index] == '0', "index values in list should not repeat");
+      verify[index] = '1';
+   }
+   delete [] random_list;
+
+   for (int i = 0; i < 1000; i++) {
+      require(verify[i] == '1', "all index values should be used");
+   }
+}
 
