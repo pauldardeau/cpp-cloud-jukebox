@@ -399,10 +399,13 @@ void TestJukeboxDB::test_delete_song() {
    FSTestCase test_case(*this, test_dir);
    string db_file = "jukebox_db.sqlite3";
    JukeboxDB jbdb(db_file);
-   require(jbdb.open(), "open must return true");
 
    string song_uid = "The-Who--Whos-Next--My-Wife.flac";
 
+   requireFalse(jbdb.delete_song(song_uid), "delete_song must return false for DB not open");
+   require(jbdb.open(), "open must return true");
+
+   requireFalse(jbdb.delete_song(""), "delete_song must return false for empty string song");
    requireFalse(jbdb.delete_song(song_uid), "delete_song must return false for empty DB");
 
    SongMetadata song;
