@@ -623,6 +623,8 @@ bool Jukebox::download_song(const SongMetadata& song) {
       return false;
    }
 
+   printf("attempting to download song '%s'\n", song.fm.file_uid.c_str());
+
    string file_path = song_path_in_playlist(song);
    double download_start_time = Utils::time_time();
    unsigned long song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
@@ -631,9 +633,9 @@ bool Jukebox::download_song(const SongMetadata& song) {
       return false;
    }
 
-   if (debug_print) {
+   //if (debug_print) {
       printf("bytes retrieved: %ld\n", song_bytes_retrieved);
-   }
+   //}
 
    if (song_bytes_retrieved > 0) {
       double download_end_time = Utils::time_time();
@@ -896,6 +898,7 @@ void Jukebox::download_songs() {
             downloader->setCompletionObserver(this);
             download_thread->start();
          } else {
+            printf("Not downloading more songs b/c downloader != NULL or download_thread != NULL\n");
          }
       }
    }
