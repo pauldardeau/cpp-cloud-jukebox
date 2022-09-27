@@ -619,6 +619,7 @@ void Jukebox::notifyRunComplete(chaudiere::Runnable* runnable) {
 
 bool Jukebox::download_song(const SongMetadata& song) {
    if (exit_requested) {
+      printf("download_song returning false because exit_requested\n");
       return false;
    }
 
@@ -626,6 +627,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
    double download_start_time = Utils::time_time();
    unsigned long song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
    if (exit_requested) {
+      printf("download_song returning false because exit_requested\n");
       return false;
    }
 
@@ -642,6 +644,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       // are we checking data integrity?
       // if so, verify that the storage system retrieved the same length that has been stored
       if (jukebox_options.check_data_integrity) {
+         printf("checking data integrity\n");
          if (debug_print) {
             printf("verifying data integrity\n");
          }
@@ -683,10 +686,12 @@ bool Jukebox::download_song(const SongMetadata& song) {
       //}
 
       if (check_file_integrity(song)) {
+         printf("check_file_integrity returned true\n");
          return true;
       } else {
          // we retrieved the file, but it failed our integrity check
          // if file exists, remove it
+         printf("integrity check failed, deleting file\n");
          if (Utils::file_exists(file_path)) {
             chaudiere::OSUtils::deleteFile(file_path);
          }
