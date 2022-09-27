@@ -30,6 +30,8 @@ void signal_handler(int signum) {
          g_jukebox_instance->toggle_pause_play();
       } else if (signum == SIGUSR2) {
          g_jukebox_instance->advance_to_next_song();
+      } else if (signum == SIGINT) {
+         g_jukebox_instance->prepare_for_termination();
       }
    }
 }
@@ -37,6 +39,7 @@ void signal_handler(int signum) {
 void install_signal_handlers() {
    signal(SIGUSR1, signal_handler);
    signal(SIGUSR2, signal_handler);
+   signal(SIGINT, signal_handler);
 }
 
 
@@ -1472,6 +1475,19 @@ void Jukebox::import_album_art() {
       } else {
          printf("no files imported\n");
       }
+   }
+}
+
+void Jukebox::prepare_for_termination() {
+   printf("Ctrl-C detected, shutting down\n");
+
+   // indicate that it's time to shutdown
+   exit_requested = true;
+
+   // terminate audio player if it's running
+   if (audio_player_process > 0) {
+      kill(audio_player_process, SIGTERM);
+      audio_player_process = -1;
    }
 }
 
