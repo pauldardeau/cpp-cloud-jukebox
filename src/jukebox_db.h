@@ -20,7 +20,7 @@ private:
 
 public:
    JukeboxDB(const std::string& metadata_db_file_path,
-             bool debug_print=true);
+             bool debug_print=false);
    ~JukeboxDB();
 
    bool is_open() const;
