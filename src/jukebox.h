@@ -172,6 +172,7 @@ public:
    bool delete_playlist(const std::string& playlist_name);
    void import_album_art();
    void prepare_for_termination();
+   void display_info() const;
 
    static bool initialize_storage_system(StorageSystem& storage_sys, std::string prefix="");
 };

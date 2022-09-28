@@ -32,6 +32,8 @@ void signal_handler(int signum) {
          g_jukebox_instance->advance_to_next_song();
       } else if (signum == SIGINT) {
          g_jukebox_instance->prepare_for_termination();
+      } else if (signum == SIGWINCH) {
+         g_jukebox_instance->display_info();
       }
    }
 }
@@ -40,6 +42,7 @@ void install_signal_handlers() {
    signal(SIGUSR1, signal_handler);
    signal(SIGUSR2, signal_handler);
    signal(SIGINT, signal_handler);
+   signal(SIGWINCH, signal_handler);
 }
 
 
@@ -1488,6 +1491,21 @@ void Jukebox::prepare_for_termination() {
    if (audio_player_process > 0) {
       kill(audio_player_process, SIGTERM);
       audio_player_process = -1;
+   }
+}
+
+void Jukebox::display_info() const {
+   if (song_list.size() > 0) {
+      size_t max_index = song_list.size() - 1;
+      printf("--- songs on deck---\n");
+      if (song_index + 3 <= max_index) {
+         const SongMetadata& first_song = song_list[song_index+1];
+	 printf("%s\n", first_song.fm.file_uid.c_str());
+	 const SongMetadata& second_song = song_list[song_index+2];
+	 printf("%s\n", second_song.fm.file_uid.c_str());
+	 const SongMetadata& third_song = song_list[song_index+3];
+	 printf("%s\n", third_song.fm.file_uid.c_str());
+      }
    }
 }
 
