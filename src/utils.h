@@ -43,6 +43,7 @@ public:
    static bool directory_delete_directory(const std::string& dir_path);
    static std::string md5_for_file(const std::string& path_to_file);
    static int* create_random_index_list(int num_elements);
+   static bool file_get_mtime(const std::string& file_path, double& mtime);
 };
 
 //}

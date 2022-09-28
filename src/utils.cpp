@@ -15,6 +15,8 @@
 
 using namespace std;
 
+#define NS_PER_SEC 1000000000.0
+
 static const string EMPTY = "";
 
 string Utils::datetime_datetime_fromtimestamp(double ts) {
@@ -476,5 +478,17 @@ int* Utils::create_random_index_list(int num_elements) {
    delete [] source_array;
 
    return result_list;
+}
+
+bool Utils::file_get_mtime(const std::string& file_path, double& mtime) {
+   struct stat s;
+   int rc = stat(file_path.c_str(), &s);
+   if (rc == 0) {
+      mtime = s.st_mtim.tv_sec;
+      mtime += s.st_mtim.tv_nsec / NS_PER_SEC;
+      return true;
+   } else {
+      return false;
+   }
 }
 
