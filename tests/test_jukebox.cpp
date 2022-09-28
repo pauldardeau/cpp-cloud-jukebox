@@ -30,14 +30,14 @@ public:
 
    virtual bool get_object_metadata(const std::string& container_name,
                                     const std::string& object_name,
-				    PropertySet& dict_props) {
+                                    PropertySet& dict_props) {
       return false;
    }
 
    virtual bool put_object(const std::string& container_name,
-		           const std::string& object_name,
-		           const std::vector<unsigned char>& object_bytes,
-		           const PropertySet* headers=NULL) {
+                           const std::string& object_name,
+                           const std::vector<unsigned char>& object_bytes,
+                           const PropertySet* headers=NULL) {
       return false;
    }
 
@@ -48,7 +48,7 @@ public:
 
    virtual int get_object(const std::string& container_name,
                           const std::string& object_name,
-			  const std::string& local_file_path) {
+                          const std::string& local_file_path) {
       return 0;
    }
 

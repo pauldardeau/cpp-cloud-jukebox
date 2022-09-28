@@ -281,7 +281,7 @@ void TestFSStorageSystem::test_get_object() {
    require(fs.put_object("books", "book.txt", v_obj_contents, NULL), "put object must work");
    ret_val = fs.get_object("books", "book.txt", local_file_path);
    require(ret_val == object_contents.size(), "existing object should return > 0");
-		   
+   
    // existing container, deleted object
    require(fs.delete_object("books", "book.txt"), "delete object must work");
    ret_val = fs.get_object("books", "book.txt", local_file_path);
