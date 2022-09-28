@@ -220,17 +220,13 @@ void TestUtils::test_path_getmtime() {
    UtilsTestCase test(*this, "test_path_getmtime", test_dir);
 
    double t1 = Utils::time_time();
-   printf("t1 = %f\n", t1);
    require(t1 > 0.0, "t1 > 0.0");
    string stooge1_file = OSUtils::pathJoin(test_dir, "moe.txt");
    Utils::file_write_all_text(stooge1_file, "I'm moe\n");
-   //time_sleep_millis(200);
    double t2 = Utils::time_time();
-   printf("t2 = %f\n", t2);
    require(t2 > 0.0, "t2 > 0.0");
    Utils::file_append_all_text(stooge1_file, "and I'm joe\n");
    double t3 = Utils::time_time();
-   printf("t3 = %f\n", t3);
    require(t3 > 0.0, "t3 > 0.0");
    require(t2 > t1, "t2 > t1");
    require(t3 > t2, "t3 > t2");
