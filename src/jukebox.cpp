@@ -1496,15 +1496,16 @@ void Jukebox::prepare_for_termination() {
 
 void Jukebox::display_info() const {
    if (song_list.size() > 0) {
-      size_t max_index = song_list.size() - 1;
-      printf("--- songs on deck---\n");
+      long max_index = song_list.size() - 1;
       if (song_index + 3 <= max_index) {
+         printf("----- songs on deck -----\n");
          const SongMetadata& first_song = song_list[song_index+1];
 	 printf("%s\n", first_song.fm.file_uid.c_str());
 	 const SongMetadata& second_song = song_list[song_index+2];
 	 printf("%s\n", second_song.fm.file_uid.c_str());
 	 const SongMetadata& third_song = song_list[song_index+3];
 	 printf("%s\n", third_song.fm.file_uid.c_str());
+	 printf("-------------------------\n");
       }
    }
 }
