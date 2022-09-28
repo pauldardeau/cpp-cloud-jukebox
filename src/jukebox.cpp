@@ -1181,19 +1181,6 @@ void Jukebox::import_playlists() {
          return;
       }
 
-      bool have_container = false;
-
-      if (!storage_system.has_container(playlist_container)) {
-         have_container = storage_system.create_container(playlist_container);
-      } else {
-         have_container = true;
-      }
-
-      if (!have_container) {
-         printf("error: unable to create container for playlists. unable to import\n");
-         return;
-      }
-
       auto it = dir_listing.begin();
       const auto it_end = dir_listing.end();
 
@@ -1211,12 +1198,10 @@ void Jukebox::import_playlists() {
                                              object_name,
                                              v_file_contents,
                                              NULL)) {
-                  printf("put of playlist succeeded\n");
                   if (!store_song_playlist(object_name, file_contents)) {
                      printf("storing of playlist to db failed\n");
                      storage_system.delete_object(playlist_container, object_name);
                   } else {
-                     printf("storing of playlist succeeded\n");
                      file_import_count += 1;
                   }
                }
@@ -1437,19 +1422,6 @@ void Jukebox::import_album_art() {
       vector<string> dir_listing = chaudiere::OSUtils::listFilesInDirectory(album_art_import_dir);
       if (dir_listing.size() == 0) {
          printf("no album art found\n");
-         return;
-      }
-
-      bool have_container = false;
-
-      if (!storage_system.has_container(album_art_container)) {
-         have_container = storage_system.create_container(album_art_container);
-      } else {
-         have_container = true;
-      }
-
-      if (!have_container) {
-         printf("error: unable to create container for album art. unable to import\n");
          return;
       }
 
