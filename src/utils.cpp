@@ -87,8 +87,7 @@ bool Utils::file_exists(const string& path) {
 }
 
 bool Utils::directory_delete_directory(const std::string& dir_path) {
-   int rc = rmdir(dir_path.c_str());
-   return rc == 0;
+   return 0 == rmdir(dir_path.c_str());
 }
 
 bool Utils::file_read_all_text(const string& file_path,
@@ -232,14 +231,9 @@ vector<string> Utils::path_splitext(const string& path) {
 double Utils::path_getmtime(const string& path) {
    // python: os.path.getmtime
 
-   struct stat st;
-   int rc = stat(path.c_str(), &st);
-   if (rc == 0) {
-      // struct timespec st_mtim;  // Time of last modification
-      //    time_t tv_sec   // whole seconds (valid values are >= 0)
-      //    long tv_nsec    // nanoseconds (valid values are [0, 999999999])
-      // DQ: should we return any fractional seconds?
-      return st.st_mtim.tv_sec * 1.0;
+   double mtime = 0.0;
+   if (Utils::file_get_mtime(path, mtime)) {
+      return mtime;
    }
 
    return 0.0;
