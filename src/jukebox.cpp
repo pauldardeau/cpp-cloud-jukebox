@@ -1225,7 +1225,17 @@ void Jukebox::show_playlists() {
    }
 }
 
-bool Jukebox::get_playlist_songs(const string& playlist_name, vector<SongMetadata>& list_songs) {
+bool Jukebox::get_album_songs(const string& album,
+                              vector<SongMetadata>& list_songs) {
+   bool success = false;
+
+   //TODO: implement get_album_songs
+
+   return success;
+}
+
+bool Jukebox::get_playlist_songs(const string& playlist_name,
+                                 vector<SongMetadata>& list_songs) {
    bool success = false;
    if (jukebox_db != NULL) {
       // look up the playlist_uid in the DB
@@ -1284,6 +1294,18 @@ bool Jukebox::get_playlist_songs(const string& playlist_name, vector<SongMetadat
       printf("error: DB is not open\n");
    }
    return success;
+}
+
+void Jukebox::show_album(const string& album) {
+   vector<SongMetadata> list_songs;
+   if (get_album_songs(album, list_songs)) {
+      auto it = list_songs.begin();
+      const auto it_end = list_songs.end();
+      for (; it != it_end; it++) {
+         const SongMetadata& song = *it;
+         printf("%s\n", song.song_name.c_str());
+      }
+   }
 }
 
 void Jukebox::show_playlist(const string& playlist_name) {

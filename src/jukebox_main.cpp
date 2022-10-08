@@ -282,6 +282,7 @@ void JukeboxMain::show_usage() const {
    printf("\tlist-albums        - show listing of all available albums\n");
    printf("\tlist-genres        - show listing of all available genres\n");
    printf("\tlist-playlists     - show listing of all available playlists\n");
+   printf("\tshow-album         - show songs in a specified album\n");
    printf("\tshow-playlist      - show songs in specified playlist\n");
    printf("\tplay               - start playing songs\n");
    printf("\tshuffle-play       - play songs randomly\n");
@@ -489,6 +490,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
       non_help_cmds.add("retrieve-catalog");
       non_help_cmds.add("import-playlists");
       non_help_cmds.add("list-playlists");
+      non_help_cmds.add("show-album");
       non_help_cmds.add("show-playlist");
       non_help_cmds.add("play-playlist");
       non_help_cmds.add("delete-song");
@@ -586,6 +588,13 @@ void JukeboxMain::run(const vector<string>& console_args) {
                      jukebox.show_genres();
                   } else if (command == "list-albums") {
                      jukebox.show_albums();
+                  } else if (command == "show-album") {
+                     if (album.length() > 0) {
+                        jukebox.show_album(album);
+                     } else {
+                        printf("error: album must be specified using --album option\n");
+                        exit_code = 1;
+                     }
                   } else if (command == "list-playlists") {
                      jukebox.show_playlists();
                   } else if (command == "show-playlist") {

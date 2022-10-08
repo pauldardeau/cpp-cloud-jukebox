@@ -163,6 +163,9 @@ public:
    void show_playlists();
    bool get_playlist_songs(const std::string& playlist_name,
                            std::vector<SongMetadata>& list_songs);
+   bool get_album_songs(const std::string& album,
+                        std::vector<SongMetadata>& list_songs);
+   void show_album(const std::string& album);
    void show_playlist(const std::string& playlist);
    void play_playlist(const std::string& playlist);
 
