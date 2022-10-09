@@ -1,3 +1,4 @@
+#include <string.h>
 #include "jukebox_db.h"
 #include "SQLiteDatabase.h"
 #include "DBStatementArgs.h"
@@ -505,10 +506,17 @@ vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
       sql += sql_where_clause();
       //if len(artist) > 0:
       //    sql += " AND artist_name='%s'" % artist
-      if (album.length() > 0) {
+      if (artist.length() > 0) {
           string encoded_artist = JBUtils::encode_value(artist);
-          string encoded_album = JBUtils::encode_value(album);
-          sql += " AND object_name LIKE '{encoded_artist}--{encoded_album}%'";
+	  char like_clause[4096];
+	  memset(like_clause, '0', sizeof(like_clause));
+          if (album.length() > 0) {
+              string encoded_album = JBUtils::encode_value(album);
+              snprintf(like_clause, 4096, " AND object_name LIKE '%s--%s%%'", encoded_artist.c_str(), encoded_album.c_str());
+          } else {
+              snprintf(like_clause, 4096, " AND object_name LIKE '%s--%%'", encoded_artist.c_str());
+          }
+	  sql += string(like_clause);
       }
       DBResultSet* rs = db_connection->executeQuery(sql);
       if (rs != NULL) {
