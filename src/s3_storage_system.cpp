@@ -562,6 +562,7 @@ vector<string> S3StorageSystem::list_account_containers() {
 
    list_service_data data;
 
+   showResponsePropertiesG = false;
    S3ListServiceHandler listServiceHandler =
    {
       { &responsePropertiesCallback, &responseCompleteCallback },
@@ -593,6 +594,7 @@ bool S3StorageSystem::create_container(const string& container_name) {
    const char *locationConstraint = 0;
    S3CannedAcl cannedAcl = S3CannedAclPrivate;
 
+   showResponsePropertiesG = false;
    S3ResponseHandler responseHandler =
    {
       &responsePropertiesCallback, &responseCompleteCallback
@@ -627,6 +629,7 @@ bool S3StorageSystem::delete_container(const string& container_name) {
 
    bool container_deleted = false;
 
+   showResponsePropertiesG = false;
    S3ResponseHandler responseHandler =
    {
       &responsePropertiesCallback, &responseCompleteCallback
@@ -663,6 +666,7 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
    S3BucketContext bucketContext;
    populateBucketContext(bucketContext, container_name);
    
+   showResponsePropertiesG = false;
    S3ListBucketHandler listBucketHandler =
    {
       { &responsePropertiesCallback, &responseCompleteCallback },
@@ -710,8 +714,8 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
    }
    
    bool success = false;
+   showResponsePropertiesG = true;
 
-   /*
    S3BucketContext bucketContext;
    populateBucketContext(bucketContext, container_name);
 
@@ -732,7 +736,8 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
    if (statusG == S3StatusOK) {
       success = true;
    }
-   */
+   
+   showResponsePropertiesG = false;
 
    return success;
 }
@@ -783,6 +788,7 @@ bool S3StorageSystem::put_object(const string& container_name,
       metaProperties
    };
 
+   showResponsePropertiesG = false;
    S3PutObjectHandler putObjectHandler =
    {
       { &responsePropertiesCallback, &responseCompleteCallback },
@@ -879,6 +885,7 @@ int64_t S3StorageSystem::get_object(const string& container_name,
    
    data.outfile = outputFile;
 
+   showResponsePropertiesG = false;
    S3GetObjectHandler getObjectHandler =
    {
       { &responsePropertiesCallback, &responseCompleteCallback },
