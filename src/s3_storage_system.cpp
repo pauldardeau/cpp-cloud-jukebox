@@ -364,16 +364,16 @@ static S3Status responsePropertiesCallback
       return S3StatusOK;
    }
 
-   //props->add("Content-Type", new StrPropertyValue(contentType));
-   //props->add("Request-Id", new StrPropertyValue(requestId));
-   //props->add("Request-Id-2", new StrPropertyValue(requestId2));
+   props->add("Content-Type", new StrPropertyValue(properties->contentType));
+   props->add("Request-Id", new StrPropertyValue(properties->requestId));
+   props->add("Request-Id-2", new StrPropertyValue(properties->requestId2));
    
    if (properties->contentLength > 0) {
-      props->add("Content-Length", new LongPropertyValue(properties->contentLength));
+      props->add("Content-Length", new ULongPropertyValue(properties->contentLength));
    }
 
-   //props->add("Server", new StrPropertyValue(server));
-   //props->add("ETag", new StrPropertyValue(eTag));
+   props->add("Server", new StrPropertyValue(properties->server));
+   props->add("ETag", new StrPropertyValue(properties->eTag));
 
    if (properties->lastModified > 0) {
       char timebuf[256];
