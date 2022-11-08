@@ -357,37 +357,37 @@ static S3Status responsePropertiesCallback
    PropertySet* props = NULL;
     
    if (callbackData != NULL) {
-      PropertySet* testPS = dynamic_cast<PropertySet*>(callbackData);
-      if (testPS != NULL) {
-         props = testPS;
-      }
+      props = static_cast<PropertySet*>(callbackData);
    }
 
    if (!showResponsePropertiesG || (props == NULL)) {
       return S3StatusOK;
    }
 
-   props->add("Content-Type", new PropertyValue(contentType));
-   props->add("Request-Id", new PropertyValue(requestId));
-   props->add("Request-Id-2", new PropertyValue(requestId2));
+   //props->add("Content-Type", new StrPropertyValue(contentType));
+   //props->add("Request-Id", new StrPropertyValue(requestId));
+   //props->add("Request-Id-2", new StrPropertyValue(requestId2));
+   
    if (properties->contentLength > 0) {
-      props->add("Content-Length", new PropertyValue(properties->contentLength));
+      props->add("Content-Length", new LongPropertyValue(properties->contentLength));
    }
-   props->add("Server", new PropertyValue(server));
-   props->add("ETag", new PropertyValue(eTag));
+
+   //props->add("Server", new StrPropertyValue(server));
+   //props->add("ETag", new StrPropertyValue(eTag));
+
    if (properties->lastModified > 0) {
       char timebuf[256];
       time_t t = (time_t) properties->lastModified;
       // gmtime is not thread-safe but we don't care here.
       strftime(timebuf, sizeof(timebuf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&t));
-      props->add("Last-Modified", new PropertyValue(timebuf));
+      props->add("Last-Modified", new StrPropertyValue(timebuf));
    }
    
    for (int i = 0; i < properties->metaDataCount; i++) {
       char propName[256];
       memset(propName, 0, sizeof(propName));
-      snprintf("x-amz-meta-%s", 256, properties->metaData[i].name);
-      props->add(propName, new PropertyValue(properties->metaData[i].value));
+      snprintf(propName, 256, "x-amz-meta-%s", properties->metaData[i].name);
+      props->add(propName, new StrPropertyValue(properties->metaData[i].value));
    }
 
    return S3StatusOK;
