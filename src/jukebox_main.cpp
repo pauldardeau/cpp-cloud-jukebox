@@ -557,18 +557,24 @@ void JukeboxMain::run(const vector<string>& console_args) {
                   Utils::sys_exit(1);
                }
 
-               //printf("entering storage system\n");
-               storage_system->enter();
+               if (!storage_system->enter()) {
+                  printf("error: unable to enter storage system\n");
+                  delete storage_system;
+                  Utils::sys_exit(1);
+               }
 
                if (command == "init-storage") {
                   init_storage_system(storage_system);
+                  delete storage_system;
                   Utils::sys_exit(0);
                }
 
-               //printf("creating jukebox\n");
                Jukebox jukebox(options, *storage_system);
-               //printf("entering jukebox\n");
-               jukebox.enter();
+               if (!jukebox.enter()) {
+                  printf("error: unable to enter jukebox\n");
+                  delete storage_system;
+                  Utils::sys_exit(1);
+               }
 
                try {
                   if (command == "import-songs") {
