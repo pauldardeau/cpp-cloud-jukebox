@@ -686,7 +686,6 @@ void JukeboxMain::run(const vector<string>& console_args) {
 
                jukebox.exit();
                if (storage_system != NULL) {
-                  storage_system->exit();
                   delete storage_system;
                   storage_system = NULL;
                }
@@ -698,7 +697,6 @@ void JukeboxMain::run(const vector<string>& console_args) {
             }
 
             if (storage_system != NULL) {
-               storage_system->exit();
                delete storage_system;
                storage_system = NULL;
             }
