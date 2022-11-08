@@ -36,7 +36,7 @@ bool FSStorageSystem::create_container(const string& container_name) {
          if (debug_mode) {
             printf("container created: '%s'\n", container_name.c_str());
          }
-         list_container_names.push_back(container_name);
+         add_container(container_name);
       }
    }
    return container_created;
@@ -50,16 +50,7 @@ bool FSStorageSystem::delete_container(const string& container_name) {
       if (debug_mode) {
          printf("container deleted: '%s'\n", container_name.c_str());
       }
-      list_containers.erase(container_name);
-
-      auto it = list_container_names.begin();
-      const auto it_end = list_container_names.end();
-      for (; it != it_end; it++) {
-         if (*it == container_name) {
-            list_container_names.erase(it);
-            break;
-         }
-      }
+      remove_container(container_name);
    }
    return container_deleted;
 }

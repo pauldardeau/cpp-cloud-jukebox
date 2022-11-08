@@ -120,15 +120,15 @@ bool Jukebox::enter() {
       vector<string> container_contents = storage_system.list_container_contents(metadata_container);
 
       bool metadata_db_file_found = false;
-      auto it_vec = container_contents.begin();
-      const auto it_vec_end = container_contents.end();
-      for (; it_vec != it_vec_end; it_vec++) {
-         if (*it_vec == metadata_db_file) {
+      auto it = container_contents.begin();
+      const auto it_end = container_contents.end();
+      for (; it != it_end; it++) {
+         if (*it == metadata_db_file) {
             metadata_db_file_found = true;
             break;
          }
       }
-
+      
       // does our metadata DB file exist in the metadata container?
       if (metadata_db_file_found) {
          printf("metadata DB file exists in container, attempting to download\n");

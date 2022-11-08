@@ -12,7 +12,6 @@
 class FSStorageSystem : public StorageSystem {
 private:
    std::string root_dir;
-   std::vector<std::string> list_container_names;
 
    FSStorageSystem(const FSStorageSystem&);
    FSStorageSystem& operator=(const FSStorageSystem&);

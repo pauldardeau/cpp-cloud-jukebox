@@ -2,7 +2,7 @@
 #define STORAGE_SYSTEM_H
 
 #include <string>
-#include <set>
+#include <vector>
 
 #include "file_metadata.h"
 #include "utils.h"
@@ -17,7 +17,7 @@ public:
    bool authenticated;
    bool compress_files;
    bool encrypt_files;
-   std::set<std::string> list_containers;
+   std::vector<std::string> list_containers;
    std::string container_prefix;
    std::string metadata_prefix;
    std::string storage_system_type;
@@ -44,24 +44,35 @@ public:
       return container_name;
    }
 
-   std::string prefixed_container(const std::string& container_name) {
+   std::string prefixed_container(const std::string& container_name) const {
       return container_prefix + container_name;
    }
 
-   bool has_container(const std::string& container_name) {
-      auto it = list_containers.find(container_name);
-      return it != list_containers.end();
+   bool has_container(const std::string& container_name) const {
+      bool container_found = false;
+      auto it = list_containers.begin();
+      const auto it_end = list_containers.end();
+      for (; it != it_end; it++) {
+         if (*it == container_name) {
+            container_found = true;
+            break;
+         }
+      }
+      return container_found;
    }
 
    void add_container(const std::string& container_name) {
-      list_containers.emplace(container_name);
+      list_containers.push_back(container_name);
    }
 
    void remove_container(const std::string& container_name) {
-      auto it = list_containers.find(container_name);
+      auto it = list_containers.begin();
       const auto it_end = list_containers.end();
-      if (it != it_end) {
-         list_containers.erase(it);
+      for (; it != it_end; it++) {
+         if (*it == container_name) {
+            list_containers.erase(it);
+            break;
+         }
       }
    }
 

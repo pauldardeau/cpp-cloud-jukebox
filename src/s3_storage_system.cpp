@@ -23,42 +23,34 @@ static char errorDetailsG[4096] = { 0 };
 
 struct _growbuffer
 {
-    // The total number of bytes, and the start byte
-    int size;
-    // The start byte
-    int start;
-    // The blocks
-    char data[64 * 1024];
-    struct _growbuffer *prev, *next;
+   // The total number of bytes, and the start byte
+   int size;
+   // The start byte
+   int start;
+   // The blocks
+   char data[64 * 1024];
+   struct _growbuffer *prev, *next;
 };
 
 typedef struct _growbuffer growbuffer;
 
 struct _put_object_callback_data
 {
-    FILE* infile;
-    growbuffer* gb;
-    uint64_t contentLength;
-    uint64_t originalContentLength;
-    int noStatus;
+   FILE* infile;
+   growbuffer* gb;
+   uint64_t contentLength;
+   uint64_t originalContentLength;
+   int noStatus;
 };
 
 typedef struct _put_object_callback_data put_object_callback_data;
 
-struct _list_service_data
-{
-    int headerPrinted;
-    int allDetails;
-};
-
-typedef struct _list_service_data list_service_data;
-
 struct _list_bucket_callback_data
 {
-    int isTruncated;
-    char nextMarker[1024];
-    int keyCount;
-    int allDetails;
+   int isTruncated;
+   char nextMarker[1024];
+   int keyCount;
+   vector<string>* list_objects;
 };
 
 typedef struct _list_bucket_callback_data list_bucket_callback_data;
@@ -76,83 +68,83 @@ typedef struct _get_object_callback_data get_object_callback_data;
 // returns nonzero on success, zero on out of memory
 static int growbuffer_append(growbuffer **gb, const char *data, int dataLen)
 {
-    while (dataLen) {
-        growbuffer *buf = *gb ? (*gb)->prev : 0;
-        if (!buf || (buf->size == sizeof(buf->data))) {
-            buf = (growbuffer *) malloc(sizeof(growbuffer));
-            if (!buf) {
-                return 0;
-            }
-            buf->size = 0;
-            buf->start = 0;
-            if (*gb && (*gb)->prev) {
-                buf->prev = (*gb)->prev;
-                buf->next = *gb;
-                (*gb)->prev->next = buf;
-                (*gb)->prev = buf;
-            }
-            else {
-                buf->prev = buf->next = buf;
-                *gb = buf;
-            }
-        }
+   while (dataLen) {
+      growbuffer *buf = *gb ? (*gb)->prev : 0;
+      if (!buf || (buf->size == sizeof(buf->data))) {
+         buf = (growbuffer *) malloc(sizeof(growbuffer));
+         if (!buf) {
+            return 0;
+         }
+         buf->size = 0;
+         buf->start = 0;
+         if (*gb && (*gb)->prev) {
+            buf->prev = (*gb)->prev;
+            buf->next = *gb;
+            (*gb)->prev->next = buf;
+            (*gb)->prev = buf;
+         } else {
+            buf->prev = buf->next = buf;
+            *gb = buf;
+         }
+      }
 
-        int toCopy = (sizeof(buf->data) - buf->size);
-        if (toCopy > dataLen) {
-            toCopy = dataLen;
-        }
+      int toCopy = (sizeof(buf->data) - buf->size);
+      if (toCopy > dataLen) {
+         toCopy = dataLen;
+      }
 
-        memcpy(&(buf->data[buf->size]), data, toCopy);
+      memcpy(&(buf->data[buf->size]), data, toCopy);
         
-        buf->size += toCopy, data += toCopy, dataLen -= toCopy;
-    }
+      buf->size += toCopy, data += toCopy, dataLen -= toCopy;
+   }
 
-    return 1;
+   return 1;
 }
 
 //*****************************************************************************
 
-static void growbuffer_read(growbuffer **gb, int amt, int *amtReturn, 
+static void growbuffer_read(growbuffer **gb,
+                            int amt,
+                            int *amtReturn, 
                             char *buffer)
 {
-    *amtReturn = 0;
+   *amtReturn = 0;
 
-    growbuffer *buf = *gb;
+   growbuffer *buf = *gb;
 
-    if (!buf) {
-        return;
-    }
+   if (!buf) {
+      return;
+   }
 
-    *amtReturn = (buf->size > amt) ? amt : buf->size;
+   *amtReturn = (buf->size > amt) ? amt : buf->size;
 
-    memcpy(buffer, &(buf->data[buf->start]), *amtReturn);
+   memcpy(buffer, &(buf->data[buf->start]), *amtReturn);
     
-    buf->start += *amtReturn, buf->size -= *amtReturn;
+   buf->start += *amtReturn, buf->size -= *amtReturn;
 
-    if (buf->size == 0) {
-        if (buf->next == buf) {
-            *gb = 0;
-        }
-        else {
-            *gb = buf->next;
-            buf->prev->next = buf->next;
-            buf->next->prev = buf->prev;
-        }
-        free(buf);
-    }
+   if (buf->size == 0) {
+      if (buf->next == buf) {
+         *gb = 0;
+      } else {
+         *gb = buf->next;
+         buf->prev->next = buf->next;
+         buf->next->prev = buf->prev;
+      }
+      free(buf);
+   }
 }
 
 //*****************************************************************************
 
 static void growbuffer_destroy(growbuffer *gb)
 {
-    growbuffer *start = gb;
+   growbuffer *start = gb;
 
-    while (gb) {
-        growbuffer *next = gb->next;
-        free(gb);
-        gb = (next == start) ? 0 : next;
-    }
+   while (gb) {
+      growbuffer *next = gb->next;
+      free(gb);
+      gb = (next == start) ? 0 : next;
+   }
 }
 
 //*****************************************************************************
@@ -173,81 +165,15 @@ static int should_retry(void)
 
 //*****************************************************************************
 
-static void printListBucketHeader(int allDetails)
-{
-    printf("%-50s  %-20s  %-5s", 
-           "                       Key", 
-           "   Last Modified", "Size");
-    if (allDetails) {
-        printf("  %-34s  %-64s  %-12s", 
-               "               ETag", 
-               "                            Owner ID",
-               "Display Name");
-    }
-    printf("\n");
-    printf("--------------------------------------------------  "
-           "--------------------  -----");
-    if (allDetails) {
-        printf("  ----------------------------------  "
-               "-------------------------------------------------"
-               "---------------  ------------");
-    }
-    printf("\n");
-}
-
-//*****************************************************************************
-
-static void printListServiceHeader(int allDetails)
-{
-    printf("%-56s  %-20s", "                         Bucket",
-           "      Created");
-    if (allDetails) {
-        printf("  %-64s  %-12s", 
-               "                            Owner ID",
-               "Display Name");
-    }
-    printf("\n");
-    printf("--------------------------------------------------------  "
-           "--------------------");
-    if (allDetails) {
-        printf("  -------------------------------------------------"
-               "---------------  ------------");
-    }
-    printf("\n");
-}
-
-//*****************************************************************************
-
 static S3Status listServiceCallback(const char *ownerId, 
                                     const char *ownerDisplayName,
                                     const char *bucketName,
                                     int64_t creationDate,
                                     void *callbackData)
 {
-    list_service_data *data = (list_service_data *) callbackData;
-
-    if (!data->headerPrinted) {
-        data->headerPrinted = 1;
-        printListServiceHeader(data->allDetails);
-    }
-
-    char timebuf[256];
-    if (creationDate >= 0) {
-        time_t t = (time_t) creationDate;
-        strftime(timebuf, sizeof(timebuf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&t));
-    }
-    else {
-        timebuf[0] = 0;
-    }
-
-    printf("%-56s  %-20s", bucketName, timebuf);
-    if (data->allDetails) {
-        printf("  %-64s  %-12s", ownerId ? ownerId : "", 
-               ownerDisplayName ? ownerDisplayName : "");
-    }
-    printf("\n");
-
-    return S3StatusOK;
+   vector<string>* list_containers = (vector<string>*) callbackData;
+   list_containers->push_back(string(bucketName));
+   return S3StatusOK;
 }
 
 //*****************************************************************************
@@ -260,93 +186,32 @@ static S3Status listBucketCallback(int isTruncated,
                                    const char **commonPrefixes,
                                    void *callbackData)
 {
-    list_bucket_callback_data *data = 
-        (list_bucket_callback_data *) callbackData;
+   list_bucket_callback_data *data = 
+       (list_bucket_callback_data *) callbackData;
 
-    data->isTruncated = isTruncated;
-    // This is tricky.  S3 doesn't return the NextMarker if there is no
-    // delimiter.  Why, I don't know, since it's still useful for paging
-    // through results.  We want NextMarker to be the last content in the
-    // list, so set it to that if necessary.
-    if ((!nextMarker || !nextMarker[0]) && contentsCount) {
-        nextMarker = contents[contentsCount - 1].key;
-    }
-    if (nextMarker) {
-        snprintf(data->nextMarker, sizeof(data->nextMarker), "%s", 
-                 nextMarker);
-    }
-    else {
-        data->nextMarker[0] = 0;
-    }
+   data->isTruncated = isTruncated;
+   // This is tricky.  S3 doesn't return the NextMarker if there is no
+   // delimiter.  Why, I don't know, since it's still useful for paging
+   // through results.  We want NextMarker to be the last content in the
+   // list, so set it to that if necessary.
+   if ((!nextMarker || !nextMarker[0]) && contentsCount) {
+      nextMarker = contents[contentsCount - 1].key;
+   }
+   if (nextMarker) {
+      snprintf(data->nextMarker, sizeof(data->nextMarker), "%s", 
+               nextMarker);
+   } else {
+      data->nextMarker[0] = 0;
+   }
     
-    if (contentsCount && !data->keyCount) {
-        printListBucketHeader(data->allDetails);
-    }
+   for (int i = 0; i < contentsCount; i++) {
+      const S3ListBucketContent *content = &(contents[i]);
+      data->list_objects->push_back(string(content->key));
+   }
 
-    for (int i = 0; i < contentsCount; i++) {
-        const S3ListBucketContent *content = &(contents[i]);
-        char timebuf[256];
-        if (0) {
-            time_t t = (time_t) content->lastModified;
-            strftime(timebuf, sizeof(timebuf), "%Y-%m-%dT%H:%M:%SZ",
-                     gmtime(&t));
-            printf("\nKey: %s\n", content->key);
-            printf("Last Modified: %s\n", timebuf);
-            printf("ETag: %s\n", content->eTag);
-            printf("Size: %llu\n", (unsigned long long) content->size);
-            if (content->ownerId) {
-                printf("Owner ID: %s\n", content->ownerId);
-            }
-            if (content->ownerDisplayName) {
-                printf("Owner Display Name: %s\n", content->ownerDisplayName);
-            }
-        }
-        else {
-            time_t t = (time_t) content->lastModified;
-            strftime(timebuf, sizeof(timebuf), "%Y-%m-%dT%H:%M:%SZ", 
-                     gmtime(&t));
-            char sizebuf[16];
-            if (content->size < 100000) {
-                sprintf(sizebuf, "%5llu", (unsigned long long) content->size);
-            }
-            else if (content->size < (1024 * 1024)) {
-                sprintf(sizebuf, "%4lluK", 
-                        ((unsigned long long) content->size) / 1024ULL);
-            }
-            else if (content->size < (10 * 1024 * 1024)) {
-                float f = content->size;
-                f /= (1024 * 1024);
-                sprintf(sizebuf, "%1.2fM", f);
-            }
-            else if (content->size < (1024 * 1024 * 1024)) {
-                sprintf(sizebuf, "%4lluM", 
-                        ((unsigned long long) content->size) / 
-                        (1024ULL * 1024ULL));
-            }
-            else {
-                float f = (content->size / 1024);
-                f /= (1024 * 1024);
-                sprintf(sizebuf, "%1.2fG", f);
-            }
-            printf("%-50s  %s  %s", content->key, timebuf, sizebuf);
-            if (data->allDetails) {
-                printf("  %-34s  %-64s  %-12s",
-                       content->eTag, 
-                       content->ownerId ? content->ownerId : "",
-                       content->ownerDisplayName ? 
-                       content->ownerDisplayName : "");
-            }
-            printf("\n");
-        }
-    }
+   data->keyCount += contentsCount;
 
-    data->keyCount += contentsCount;
-
-    for (int i = 0; i < commonPrefixesCount; i++) {
-        printf("\nCommon Prefix: %s\n", commonPrefixes[i]);
-    }
-
-    return S3StatusOK;
+   return S3StatusOK;
 }
 
 //*****************************************************************************
@@ -395,39 +260,39 @@ static S3Status responsePropertiesCallback
 
 //*****************************************************************************
 
-static int putObjectDataCallback(int bufferSize, char *buffer,
+static int putObjectDataCallback(int bufferSize,
+                                 char *buffer,
                                  void *callbackData)
 {
-    put_object_callback_data *data = 
-        (put_object_callback_data *) callbackData;
+   put_object_callback_data *data = 
+       (put_object_callback_data *) callbackData;
     
-    int ret = 0;
+   int ret = 0;
 
-    if (data->contentLength) {
-        int toRead = ((data->contentLength > (unsigned) bufferSize) ?
-                      (unsigned) bufferSize : data->contentLength);
-        if (data->gb) {
-            growbuffer_read(&(data->gb), toRead, &ret, buffer);
-        }
-        else if (data->infile) {
-            ret = fread(buffer, 1, toRead, data->infile);
-        }
-    }
+   if (data->contentLength) {
+      int toRead = ((data->contentLength > (unsigned) bufferSize) ?
+                    (unsigned) bufferSize : data->contentLength);
+      if (data->gb) {
+         growbuffer_read(&(data->gb), toRead, &ret, buffer);
+      } else if (data->infile) {
+         ret = fread(buffer, 1, toRead, data->infile);
+      }
+   }
 
-    data->contentLength -= ret;
+   data->contentLength -= ret;
 
-    if (data->contentLength && !data->noStatus) {
-        // Avoid a weird bug in MingW, which won't print the second integer
-        // value properly when it's in the same call, so print separately
-        printf("%llu bytes remaining ", 
-               (unsigned long long) data->contentLength);
-        printf("(%d%% complete) ...\n",
-               (int) (((data->originalContentLength - 
-                        data->contentLength) * 100) /
-                      data->originalContentLength));
-    }
+   if (data->contentLength && !data->noStatus) {
+      // Avoid a weird bug in MingW, which won't print the second integer
+      // value properly when it's in the same call, so print separately
+      printf("%llu bytes remaining ", 
+             (unsigned long long) data->contentLength);
+      printf("(%d%% complete) ...\n",
+             (int) (((data->originalContentLength - 
+                      data->contentLength) * 100) /
+                    data->originalContentLength));
+   }
 
-    return ret;
+   return ret;
 }
 
 //*****************************************************************************
@@ -436,36 +301,35 @@ static void responseCompleteCallback(S3Status status,
                                      const S3ErrorDetails *error, 
                                      void *callbackData)
 {
-    (void) callbackData;
+   (void) callbackData;
 
-    statusG = status;
-    // Compose the error details message now, although we might not use it.
-    // Can't just save a pointer to [error] since it's not guaranteed to last
-    // beyond this callback
-    int len = 0;
-    if (error && error->message) {
-        len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
-                        "  Message: %s\n", error->message);
-    }
-    if (error && error->resource) {
-        len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
-                        "  Resource: %s\n", error->resource);
-    }
-    if (error && error->furtherDetails) {
-        len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
-                        "  Further Details: %s\n", error->furtherDetails);
-    }
-    if (error && error->extraDetailsCount) {
-        len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
+   statusG = status;
+   // Compose the error details message now, although we might not use it.
+   // Can't just save a pointer to [error] since it's not guaranteed to last
+   // beyond this callback
+   int len = 0;
+   if (error && error->message) {
+      len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
+                      "  Message: %s\n", error->message);
+   }
+   if (error && error->resource) {
+      len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
+                      "  Resource: %s\n", error->resource);
+   }
+   if (error && error->furtherDetails) {
+      len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
+                      "  Further Details: %s\n", error->furtherDetails);
+   }
+   if (error && error->extraDetailsCount) {
+      len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
                         "%s", "  Extra Details:\n");
-        int i;
-        for (i = 0; i < error->extraDetailsCount; i++) {
-            len += snprintf(&(errorDetailsG[len]), 
-                            sizeof(errorDetailsG) - len, "    %s: %s\n", 
-                            error->extraDetails[i].name,
-                            error->extraDetails[i].value);
-        }
-    }
+      for (int i = 0; i < error->extraDetailsCount; i++) {
+         len += snprintf(&(errorDetailsG[len]), 
+                         sizeof(errorDetailsG) - len, "    %s: %s\n", 
+                         error->extraDetails[i].name,
+                         error->extraDetails[i].value);
+      }
+   }
 }
 
 //*****************************************************************************
@@ -524,7 +388,6 @@ S3StorageSystem::~S3StorageSystem() {
 bool S3StorageSystem::enter() {
    if (debug_mode) {
       printf("S3StorageSystem.enter\n");
-      printf("attempting to connect to S3\n");
    }
 
    S3Status status = S3_initialize("s3",
@@ -533,7 +396,7 @@ bool S3StorageSystem::enter() {
    if (status == S3StatusOK) {
       authenticated = true;
       connected = true;
-      //list_containers = list_account_containers();
+      list_containers = list_account_containers();
       return true;
    } else {
       return false;
@@ -560,7 +423,7 @@ vector<string> S3StorageSystem::list_account_containers() {
       printf("list_account_containers\n");
    }
 
-   list_service_data data;
+   vector<string> list_containers;
 
    showResponsePropertiesG = false;
    S3ListServiceHandler listServiceHandler =
@@ -576,10 +439,10 @@ vector<string> S3StorageSystem::list_account_containers() {
                       s3_host.c_str(),         // const char *hostName
                       NULL,                    // S3RequestContext *requestContext
                       &listServiceHandler,     // const S3ListServiceHandler *handler
-                      &data);                  // void *callbackData
+                      &list_containers);       // void *callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
 
-   return vector<string>();
+   return list_containers;
 }
 
 //*****************************************************************************
@@ -674,13 +537,15 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
    };
 
    list_bucket_callback_data data;
+   memset(&data, 0, sizeof(list_bucket_callback_data));
    const char *marker = 0;
    int maxkeys = 0;
-   int allDetails = 0;
    
-   snprintf(data.nextMarker, sizeof(data.nextMarker), "%s", marker);
+   if (marker) {
+      snprintf(data.nextMarker, sizeof(data.nextMarker), "%s", marker);
+   }
    data.keyCount = 0;
-   data.allDetails = allDetails;
+   data.list_objects = &list_objects;
 
    do {
       data.isTruncated = 0;
@@ -749,6 +614,11 @@ bool S3StorageSystem::put_object(const string& container_name,
                                  const vector<unsigned char>& file_contents,
                                  const PropertySet* headers) {
 
+   if (debug_mode) {
+      printf("put_object: container=%s, object=%s, length=%ld\n",
+             container_name.c_str(), object_name.c_str(), file_contents.size());
+   }
+   
    bool object_added = false;
 
    S3BucketContext bucketContext;
