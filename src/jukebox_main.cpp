@@ -147,7 +147,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
          secret_key = aws_secret_key;
       }
 
-      printf("Creating S3StorageSystem\n");
+      //printf("Creating S3StorageSystem\n");
       return new S3StorageSystem(access_key,
                                  secret_key,
                                  prefix,

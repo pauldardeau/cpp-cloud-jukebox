@@ -255,7 +255,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
                                  const string& container_prefix,
                                  bool debug) :
    StorageSystem("S3", debug),
-   debug_mode(true), //debug),
+   debug_mode(debug),
    connected(false),
    aws_access_key(access_key),
    aws_secret_key(secret_key),

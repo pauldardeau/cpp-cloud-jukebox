@@ -131,13 +131,13 @@ bool Jukebox::enter() {
       
       // does our metadata DB file exist in the metadata container?
       if (metadata_db_file_found) {
-         printf("metadata DB file exists in container, attempting to download\n");
+         //printf("metadata DB file exists in container, attempting to download\n");
 
          // download it
          string metadata_db_file_path = get_metadata_db_file_path();
          string download_file = metadata_db_file_path + ".download";
 
-         printf("downloading metadata DB to %s\n", download_file.c_str());
+         //printf("downloading metadata DB to %s\n", download_file.c_str());
          if (storage_system.get_object(metadata_container, metadata_db_file, download_file) > 0) {
             // have an existing metadata DB file?
             if (Utils::path_exists(metadata_db_file_path)) {
@@ -629,7 +629,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       return false;
    }
 
-   printf("attempting to download song '%s'\n", song.fm.file_uid.c_str());
+   //printf("attempting to download song '%s'\n", song.fm.file_uid.c_str());
 
    string file_path = song_path_in_playlist(song);
    double download_start_time = Utils::time_time();
@@ -640,7 +640,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
    }
 
    //if (debug_print) {
-      printf("bytes retrieved: %ld\n", song_bytes_retrieved);
+   //   printf("bytes retrieved: %ld\n", song_bytes_retrieved);
    //}
 
    if (song_bytes_retrieved > 0) {
@@ -694,7 +694,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       //}
 
       if (check_file_integrity(song)) {
-         printf("check_file_integrity returned true\n");
+         //printf("check_file_integrity returned true\n");
          return true;
       } else {
          // we retrieved the file, but it failed our integrity check
