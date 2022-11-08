@@ -4,6 +4,7 @@
 #include <libs3.h>
 
 #include "s3_storage_system.h"
+#include "OSUtils.h"
 
 #ifndef SLEEP_UNITS_PER_SECOND
 #define SLEEP_UNITS_PER_SECOND 1
@@ -11,36 +12,26 @@
 
 using namespace std;
 
+//*****************************************************************************
+//TODO:
+// - move hostname to creds file
+//*****************************************************************************
+
 // Helpful links:
 // https://docs.ceph.com/en/latest/radosgw/s3/csharp/
-
 // https://docs.ceph.com/en/latest/radosgw/s3/cpp/
-//
+
 static int retriesG = 3;
 static S3Status statusG = S3StatusOK;
 static int showResponsePropertiesG = 0;
 static char errorDetailsG[4096] = { 0 };
 
-struct _growbuffer
-{
-   // The total number of bytes, and the start byte
-   int size;
-   // The start byte
-   int start;
-   // The blocks
-   char data[64 * 1024];
-   struct _growbuffer *prev, *next;
-};
-
-typedef struct _growbuffer growbuffer;
-
 struct _put_object_callback_data
 {
-   FILE* infile;
-   growbuffer* gb;
+   FILE* infile;  // put_object from file
+   const vector<unsigned char>* contentBuffer;  // put object from memory
+   uint64_t bufferOffset;
    uint64_t contentLength;
-   uint64_t originalContentLength;
-   int noStatus;
 };
 
 typedef struct _put_object_callback_data put_object_callback_data;
@@ -65,102 +56,18 @@ typedef struct _get_object_callback_data get_object_callback_data;
 
 //*****************************************************************************
 
-// returns nonzero on success, zero on out of memory
-static int growbuffer_append(growbuffer **gb, const char *data, int dataLen)
+static bool should_retry()
 {
-   while (dataLen) {
-      growbuffer *buf = *gb ? (*gb)->prev : 0;
-      if (!buf || (buf->size == sizeof(buf->data))) {
-         buf = (growbuffer *) malloc(sizeof(growbuffer));
-         if (!buf) {
-            return 0;
-         }
-         buf->size = 0;
-         buf->start = 0;
-         if (*gb && (*gb)->prev) {
-            buf->prev = (*gb)->prev;
-            buf->next = *gb;
-            (*gb)->prev->next = buf;
-            (*gb)->prev = buf;
-         } else {
-            buf->prev = buf->next = buf;
-            *gb = buf;
-         }
-      }
-
-      int toCopy = (sizeof(buf->data) - buf->size);
-      if (toCopy > dataLen) {
-         toCopy = dataLen;
-      }
-
-      memcpy(&(buf->data[buf->size]), data, toCopy);
-        
-      buf->size += toCopy, data += toCopy, dataLen -= toCopy;
+   if (retriesG--) {
+      // Sleep before next retry; start out with a 1 second sleep
+      static int retrySleepInterval = 1 * SLEEP_UNITS_PER_SECOND;
+      sleep(retrySleepInterval);
+      // Next sleep 1 second longer
+      retrySleepInterval++;
+      return true;
    }
 
-   return 1;
-}
-
-//*****************************************************************************
-
-static void growbuffer_read(growbuffer **gb,
-                            int amt,
-                            int *amtReturn, 
-                            char *buffer)
-{
-   *amtReturn = 0;
-
-   growbuffer *buf = *gb;
-
-   if (!buf) {
-      return;
-   }
-
-   *amtReturn = (buf->size > amt) ? amt : buf->size;
-
-   memcpy(buffer, &(buf->data[buf->start]), *amtReturn);
-    
-   buf->start += *amtReturn, buf->size -= *amtReturn;
-
-   if (buf->size == 0) {
-      if (buf->next == buf) {
-         *gb = 0;
-      } else {
-         *gb = buf->next;
-         buf->prev->next = buf->next;
-         buf->next->prev = buf->prev;
-      }
-      free(buf);
-   }
-}
-
-//*****************************************************************************
-
-static void growbuffer_destroy(growbuffer *gb)
-{
-   growbuffer *start = gb;
-
-   while (gb) {
-      growbuffer *next = gb->next;
-      free(gb);
-      gb = (next == start) ? 0 : next;
-   }
-}
-
-//*****************************************************************************
-
-static int should_retry(void)
-{
-    if (retriesG--) {
-        // Sleep before next retry; start out with a 1 second sleep
-        static int retrySleepInterval = 1 * SLEEP_UNITS_PER_SECOND;
-        sleep(retrySleepInterval);
-        // Next sleep 1 second longer
-        retrySleepInterval++;
-        return 1;
-    }
-
-    return 0;
+   return false;
 }
 
 //*****************************************************************************
@@ -216,8 +123,8 @@ static S3Status listBucketCallback(int isTruncated,
 
 //*****************************************************************************
 
-static S3Status responsePropertiesCallback
-    (const S3ResponseProperties *properties, void *callbackData)
+static S3Status responsePropertiesCallback(const S3ResponseProperties *properties,
+                                           void *callbackData)
 {
    PropertySet* props = NULL;
     
@@ -242,6 +149,7 @@ static S3Status responsePropertiesCallback
 
    if (properties->lastModified > 0) {
       char timebuf[256];
+      memset(timebuf, 0, sizeof(timebuf));
       time_t t = (time_t) properties->lastModified;
       // gmtime is not thread-safe but we don't care here.
       strftime(timebuf, sizeof(timebuf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&t));
@@ -252,7 +160,8 @@ static S3Status responsePropertiesCallback
       char propName[256];
       memset(propName, 0, sizeof(propName));
       snprintf(propName, 256, "x-amz-meta-%s", properties->metaData[i].name);
-      props->add(propName, new StrPropertyValue(properties->metaData[i].value));
+      props->add(propName,
+                 new StrPropertyValue(properties->metaData[i].value));
    }
 
    return S3StatusOK;
@@ -272,25 +181,14 @@ static int putObjectDataCallback(int bufferSize,
    if (data->contentLength) {
       int toRead = ((data->contentLength > (unsigned) bufferSize) ?
                     (unsigned) bufferSize : data->contentLength);
-      if (data->gb) {
-         growbuffer_read(&(data->gb), toRead, &ret, buffer);
-      } else if (data->infile) {
+      if (data->infile) {
          ret = fread(buffer, 1, toRead, data->infile);
+      } else if (data->contentBuffer) {
+         //TODO: fill buffer from contentBuffer (use std::copy)
       }
    }
 
    data->contentLength -= ret;
-
-   if (data->contentLength && !data->noStatus) {
-      // Avoid a weird bug in MingW, which won't print the second integer
-      // value properly when it's in the same call, so print separately
-      printf("%llu bytes remaining ", 
-             (unsigned long long) data->contentLength);
-      printf("(%d%% complete) ...\n",
-             (int) (((data->originalContentLength - 
-                      data->contentLength) * 100) /
-                    data->originalContentLength));
-   }
 
    return ret;
 }
@@ -390,9 +288,7 @@ bool S3StorageSystem::enter() {
       printf("S3StorageSystem.enter\n");
    }
 
-   S3Status status = S3_initialize("s3",
-                                   S3_INIT_ALL,
-                                   s3_host.c_str());
+   S3Status status = S3_initialize("s3", S3_INIT_ALL, s3_host.c_str());
    if (status == S3StatusOK) {
       authenticated = true;
       connected = true;
@@ -433,13 +329,13 @@ vector<string> S3StorageSystem::list_account_containers() {
    };
 
    do {
-      S3_list_service(s3_protocol,             // S3Protocol protocol
-                      aws_access_key.c_str(),  // const char *accessKeyId
-                      aws_secret_key.c_str(),  // const char *secretAccessKey
-                      s3_host.c_str(),         // const char *hostName
-                      NULL,                    // S3RequestContext *requestContext
-                      &listServiceHandler,     // const S3ListServiceHandler *handler
-                      &list_containers);       // void *callbackData
+      S3_list_service(s3_protocol,            // S3Protocol protocol
+                      aws_access_key.c_str(), // const char *accessKeyId
+                      aws_secret_key.c_str(), // const char *secretAccessKey
+                      s3_host.c_str(),        // const char *hostName
+                      NULL,                   // S3RequestContext *requestContext
+                      &listServiceHandler,    // const S3ListServiceHandler *handler
+                      &list_containers);      // void *callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
 
    return list_containers;
@@ -464,16 +360,16 @@ bool S3StorageSystem::create_container(const string& container_name) {
    };
 
    do {
-      S3_create_bucket(s3_protocol,             // S3Protocol protocol
-                       aws_access_key.c_str(),  // const char *accessKeyId
-                       aws_secret_key.c_str(),  // const char *secretAccessKey
-                       s3_host.c_str(),         // const char *hostName
-                       container_name.c_str(),  // const char *bucketName
-                       cannedAcl,               // S3CannedAcl cannedAcl
-                       locationConstraint,      // const char *locationConstraint
-                       NULL,                    // S3RequestContext *requestContext
-                       &responseHandler,        // const S3ResponseHandler *handler
-                       NULL);                   // void *callbackData
+      S3_create_bucket(s3_protocol,            // S3Protocol protocol
+                       aws_access_key.c_str(), // const char *accessKeyId
+                       aws_secret_key.c_str(), // const char *secretAccessKey
+                       s3_host.c_str(),        // const char *hostName
+                       container_name.c_str(), // const char *bucketName
+                       cannedAcl,              // S3CannedAcl cannedAcl
+                       locationConstraint,     // const char *locationConstraint
+                       NULL,                   // S3RequestContext *requestContext
+                       &responseHandler,       // const S3ResponseHandler *handler
+                       NULL);                  // void *callbackData
    } while (S3_status_is_retryable(statusG) & should_retry());
    
    if (statusG == S3StatusOK) {
@@ -499,15 +395,15 @@ bool S3StorageSystem::delete_container(const string& container_name) {
    };
 
    do {
-      S3_delete_bucket(s3_protocol,             // S3Protocol protocol
-                       s3_uri_style,            // S3UriStyle uriStyle
-                       aws_access_key.c_str(),  // const char *accessKeyId
-                       aws_secret_key.c_str(),  // const char *secretAccessKey
-                       s3_host.c_str(),         // const char *hostName
-                       container_name.c_str(),  // const char *bucketName
-                       NULL,                    // S3RequestContext *requestContext
-                       &responseHandler,        // const S3ResponseHandler *handler
-                       NULL);                   // void *callbackData
+      S3_delete_bucket(s3_protocol,            // S3Protocol protocol
+                       s3_uri_style,           // S3UriStyle uriStyle
+                       aws_access_key.c_str(), // const char *accessKeyId
+                       aws_secret_key.c_str(), // const char *secretAccessKey
+                       s3_host.c_str(),        // const char *hostName
+                       container_name.c_str(), // const char *bucketName
+                       NULL,                   // S3RequestContext *requestContext
+                       &responseHandler,       // const S3ResponseHandler *handler
+                       NULL);                  // void *callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
    
    if (statusG == S3StatusOK) {
@@ -536,28 +432,25 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
       &listBucketCallback
    };
 
-   list_bucket_callback_data data;
-   memset(&data, 0, sizeof(list_bucket_callback_data));
-   const char *marker = 0;
    int maxkeys = 0;
    
-   if (marker) {
-      snprintf(data.nextMarker, sizeof(data.nextMarker), "%s", marker);
-   }
+   list_bucket_callback_data data;
+   memset(&data, 0, sizeof(list_bucket_callback_data));
+
    data.keyCount = 0;
    data.list_objects = &list_objects;
 
    do {
       data.isTruncated = 0;
       do {
-         S3_list_bucket(&bucketContext,      // const S3BucketContext *bucketContext
-                        0,                   // const char *prefix
-                        data.nextMarker,     // const char *marker
-                        0,                   // const char *delimiter
-                        0,                   // int maxkeys
-                        NULL,                // S3RequestContext*
-                        &listBucketHandler,  // const S3ListBucketHandler *handler
-                        &data);              // void *callbackData
+         S3_list_bucket(&bucketContext,     // const S3BucketContext *bucketContext
+                        0,                  // const char *prefix
+                        data.nextMarker,    // const char *marker
+                        0,                  // const char *delimiter
+                        0,                  // int maxkeys
+                        NULL,               // S3RequestContext*
+                        &listBucketHandler, // const S3ListBucketHandler *handler
+                        &data);             // void *callbackData
       } while (S3_status_is_retryable(statusG) && should_retry());
       
       if (statusG != S3StatusOK) {
@@ -591,11 +484,11 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
    };
 
    do {
-      S3_head_object(&bucketContext,       // const S3BucketContext *bucketContext
-                     object_name.c_str(),  // const char *key
-		     NULL,                 // S3RequestContext *requestContext
-		     &responseHandler,     // const S3ResponseHandler *handler
-		     &properties);         // void* callbackData
+      S3_head_object(&bucketContext,      // const S3BucketContext *bucketContext
+                     object_name.c_str(), // const char *key
+		     NULL,                // S3RequestContext *requestContext
+		     &responseHandler,    // const S3ResponseHandler *handler
+		     &properties);        // void* callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
    
    if (statusG == S3StatusOK) {
@@ -616,7 +509,9 @@ bool S3StorageSystem::put_object(const string& container_name,
 
    if (debug_mode) {
       printf("put_object: container=%s, object=%s, length=%ld\n",
-             container_name.c_str(), object_name.c_str(), file_contents.size());
+             container_name.c_str(),
+             object_name.c_str(),
+             file_contents.size());
    }
    
    bool object_added = false;
@@ -635,15 +530,12 @@ bool S3StorageSystem::put_object(const string& container_name,
    const char *cacheControl = 0;
    const char *contentType = 0;
    const char *md5 = 0;
-   int noStatus = 0;
 
    put_object_callback_data data;
-
-   data.infile = 0;
-   data.gb = 0;
-   data.noStatus = noStatus;
+   memset(&data, 0, sizeof(put_object_callback_data));
+   
+   data.contentBuffer = &file_contents;
    data.contentLength = contentLength;
-   data.originalContentLength = contentLength;
 
    S3PutProperties putProperties =
    {
@@ -666,13 +558,13 @@ bool S3StorageSystem::put_object(const string& container_name,
    };
 
    do {
-      S3_put_object(&bucketContext,       // const S3BucketContext *bucketContext
-                    object_name.c_str(),  // const char *key
-                    contentLength,        // uint64_t contentLength
-                    &putProperties,       // const S3PutProperties*
-                    NULL,                 // S3RequestContext*
-                    &putObjectHandler,    // const S3PutObjectHandler*
-                    &data);               // void* callbackData
+      S3_put_object(&bucketContext,      // const S3BucketContext *bucketContext
+                    object_name.c_str(), // const char *key
+                    contentLength,       // uint64_t contentLength
+                    &putProperties,      // const S3PutProperties*
+                    NULL,                // S3RequestContext*
+                    &putObjectHandler,   // const S3PutObjectHandler*
+                    &data);              // void* callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
 
    return object_added;
@@ -699,11 +591,11 @@ bool S3StorageSystem::delete_object(const string& container_name,
    };
 
    do {
-      S3_delete_object(&bucketContext,       // const S3BucketContext *bucketContext
-                       object_name.c_str(),  // const char *key
-                       NULL,                 // S3RequestContext* requestContext
-                       &responseHandler,     // const S3ResponseHandler* handler
-                       NULL);                // void* callbackData
+      S3_delete_object(&bucketContext,      // const S3BucketContext *bucketContext
+                       object_name.c_str(), // const char *key
+                       NULL,                // S3RequestContext* requestContext
+                       &responseHandler,    // const S3ResponseHandler* handler
+                       NULL);               // void* callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
    
    return object_deleted;
@@ -727,7 +619,8 @@ int64_t S3StorageSystem::get_object(const string& container_name,
    
    FILE* outputFile = fopen(local_file_path.c_str(), "w");
    if (outputFile == NULL) {
-      printf("error: unable to open output file '%s'\n", local_file_path.c_str());
+      printf("error: unable to open output file '%s'\n",
+             local_file_path.c_str());
       return 0;
    }
 
@@ -778,7 +671,7 @@ int64_t S3StorageSystem::get_object(const string& container_name,
    if (statusG == S3StatusOK) {
       return data.bytes_retrieved;
    } else {
-      //TODO: delete file
+      chaudiere::OSUtils::deleteFile(local_file_path);
       return 0;
    }
 }
