@@ -127,9 +127,9 @@ public:
    virtual bool delete_object(const std::string& container_name,
                               const std::string& object_name) = 0;
 
-   virtual int get_object(const std::string& container_name,
-                          const std::string& object_name,
-                          const std::string& local_file_path) = 0;
+   virtual int64_t get_object(const std::string& container_name,
+                              const std::string& object_name,
+                              const std::string& local_file_path) = 0;
 
    virtual bool enter() = 0;
    virtual void exit() = 0;

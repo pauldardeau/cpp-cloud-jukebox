@@ -267,26 +267,29 @@ void JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
 
 void JukeboxMain::show_usage() const {
    printf("Supported Commands:\n");
-   printf("\tdelete-artist      - delete specified artist\n");
    printf("\tdelete-album       - delete specified album\n");
+   printf("\tdelete-artist      - delete specified artist\n");
    printf("\tdelete-playlist    - delete specified playlist\n");
    printf("\tdelete-song        - delete specified song\n");
+   printf("\texport-album       - FUTURE\n");
+   printf("\texport-artist      - FUTURE\n");
+   printf("\texport-playlist    - FUTURE\n");
    printf("\thelp               - show this help message\n");
-   printf("\timport-songs       - import all new songs from song-import subdirectory\n");
-   printf("\timport-playlists   - import all new playlists from playlist-import subdirectory\n");
    printf("\timport-album-art   - import all album art from album-art-import subdirectory\n");
+   printf("\timport-playlists   - import all new playlists from playlist-import subdirectory\n");
+   printf("\timport-songs       - import all new songs from song-import subdirectory\n");
    printf("\tinit-storage       - initialize storage system\n");
-   printf("\tlist-songs         - show listing of all available songs\n");
+   printf("\tlist-albums        - show listing of all available albums\n");
    printf("\tlist-artists       - show listing of all available artists\n");
    printf("\tlist-containers    - show listing of all available storage containers\n");
-   printf("\tlist-albums        - show listing of all available albums\n");
    printf("\tlist-genres        - show listing of all available genres\n");
    printf("\tlist-playlists     - show listing of all available playlists\n");
+   printf("\tlist-songs         - show listing of all available songs\n");
+   printf("\tplay               - start playing songs\n");
+   printf("\tplay-playlist      - play specified playlist\n");
    printf("\tshow-album         - show songs in a specified album\n");
    printf("\tshow-playlist      - show songs in specified playlist\n");
-   printf("\tplay               - start playing songs\n");
    printf("\tshuffle-play       - play songs randomly\n");
-   printf("\tplay-playlist      - play specified playlist\n");
    printf("\tretrieve-catalog   - retrieve copy of music catalog\n");
    printf("\tupload-metadata-db - upload SQLite metadata\n");
    printf("\tusage              - show this help message\n");

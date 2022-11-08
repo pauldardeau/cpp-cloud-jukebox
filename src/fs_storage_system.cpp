@@ -169,10 +169,10 @@ bool FSStorageSystem::delete_object(const string& container_name,
    return object_deleted;
 }
 
-int FSStorageSystem::get_object(const string& container_name,
-                                const string& object_name,
-                                const string& local_file_path) {
-   int bytes_retrieved = 0;
+int64_t FSStorageSystem::get_object(const string& container_name,
+                                    const string& object_name,
+                                    const string& local_file_path) {
+   int64_t bytes_retrieved = 0;
    if (container_name.length() > 0 &&
        object_name.length() > 0 &&
        local_file_path.length() > 0) {

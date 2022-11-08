@@ -44,9 +44,9 @@ public:
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);
 
-   int get_object(const std::string& container_name,
-                  const std::string& object_name,
-                  const std::string& local_file_path);
+   int64_t get_object(const std::string& container_name,
+                      const std::string& object_name,
+                      const std::string& local_file_path);
 };
 
 #endif
