@@ -5,17 +5,13 @@
 
 #include "s3_storage_system.h"
 #include "OSUtils.h"
+#include "StrUtils.h"
 
 #ifndef SLEEP_UNITS_PER_SECOND
 #define SLEEP_UNITS_PER_SECOND 1
 #endif
 
 using namespace std;
-
-//*****************************************************************************
-//TODO:
-// - move protocol (http/https) to creds file
-//*****************************************************************************
 
 // Helpful links:
 // https://docs.ceph.com/en/latest/radosgw/s3/csharp/
@@ -256,6 +252,7 @@ static S3Status getObjectDataCallback(int bufferSize,
 
 S3StorageSystem::S3StorageSystem(const string& access_key,
                                  const string& secret_key,
+                                 const string& protocol,
                                  const string& host,
                                  const string& container_prefix,
                                  bool debug) :
@@ -268,15 +265,31 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
    s3_protocol(S3ProtocolHTTPS),
    s3_uri_style(S3UriStyleVirtualHost)
 {
-
-   if (debug_mode) {
-      printf("Using access_key=%s, secret_key=%s\n",
-             aws_access_key.c_str(), aws_secret_key.c_str());
-   }
-   if (container_prefix.length() > 0) {
-      if (debug_mode) {
-         printf("using container_prefix=%s\n", container_prefix.c_str());
+   string protocolInUse(protocol);
+   
+   if (protocol.length() > 0) {
+      chaudiere::StrUtils::toLowerCase(protocolInUse);
+      if (protocolInUse == "http") {
+         s3_protocol = S3ProtocolHTTP;
+      } else if (protocolInUse == "https") {
+         s3_protocol = S3ProtocolHTTPS;
+      } else {
+         s3_protocol = S3ProtocolHTTPS;
+         protocolInUse = "https";
+         printf("S3StorageSystem error: unrecognized protocol '%s'\n",
+                protocol.c_str());
+         printf("valid options are: 'http' and 'https'\n");
+         printf("using default value of %s\n", protocolInUse.c_str());
       }
+   }
+   
+   if (debug_mode) {
+      printf("S3StorageSystem parameters:\n");
+      printf("access_key=%s\n", aws_access_key.c_str());
+      printf("secret_key=%s\n", aws_secret_key.c_str());
+      printf("protocol=%s\n", protocolInUse.c_str());
+      printf("host=%s\n", s3_host.c_str());
+      printf("container_prefix=%s\n", container_prefix.c_str());
    }
 }
 

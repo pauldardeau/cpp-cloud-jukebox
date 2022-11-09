@@ -102,6 +102,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
    string aws_secret_key = "";
    string update_aws_access_key = "";
    string update_aws_secret_key = "";
+   string protocol = "";
    string host = "";
 
    if (credentials.contains("aws_access_key")) {
@@ -109,6 +110,9 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
    }
    if (credentials.contains("aws_secret_key")) {
       aws_secret_key = credentials.get_string_value("aws_secret_key");
+   }
+   if (credentials.contains("protocol")) {
+      protocol = credentials.get_string_value("protocol");
    }
    if (credentials.contains("host")) {
       host = credentials.get_string_value("host");
@@ -155,6 +159,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
       //printf("Creating S3StorageSystem\n");
       return new S3StorageSystem(access_key,
                                  secret_key,
+                                 protocol,
                                  host,
                                  prefix,
                                  in_debug_mode);

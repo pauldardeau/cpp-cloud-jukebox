@@ -29,6 +29,7 @@ private:
 public:
    S3StorageSystem(const std::string& aws_access_key,
                    const std::string& aws_secret_key,
+                   const std::string& protocol,
                    const std::string& host,
                    const std::string& container_prefix,
                    bool debug_mode=true);
