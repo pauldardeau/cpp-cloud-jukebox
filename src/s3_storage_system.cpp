@@ -14,7 +14,7 @@ using namespace std;
 
 //*****************************************************************************
 //TODO:
-// - move hostname to creds file
+// - move protocol (http/https) to creds file
 //*****************************************************************************
 
 // Helpful links:
@@ -184,7 +184,11 @@ static int putObjectDataCallback(int bufferSize,
       if (data->infile) {
          ret = fread(buffer, 1, toRead, data->infile);
       } else if (data->contentBuffer) {
-         //TODO: fill buffer from contentBuffer (use std::copy)
+         std::copy(data->contentBuffer->begin() + data->bufferOffset,
+                   data->contentBuffer->begin() + data->bufferOffset + toRead,
+                   buffer);
+         ret = toRead;
+         data->bufferOffset += toRead;
       }
    }
 
@@ -252,6 +256,7 @@ static S3Status getObjectDataCallback(int bufferSize,
 
 S3StorageSystem::S3StorageSystem(const string& access_key,
                                  const string& secret_key,
+                                 const string& host,
                                  const string& container_prefix,
                                  bool debug) :
    StorageSystem("S3", debug),
@@ -259,7 +264,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
    connected(false),
    aws_access_key(access_key),
    aws_secret_key(secret_key),
-   s3_host("s3.us-central-1.wasabisys.com"),
+   s3_host(host),
    s3_protocol(S3ProtocolHTTPS),
    s3_uri_style(S3UriStyleVirtualHost)
 {

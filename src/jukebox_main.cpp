@@ -98,21 +98,20 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                               bool in_debug_mode,
                                               bool in_update_mode)
 {
-   //if (!s3.is_available()) {
-   //   printf("error: s3 is not supported on this system. please install boto3 (s3 client) first.");
-   //   Utils::sys_exit(1);
-   //}
-
    string aws_access_key = "";
    string aws_secret_key = "";
    string update_aws_access_key = "";
    string update_aws_secret_key = "";
+   string host = "";
 
    if (credentials.contains("aws_access_key")) {
       aws_access_key = credentials.get_string_value("aws_access_key");
    }
    if (credentials.contains("aws_secret_key")) {
       aws_secret_key = credentials.get_string_value("aws_secret_key");
+   }
+   if (credentials.contains("host")) {
+      host = credentials.get_string_value("host");
    }
 
    if (credentials.contains("update_aws_access_key") &&
@@ -129,6 +128,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
          printf("update_aws_access_key=%s\n", update_aws_access_key.c_str());
          printf("update_aws_secret_key=%s\n", update_aws_secret_key.c_str());
       }
+      printf("host=%s\n", host.c_str());
    }
 
    if (aws_access_key.length() == 0 || aws_secret_key.length() == 0) {
@@ -136,6 +136,11 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
              "and aws_secret_key in credentials file\n");
       return NULL;
    } else {
+      if (host.length() == 0) {
+         printf("error: no s3 host given. please specify host in credentials file\n");
+         return NULL;
+      }
+      
       string access_key = "";
       string secret_key = "";
 
@@ -150,6 +155,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
       //printf("Creating S3StorageSystem\n");
       return new S3StorageSystem(access_key,
                                  secret_key,
+                                 host,
                                  prefix,
                                  in_debug_mode);
    }
