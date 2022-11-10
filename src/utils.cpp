@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
@@ -445,5 +446,113 @@ bool Utils::file_get_mtime(const std::string& file_path, double& mtime) {
    } else {
       return false;
    }
+}
+
+bool Utils::execute_program(const string& program_path,
+                            const vector<string>& program_args,
+                            int& exit_code,
+                            string& std_out,
+                            string& std_err) {
+   //TODO: capture stdout and stderr
+   bool success = false;
+   
+   if (program_path.length() == 0) {
+      printf("error: a non-empty program_path must be specified\n");
+      return false;
+   }
+   
+   if (!file_exists(program_path)) {
+      printf("error: program_path '%s' does not exist\n", program_path.c_str());
+      return false;
+   }
+   
+   pid_t pid = fork();
+   
+   if (pid == 0) {
+      // child
+      vector<string> program_path_components = path_splitext(program_path);
+      const string& program_file = program_path_components[1];
+      const char* program_name = program_file.c_str();
+
+      // create with extra room for program name and sentinel
+      const char **argv = new const char*[program_args.size()+2];
+      argv[0] = program_name;  // by convention, argv[0] is program name
+      for (unsigned int j = 0; j < program_args.size()+1; ++j) {
+         argv[j+1] = program_args[j].c_str();
+      }
+
+      argv[program_args.size()+1] = NULL;  // add sentinel
+   
+      int rc = execv(program_path.c_str(), (char **)argv);
+      if (rc == -1) {
+         delete [] argv;
+      }
+   } else {
+      // parent
+      int status = 0;
+      int options = 0;
+
+      pid_t wait_pid = waitpid(pid, &status, options);
+      if (wait_pid == pid) {
+         if (WIFEXITED(status)) {
+            exit_code = WEXITSTATUS(status);
+            if (exit_code == 0) {
+               success = true;
+            }
+         } else {
+            printf("waitpid returned, but program not exited\n");
+         }
+      } else {
+         printf("waitpid return value (other than pid) = %d\n", wait_pid);
+         printf("errno = %d\n", errno);
+      }
+   }
+   
+   return success;
+}
+
+bool Utils::launch_program(const string& program_path,
+                           const vector<string>& program_args,
+                           int& child_process_pid) {
+   bool success = false;
+   
+   if (program_path.length() == 0) {
+      printf("error: a non-empty program_path must be specified\n");
+      return false;
+   }
+   
+   if (!file_exists(program_path)) {
+      printf("error: program_path '%s' does not exist\n", program_path.c_str());
+      return false;
+   }
+   
+   pid_t pid = fork();
+   
+   if (pid == 0) {
+      // child
+      vector<string> program_path_components = path_splitext(program_path);
+      const string& program_file = program_path_components[1];
+      const char* program_name = program_file.c_str();
+
+      // create with extra room for program name and sentinel
+      const char **argv = new const char*[program_args.size()+2];
+      argv[0] = program_name;  // by convention, argv[0] is program name
+      for (unsigned int j = 0; j < program_args.size()+1; ++j) {
+         argv[j+1] = program_args[j].c_str();
+      }
+
+      argv[program_args.size()+1] = NULL;  // add sentinel
+   
+      int rc = execv(program_path.c_str(), (char **)argv);
+      if (rc == -1) {
+         delete [] argv;
+      }
+   } else {
+      // parent
+      child_process_pid = pid;
+      success = true;
+   }
+   
+   return success;
 }
 

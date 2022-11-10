@@ -13,6 +13,8 @@
 #include "song_downloader.h"
 #include "jb_utils.h"
 #include "utils.h"
+#include "IniReader.h"
+#include "KeyValuePairs.h"
 #include "OSUtils.h"
 #include "StringTokenizer.h"
 #include "StrUtils.h"
@@ -720,101 +722,19 @@ void Jukebox::play_song(const SongMetadata& song) {
       printf("playing %s\n", song.fm.file_uid.c_str());
 
       if (audio_player_command_args.length() > 0) {
+         string command_args = audio_player_command_args;
+         chaudiere::StrUtils::replaceAll(command_args, "%%AUDIO_FILE_PATH%%", song_file_path);
+         vector<string> vec_args = chaudiere::StrUtils::split(command_args, " ");
+         int child_process_id = 0;
+         pid_t pid;
          int exit_code = -1;
-         bool started_audio_player = false;
-         pid_t pid = fork();
-         if (pid == 0) {
-            // child
-            string base_exe_name;
-            vector<string> path_components = Utils::path_split(audio_player_exe_file_name);
-            if (path_components.size() == 2) {
-               const string& tail = path_components[1];
-               if (tail.length() > 0) {
-                  base_exe_name = tail;
-               }
-            }
-
-            if (base_exe_name.length() == 0) {
-               base_exe_name = audio_player_exe_file_name;
-            }
-
-            vector<string> vec_args;
-            vec_args.push_back(base_exe_name);
-
-            if (audio_player_command_args.length() > 0) {
-               vector<string> vec_addl_args = chaudiere::StrUtils::split(audio_player_command_args, " ");
-               std::copy(vec_addl_args.begin(), vec_addl_args.end(), std::back_inserter(vec_args));
-            }
-            vec_args.push_back(song_file_path);
-            int rc;
-            const auto num_args = vec_args.size();
-            if (num_args == 2) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          (char *) 0);
-            } else if (num_args == 3) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          vec_args[2].c_str(),
-                          (char *) 0);
-            } else if (num_args == 4) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          vec_args[2].c_str(),
-                          vec_args[3].c_str(),
-                          (char *) 0);
-            } else if (num_args == 5) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          vec_args[2].c_str(),
-                          vec_args[3].c_str(),
-                          vec_args[4].c_str(),
-                          (char *) 0);
-            } else if (num_args == 6) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          vec_args[2].c_str(),
-                          vec_args[3].c_str(),
-                          vec_args[4].c_str(),
-                          vec_args[5].c_str(),
-                          (char *) 0);
-            } else if (num_args == 7) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          vec_args[2].c_str(),
-                          vec_args[3].c_str(),
-                          vec_args[4].c_str(),
-                          vec_args[5].c_str(),
-                          vec_args[6].c_str(),
-                          (char *) 0);
-            } else if (num_args == 8) {
-               rc = execl(audio_player_exe_file_name.c_str(),
-                          vec_args[0].c_str(),
-                          vec_args[1].c_str(),
-                          vec_args[2].c_str(),
-                          vec_args[3].c_str(),
-                          vec_args[4].c_str(),
-                          vec_args[5].c_str(),
-                          vec_args[6].c_str(),
-                          vec_args[7].c_str(),
-                          (char *) 0);
-            } else {
-               rc = -1;
-            }
-            if (rc == -1) {
-               printf("+++++++******** ERROR: child process unable to start audio player\n");
-               ::exit(1);
-            }
-         } else {
-            // parent
+         
+         bool started_audio_player = Utils::launch_program(audio_player_exe_file_name,
+                                                           vec_args,
+                                                           child_process_id);
+         if (started_audio_player) {
+            pid = child_process_id;
             player_active = true;
-            started_audio_player = true;
             song_start_time = Utils::time_time();
             int status = 0;
             int options = 0;
@@ -832,8 +752,11 @@ void Jukebox::play_song(const SongMetadata& song) {
                printf("errno = %d\n", errno);
             }
             audio_player_process = -1;
+         } else {
+            printf("error: unable to start audio player\n");
+            ::exit(1);
          }
-
+         
          // if the audio player failed or is not present, just sleep
          // for the length of time that audio would be played
          if (!started_audio_player && exit_code != 0) {
@@ -965,27 +888,96 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
 
       song_index = 0;
       install_signal_handlers();
-
+      
+      string os_identifier;
+      
 #if defined(__APPLE__)
-      audio_player_exe_file_name = "afplay";
-      audio_player_command_args = "";
-#elif defined(__linux__) || defined(__unix__) || defined(__FreeBSD__)
-      audio_player_exe_file_name = "/usr/bin/mplayer";
-      audio_player_command_args = "-novideo -nolirc -really-quiet ";
+      os_identifier = "mac";
+#elif defined(__linux__)
+      os_identifier = "linux";
+#elif defined(__FreeBSD__)
+      os_identifier = "freebsd";
+#elif defined(__unix__)
+      os_identifier = "unix";
 #elif defined(_WIN32)
-      // we really need command-line support for /play and /close arguments. unfortunately,
-      // this support used to be available in the built-in Windows Media Player, but is
-      // no longer present.
-      // audio_player_command_args = "C:\Program Files\Windows Media Player\wmplayer.exe ";
-      //
-      /*
-      audio_player_exe_file_name = "C:\\Program Files\\MPC-HC\\mpc-hc64.exe";
-      audio_player_command_args = "/play /close /minimized ";
-      */
+      os_identifier = "windows";
 #else
+      printf("error: no audio-player specific lookup defined for this OS (unknown)\n");
+      return;
+#endif
+
+      string ini_file_name = "audio_player.ini";
       audio_player_exe_file_name = "";
       audio_player_command_args = "";
-#endif
+      
+      try {
+         chaudiere::IniReader ini_reader(ini_file_name);
+         chaudiere::KeyValuePairs kvpAudioPlayer;
+         if (!ini_reader.readSection(os_identifier, kvpAudioPlayer)) {
+            printf("error: no config section present for '%s'\n", os_identifier.c_str());
+            return;
+         }
+         
+         string key = "audio_player_exe_file_name";
+         if (kvpAudioPlayer.hasKey(key)) {
+            audio_player_exe_file_name = kvpAudioPlayer.getValue(key);
+            if (chaudiere::StrUtils::startsWith(audio_player_exe_file_name, "\"") &&
+                chaudiere::StrUtils::endsWith(audio_player_exe_file_name, "\"")) {
+               chaudiere::StrUtils::strip(audio_player_exe_file_name, '"');
+            }
+            chaudiere::StrUtils::strip(audio_player_exe_file_name);
+            if (audio_player_exe_file_name.length() == 0) {
+               printf("error: no value given for '%s' within [%s]\n",
+                      key.c_str(),
+                      os_identifier.c_str());
+               return;
+            }
+         } else {
+            printf("error: audio_player.ini missing value for '%s' within [%s]\n",
+                   key.c_str(),
+                   os_identifier.c_str());
+            return;
+         }
+         
+         key = "audio_player_command_args";
+         if (kvpAudioPlayer.hasKey(key)) {
+            audio_player_command_args = kvpAudioPlayer.getValue(key);
+            if (chaudiere::StrUtils::startsWith(audio_player_command_args, "\"") &&
+                chaudiere::StrUtils::endsWith(audio_player_command_args, "\"")) {
+               chaudiere::StrUtils::strip(audio_player_command_args, '"');
+            }
+            chaudiere::StrUtils::strip(audio_player_command_args);
+            if (audio_player_command_args.length() == 0) {
+               printf("error: no value given for '%s' within [%s]\n",
+                      key.c_str(),
+                      os_identifier.c_str());
+               return;
+            }
+
+            string placeholder = "%%AUDIO_FILE_PATH%%";
+            string::size_type pos_placeholder = audio_player_command_args.find(placeholder);
+            if (pos_placeholder == string::npos) {
+               printf("error: %s value does not contain placeholder '%s'\n",
+                      key.c_str(),
+                      placeholder.c_str());
+               return;
+            }
+
+         } else {
+            printf("error: audio_player.ini missing value for '%s' within [%s]\n",
+                   key.c_str(),
+                   os_identifier.c_str());
+            return;
+         }
+      } catch (const exception& e) {
+         printf("error: unable to read %s - %s\n", ini_file_name.c_str(), e.what());
+         return;
+      }
+      
+      if (debug_print) {
+         printf("audio_player_exe_file_name = '%s'\n", audio_player_exe_file_name.c_str());
+         printf("audio_player_command_args = '%s'\n", audio_player_command_args.c_str());
+      }
 
       printf("downloading first song...\n");
 
@@ -1004,7 +996,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
             int pid_value = Utils::get_pid();
             char pid_text[128];
             memset(pid_text, 0, sizeof(pid_text));
-            snprintf(pid_text, 128, "%d", pid_value);
+            snprintf(pid_text, 128, "%d\n", pid_value);
             string str_pid_text = pid_text;
             Utils::file_write_all_text("jukebox.pid", str_pid_text);
 

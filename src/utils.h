@@ -43,6 +43,15 @@ public:
    static bool directory_delete_directory(const std::string& dir_path);
    static std::string md5_for_file(const std::string& path_to_file);
    static bool file_get_mtime(const std::string& file_path, double& mtime);
+   static bool execute_program(const std::string& program_path,
+                               const std::vector<std::string>& program_args,
+                               int& exit_code,
+                               std::string& std_out,
+                               std::string& std_err);
+   static bool launch_program(const std::string& program_path,
+                              const std::vector<std::string>& program_args,
+                              int& child_process_pid);
+
 };
 
 //}
