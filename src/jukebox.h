@@ -85,8 +85,8 @@ public:
    int song_index;
    std::string audio_player_exe_file_name;
    std::string audio_player_command_args;
+   std::string audio_player_resume_args;
    pid_t audio_player_process;
-   int song_play_length_seconds;
    int cumulative_download_bytes;
    double cumulative_download_time;
    bool exit_requested;
@@ -97,6 +97,8 @@ public:
    chaudiere::PthreadsThread* download_thread;
    bool player_active;
    bool downloader_ready_to_delete;
+   int num_successive_play_failures;
+   bool song_play_is_resume;
 
    Jukebox(const JukeboxOptions& jb_options,
            StorageSystem& storage_sys,

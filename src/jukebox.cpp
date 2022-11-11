@@ -63,7 +63,6 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    number_songs(0),
    song_index(-1),
    audio_player_process(-1),
-   song_play_length_seconds(20),
    cumulative_download_bytes(0),
    cumulative_download_time(0.0),
    exit_requested(false),
@@ -73,7 +72,9 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    downloader(NULL),
    download_thread(NULL),
    player_active(false),
-   downloader_ready_to_delete(false)
+   downloader_ready_to_delete(false),
+   num_successive_play_failures(0),
+   song_play_is_resume(false)
 {
    g_jukebox_instance = this;
 
@@ -194,6 +195,7 @@ void Jukebox::exit() {
 
 void Jukebox::toggle_pause_play() {
    is_paused = !is_paused;
+   num_successive_play_failures = 0;
    if (is_paused) {
       printf("paused\n");
       if (audio_player_process > 0) {
@@ -203,6 +205,7 @@ void Jukebox::toggle_pause_play() {
       }
    } else {
       printf("resuming play\n");
+      song_play_is_resume = true;
    }
 }
 
@@ -211,6 +214,8 @@ void Jukebox::advance_to_next_song() {
    if (audio_player_process > 0) {
       kill(audio_player_process, SIGTERM);
       audio_player_process = -1;
+      num_successive_play_failures = 0;
+      song_play_is_resume = false;
    }
 }
 
@@ -626,6 +631,10 @@ void Jukebox::notifyRunComplete(chaudiere::Runnable* runnable) {
 }
 
 bool Jukebox::download_song(const SongMetadata& song) {
+   if (debug_print) {
+      printf("download_song called for '%s'\n", song.fm.file_uid.c_str());
+   }
+
    if (exit_requested) {
       printf("download_song returning false because exit_requested\n");
       return false;
@@ -636,6 +645,10 @@ bool Jukebox::download_song(const SongMetadata& song) {
    string file_path = song_path_in_playlist(song);
    double download_start_time = Utils::time_time();
    unsigned long song_bytes_retrieved = storage_system.retrieve_file(song.fm, song_play_dir);
+   if (debug_print) {
+      printf("song_bytes_retrieved = %ld\n", song_bytes_retrieved);
+   }
+
    if (exit_requested) {
       printf("download_song returning false because exit_requested\n");
       return false;
@@ -654,7 +667,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       // are we checking data integrity?
       // if so, verify that the storage system retrieved the same length that has been stored
       if (jukebox_options.check_data_integrity) {
-         printf("checking data integrity\n");
+         //printf("checking data integrity\n");
          if (debug_print) {
             printf("verifying data integrity\n");
          }
@@ -696,7 +709,9 @@ bool Jukebox::download_song(const SongMetadata& song) {
       //}
 
       if (check_file_integrity(song)) {
-         //printf("check_file_integrity returned true\n");
+         if (debug_print) {
+            printf("check_file_integrity returned true\n");
+         }
          return true;
       } else {
          // we retrieved the file, but it failed our integrity check
@@ -721,9 +736,41 @@ void Jukebox::play_song(const SongMetadata& song) {
    if (Utils::path_exists(song_file_path)) {
       printf("playing %s\n", song.fm.file_uid.c_str());
 
-      if (audio_player_command_args.length() > 0) {
-         string command_args = audio_player_command_args;
-         chaudiere::StrUtils::replaceAll(command_args, "%%AUDIO_FILE_PATH%%", song_file_path);
+      if (audio_player_exe_file_name.length() > 0) {
+         bool did_resume = false;
+         string command_args;
+         if (song_play_is_resume) {
+            string placeholder = "%%START_SONG_TIME_OFFSET%%";
+            string::size_type pos_placeholder = audio_player_resume_args.find(placeholder);
+            if (pos_placeholder != string::npos) {
+               command_args = audio_player_resume_args;
+               string song_start_time;
+               int minutes = song_seconds_offset / 60;
+               if (minutes > 0) {
+                  song_start_time = chaudiere::StrUtils::toString(minutes);
+                  song_start_time += ":";
+                  int remaining_seconds = song_seconds_offset % 60;
+                  string seconds_text = chaudiere::StrUtils::toString(remaining_seconds);
+                  if (seconds_text.length() == 1) {
+                     seconds_text = string("0") + seconds_text;
+                  }
+                  song_start_time += seconds_text;
+               } else {
+                  song_start_time = chaudiere::StrUtils::toString(song_seconds_offset);
+               }
+               //printf("resuming at '%s'\n", song_start_time.c_str());
+               chaudiere::StrUtils::replaceAll(command_args, "%%START_SONG_TIME_OFFSET%%", song_start_time);
+               chaudiere::StrUtils::replaceAll(command_args, "%%AUDIO_FILE_PATH%%", song_file_path);
+               did_resume = true;
+               //printf("command_args: '%s'\n", command_args.c_str());
+            }
+         }
+
+         if (!did_resume) {
+            command_args = audio_player_command_args;
+            chaudiere::StrUtils::replaceAll(command_args, "%%AUDIO_FILE_PATH%%", song_file_path);
+         }
+
          vector<string> vec_args = chaudiere::StrUtils::split(command_args, " ");
          int child_process_id = 0;
          pid_t pid;
@@ -743,7 +790,18 @@ void Jukebox::play_song(const SongMetadata& song) {
             if (rc_pid == pid) {
                if (WIFEXITED(status)) {
                   exit_code = WEXITSTATUS(status);
+                  double song_end_time = Utils::time_time();
+                  double song_play_time = song_end_time - song_start_time;
+                  song_seconds_offset += floor(song_play_time);
+                  //printf("song_start_time = %f\n", song_start_time);
+                  //printf("song_end_time = %f\n", song_end_time);
+                  //printf("song_play_time = %f\n", song_play_time);
+                  //printf("DEBUG: song_seconds_offset = %d\n", song_seconds_offset);
                   player_active = false;
+                  if (exit_code == 0) {
+                     num_successive_play_failures = 0;
+                  }
+                  song_play_is_resume = false;
                } else {
                   printf("waitpid returned, but player not exited\n");
                }
@@ -757,15 +815,22 @@ void Jukebox::play_song(const SongMetadata& song) {
             ::exit(1);
          }
          
-         // if the audio player failed or is not present, just sleep
-         // for the length of time that audio would be played
-         if (!started_audio_player && exit_code != 0) {
-            Utils::time_sleep(song_play_length_seconds);
+         // audio player failed or is not present?
+         if (!started_audio_player || exit_code != 0) {
+            ++num_successive_play_failures;
+            if (num_successive_play_failures >= 3) {
+               // we've had at least 3 successive play failures.
+               // obviously something is not right with config.
+               // just print a message and exit.
+               printf("error: audio player appears to be misconfigured. exiting\n");
+               ::exit(1);
+            }
          }
       } else {
-         // we don't know about an audio player, so simulate a
-         // song being played by sleeping
-         Utils::time_sleep(song_play_length_seconds);
+         // we don't know about an audio player, so there's nothing
+         // left to do
+         printf("error: no audio player configured. exiting.\n");
+         ::exit(1);
       }
 
       if (!is_paused) {
@@ -822,12 +887,17 @@ void Jukebox::download_songs() {
 
       if (dl_songs.size() > 0) {
          if (downloader == NULL && download_thread == NULL) {
+            if (debug_print) {
+               printf("creating SongDownloader and download thread\n");
+            }
             downloader = new SongDownloader(*this, dl_songs);
             download_thread = new chaudiere::PthreadsThread(downloader);
             downloader->setCompletionObserver(this);
             download_thread->start();
          } else {
-            printf("Not downloading more songs b/c downloader != NULL or download_thread != NULL\n");
+            if (debug_print) {
+               printf("Not downloading more songs b/c downloader != NULL or download_thread != NULL\n");
+            }
          }
       }
    }
@@ -909,6 +979,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
       string ini_file_name = "audio_player.ini";
       audio_player_exe_file_name = "";
       audio_player_command_args = "";
+      audio_player_resume_args = "";
       
       try {
          chaudiere::IniReader ini_reader(ini_file_name);
@@ -917,7 +988,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
             printf("error: no config section present for '%s'\n", os_identifier.c_str());
             return;
          }
-         
+
          string key = "audio_player_exe_file_name";
          if (kvpAudioPlayer.hasKey(key)) {
             audio_player_exe_file_name = kvpAudioPlayer.getValue(key);
@@ -969,6 +1040,32 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
                    os_identifier.c_str());
             return;
          }
+
+         key = "audio_player_resume_args";
+         if (kvpAudioPlayer.hasKey(key)) {
+            audio_player_resume_args = kvpAudioPlayer.getValue(key);
+            if (chaudiere::StrUtils::startsWith(audio_player_resume_args, "\"") &&
+                chaudiere::StrUtils::endsWith(audio_player_resume_args, "\"")) {
+               chaudiere::StrUtils::strip(audio_player_resume_args, '"');
+            }
+            chaudiere::StrUtils::strip(audio_player_resume_args);
+            if (audio_player_resume_args.length() > 0) {
+               string placeholder = "%%START_SONG_TIME_OFFSET%%";
+               string::size_type pos_placeholder = audio_player_resume_args.find(placeholder);
+               if (pos_placeholder == string::npos) {
+                  printf("error: %s value does not contain placeholder '%s'\n",
+                         key.c_str(),
+                         placeholder.c_str());
+                  printf("ignoring '%s', using 'audio_player_command_args' for song resume\n",
+                         key.c_str());
+                  audio_player_resume_args = "";
+               }
+            }
+         }
+
+         if (audio_player_resume_args.length() == 0) {
+            audio_player_resume_args = audio_player_command_args;
+         }
       } catch (const exception& e) {
          printf("error: unable to read %s - %s\n", ini_file_name.c_str(), e.what());
          return;
@@ -1005,15 +1102,25 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
 
                if (!is_paused) {
                   if (downloader == NULL && download_thread == NULL) {
+                     if (debug_print) {
+                        printf("calling download_songs\n");
+                     }
                      download_songs();
                      if (!player_active) {
                         play_song(song_list[song_index]);
                      }
                      downloader_cleanup();
+                  } else {
+                     if (debug_print) {
+                        printf("have downloader so not downloading\n");
+                     }
                   }
                }
+
                if (!is_paused) {
                   song_index++;
+                  song_play_is_resume = false;
+                  song_seconds_offset = 0;
                   if (song_index >= number_songs) {
                      song_index = 0;
                   }
