@@ -131,7 +131,7 @@ bool Jukebox::enter() {
             break;
          }
       }
-      
+
       // does our metadata DB file exist in the metadata container?
       if (metadata_db_file_found) {
          //printf("metadata DB file exists in container, attempting to download\n");
@@ -775,7 +775,7 @@ void Jukebox::play_song(const SongMetadata& song) {
          int child_process_id = 0;
          pid_t pid;
          int exit_code = -1;
-         
+
          bool started_audio_player = Utils::launch_program(audio_player_exe_file_name,
                                                            vec_args,
                                                            child_process_id);
@@ -814,7 +814,7 @@ void Jukebox::play_song(const SongMetadata& song) {
             printf("error: unable to start audio player\n");
             ::exit(1);
          }
-         
+
          // audio player failed or is not present?
          if (!started_audio_player || exit_code != 0) {
             ++num_successive_play_failures;
@@ -958,9 +958,9 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
 
       song_index = 0;
       install_signal_handlers();
-      
+
       string os_identifier;
-      
+
 #if defined(__APPLE__)
       os_identifier = "mac";
 #elif defined(__linux__)
@@ -980,7 +980,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
       audio_player_exe_file_name = "";
       audio_player_command_args = "";
       audio_player_resume_args = "";
-      
+
       try {
          chaudiere::IniReader ini_reader(ini_file_name);
          chaudiere::KeyValuePairs kvpAudioPlayer;
@@ -1009,7 +1009,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
                    os_identifier.c_str());
             return;
          }
-         
+
          key = "audio_player_command_args";
          if (kvpAudioPlayer.hasKey(key)) {
             audio_player_command_args = kvpAudioPlayer.getValue(key);
@@ -1070,7 +1070,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          printf("error: unable to read %s - %s\n", ini_file_name.c_str(), e.what());
          return;
       }
-      
+
       if (debug_print) {
          printf("audio_player_exe_file_name = '%s'\n", audio_player_exe_file_name.c_str());
          printf("audio_player_command_args = '%s'\n", audio_player_command_args.c_str());
@@ -1125,7 +1125,6 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
                      song_index = 0;
                   }
                } else {
-                  //printf("DEBUG: is_paused, sleeping\n");
                   Utils::time_sleep(1);
                }
             }
@@ -1134,9 +1133,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
             printf("error: unable to download songs\n");
             Utils::sys_exit(1);
          }
-      }
-      catch (exception& e)
-      {
+      } catch (exception& e) {
          printf("exception caught: %s\n", e.what());
          printf("\nexiting jukebox\n");
          chaudiere::OSUtils::deleteFile("jukebox.pid");
@@ -1201,19 +1198,19 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
          // a minimum size for compressing
          if (jukebox_options.use_compression) {
             //FUTURE: compression (read_file_contents)
-     /*
+            /*
             if (debug_print) {
                printf("compressing file\n");
             }
 
             file_bytes = bytes(file_contents, 'utf-8');
             file_contents = zlib.compress(file_bytes, 9);
-      */
+            */
          }
 
          if (allow_encryption && jukebox_options.use_encryption) {
             //FUTURE: encryption (read_file_contents)
-      /*
+            /*
             if (debug_print) {
                printf("encrypting file\n");
             }

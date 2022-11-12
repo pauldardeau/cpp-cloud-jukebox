@@ -455,19 +455,19 @@ bool Utils::execute_program(const string& program_path,
                             string& std_err) {
    //TODO: capture stdout and stderr
    bool success = false;
-   
+
    if (program_path.length() == 0) {
       printf("error: a non-empty program_path must be specified\n");
       return false;
    }
-   
+
    if (!file_exists(program_path)) {
       printf("error: program_path '%s' does not exist\n", program_path.c_str());
       return false;
    }
-   
+
    pid_t pid = fork();
-   
+
    if (pid == 0) {
       // child
       vector<string> program_path_components = path_splitext(program_path);
@@ -482,7 +482,7 @@ bool Utils::execute_program(const string& program_path,
       }
 
       argv[program_args.size()+1] = NULL;  // add sentinel
-   
+
       int rc = execv(program_path.c_str(), (char **)argv);
       if (rc == -1) {
          delete [] argv;
@@ -507,7 +507,7 @@ bool Utils::execute_program(const string& program_path,
          printf("errno = %d\n", errno);
       }
    }
-   
+
    return success;
 }
 
@@ -515,19 +515,19 @@ bool Utils::launch_program(const string& program_path,
                            const vector<string>& program_args,
                            int& child_process_pid) {
    bool success = false;
-   
+
    if (program_path.length() == 0) {
       printf("error: a non-empty program_path must be specified\n");
       return false;
    }
-   
+
    if (!file_exists(program_path)) {
       printf("error: program_path '%s' does not exist\n", program_path.c_str());
       return false;
    }
-   
+
    pid_t pid = fork();
-   
+
    if (pid == 0) {
       // child
       vector<string> program_path_components = path_splitext(program_path);
@@ -542,7 +542,7 @@ bool Utils::launch_program(const string& program_path,
       }
 
       argv[program_args.size()+1] = NULL;  // add sentinel
-   
+
       int rc = execv(program_path.c_str(), (char **)argv);
       if (rc == -1) {
          delete [] argv;
@@ -552,7 +552,7 @@ bool Utils::launch_program(const string& program_path,
       child_process_pid = pid;
       success = true;
    }
-   
+
    return success;
 }
 

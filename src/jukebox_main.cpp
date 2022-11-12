@@ -144,7 +144,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
          printf("error: no s3 host given. please specify host in credentials file\n");
          return NULL;
       }
-      
+
       string access_key = "";
       string secret_key = "";
 

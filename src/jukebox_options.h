@@ -19,7 +19,7 @@ public:
    std::string encryption_iv;
    bool suppress_metadata_download;
 
-   JukeboxOptions() : 
+   JukeboxOptions() :
       debug_mode(false),
       use_encryption(false),
       use_compression(false),

@@ -68,7 +68,7 @@ static bool should_retry()
 
 //*****************************************************************************
 
-static S3Status listServiceCallback(const char *ownerId, 
+static S3Status listServiceCallback(const char *ownerId,
                                     const char *ownerDisplayName,
                                     const char *bucketName,
                                     int64_t creationDate,
@@ -83,13 +83,13 @@ static S3Status listServiceCallback(const char *ownerId,
 
 static S3Status listBucketCallback(int isTruncated,
                                    const char *nextMarker,
-                                   int contentsCount, 
+                                   int contentsCount,
                                    const S3ListBucketContent *contents,
                                    int commonPrefixesCount,
                                    const char **commonPrefixes,
                                    void *callbackData)
 {
-   list_bucket_callback_data *data = 
+   list_bucket_callback_data *data =
        (list_bucket_callback_data *) callbackData;
 
    data->isTruncated = isTruncated;
@@ -101,12 +101,12 @@ static S3Status listBucketCallback(int isTruncated,
       nextMarker = contents[contentsCount - 1].key;
    }
    if (nextMarker) {
-      snprintf(data->nextMarker, sizeof(data->nextMarker), "%s", 
+      snprintf(data->nextMarker, sizeof(data->nextMarker), "%s",
                nextMarker);
    } else {
       data->nextMarker[0] = 0;
    }
-    
+
    for (int i = 0; i < contentsCount; i++) {
       const S3ListBucketContent *content = &(contents[i]);
       data->list_objects->push_back(string(content->key));
@@ -123,7 +123,7 @@ static S3Status responsePropertiesCallback(const S3ResponseProperties *propertie
                                            void *callbackData)
 {
    PropertySet* props = NULL;
-    
+
    if (callbackData != NULL) {
       props = static_cast<PropertySet*>(callbackData);
    }
@@ -135,7 +135,7 @@ static S3Status responsePropertiesCallback(const S3ResponseProperties *propertie
    props->add("Content-Type", new StrPropertyValue(properties->contentType));
    props->add("Request-Id", new StrPropertyValue(properties->requestId));
    props->add("Request-Id-2", new StrPropertyValue(properties->requestId2));
-   
+
    if (properties->contentLength > 0) {
       props->add("Content-Length", new ULongPropertyValue(properties->contentLength));
    }
@@ -151,7 +151,7 @@ static S3Status responsePropertiesCallback(const S3ResponseProperties *propertie
       strftime(timebuf, sizeof(timebuf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&t));
       props->add("Last-Modified", new StrPropertyValue(timebuf));
    }
-   
+
    for (int i = 0; i < properties->metaDataCount; i++) {
       char propName[256];
       memset(propName, 0, sizeof(propName));
@@ -169,9 +169,9 @@ static int putObjectDataCallback(int bufferSize,
                                  char *buffer,
                                  void *callbackData)
 {
-   put_object_callback_data *data = 
+   put_object_callback_data *data =
        (put_object_callback_data *) callbackData;
-    
+
    int ret = 0;
 
    if (data->contentLength) {
@@ -196,7 +196,7 @@ static int putObjectDataCallback(int bufferSize,
 //*****************************************************************************
 
 static void responseCompleteCallback(S3Status status,
-                                     const S3ErrorDetails *error, 
+                                     const S3ErrorDetails *error,
                                      void *callbackData)
 {
    (void) callbackData;
@@ -222,8 +222,8 @@ static void responseCompleteCallback(S3Status status,
       len += snprintf(&(errorDetailsG[len]), sizeof(errorDetailsG) - len,
                         "%s", "  Extra Details:\n");
       for (int i = 0; i < error->extraDetailsCount; i++) {
-         len += snprintf(&(errorDetailsG[len]), 
-                         sizeof(errorDetailsG) - len, "    %s: %s\n", 
+         len += snprintf(&(errorDetailsG[len]),
+                         sizeof(errorDetailsG) - len, "    %s: %s\n",
                          error->extraDetails[i].name,
                          error->extraDetails[i].value);
       }
@@ -266,7 +266,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
    s3_uri_style(S3UriStyleVirtualHost)
 {
    string protocolInUse(protocol);
-   
+
    if (protocol.length() > 0) {
       chaudiere::StrUtils::toLowerCase(protocolInUse);
       if (protocolInUse == "http") {
@@ -282,7 +282,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
          printf("using default value of %s\n", protocolInUse.c_str());
       }
    }
-   
+
    if (debug_mode) {
       printf("S3StorageSystem parameters:\n");
       printf("access_key=%s\n", aws_access_key.c_str());
@@ -389,11 +389,11 @@ bool S3StorageSystem::create_container(const string& container_name) {
                        &responseHandler,       // const S3ResponseHandler *handler
                        NULL);                  // void *callbackData
    } while (S3_status_is_retryable(statusG) & should_retry());
-   
+
    if (statusG == S3StatusOK) {
       container_created = true;
    }
-   
+
    return container_created;
 }
 
@@ -423,7 +423,7 @@ bool S3StorageSystem::delete_container(const string& container_name) {
                        &responseHandler,       // const S3ResponseHandler *handler
                        NULL);                  // void *callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
-   
+
    if (statusG == S3StatusOK) {
       container_deleted = true;
    }
@@ -442,7 +442,7 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
 
    S3BucketContext bucketContext;
    populateBucketContext(bucketContext, container_name);
-   
+
    showResponsePropertiesG = false;
    S3ListBucketHandler listBucketHandler =
    {
@@ -451,7 +451,7 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
    };
 
    int maxkeys = 0;
-   
+
    list_bucket_callback_data data;
    memset(&data, 0, sizeof(list_bucket_callback_data));
 
@@ -470,12 +470,12 @@ vector<string> S3StorageSystem::list_container_contents(const string& container_
                         &listBucketHandler, // const S3ListBucketHandler *handler
                         &data);             // void *callbackData
       } while (S3_status_is_retryable(statusG) && should_retry());
-      
+
       if (statusG != S3StatusOK) {
          break;
       }
    } while (data.isTruncated && (!maxkeys || (data.keyCount < maxkeys)));
-   
+
    return list_objects;
 }
 
@@ -488,7 +488,7 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
       printf("get_object_metadata: container=%s, object=%s\n",
              container_name.c_str(), object_name.c_str());
    }
-   
+
    bool success = false;
    showResponsePropertiesG = true;
 
@@ -496,7 +496,7 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
    populateBucketContext(bucketContext, container_name);
 
    S3ResponseHandler responseHandler =
-   { 
+   {
       &responsePropertiesCallback,
       &responseCompleteCallback
    };
@@ -504,15 +504,15 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
    do {
       S3_head_object(&bucketContext,      // const S3BucketContext *bucketContext
                      object_name.c_str(), // const char *key
-		     NULL,                // S3RequestContext *requestContext
-		     &responseHandler,    // const S3ResponseHandler *handler
-		     &properties);        // void* callbackData
+                     NULL,                // S3RequestContext *requestContext
+                     &responseHandler,    // const S3ResponseHandler *handler
+                     &properties);        // void* callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
-   
+
    if (statusG == S3StatusOK) {
       success = true;
    }
-   
+
    showResponsePropertiesG = false;
 
    return success;
@@ -531,16 +531,16 @@ bool S3StorageSystem::put_object(const string& container_name,
              object_name.c_str(),
              file_contents.size());
    }
-   
+
    bool object_added = false;
 
    S3BucketContext bucketContext;
    populateBucketContext(bucketContext, container_name);
 
-   uint64_t contentLength = file_contents.size(); 
-   
+   uint64_t contentLength = file_contents.size();
+
    int metaPropertiesCount = 0;
-   S3NameValue metaProperties[S3_MAX_METADATA_COUNT]; 
+   S3NameValue metaProperties[S3_MAX_METADATA_COUNT];
    int64_t expires = -1;
    S3CannedAcl cannedAcl = S3CannedAclPrivate;
    const char *contentDispositionFilename = 0;
@@ -551,7 +551,7 @@ bool S3StorageSystem::put_object(const string& container_name,
 
    put_object_callback_data data;
    memset(&data, 0, sizeof(put_object_callback_data));
-   
+
    data.contentBuffer = &file_contents;
    data.contentLength = contentLength;
 
@@ -601,9 +601,9 @@ bool S3StorageSystem::delete_object(const string& container_name,
 
    S3BucketContext bucketContext;
    populateBucketContext(bucketContext, container_name);
-   
+
    S3ResponseHandler responseHandler =
-   { 
+   {
       0,
       &responseCompleteCallback
    };
@@ -615,7 +615,7 @@ bool S3StorageSystem::delete_object(const string& container_name,
                        &responseHandler,    // const S3ResponseHandler* handler
                        NULL);               // void* callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
-   
+
    return object_deleted;
 }
 
@@ -629,12 +629,12 @@ int64_t S3StorageSystem::get_object(const string& container_name,
              container_name.c_str(), object_name.c_str(),
              local_file_path.c_str());
    }
-   
+
    if (local_file_path.length() == 0) {
       printf("error: local file path is empty\n");
       return 0;
    }
-   
+
    FILE* outputFile = fopen(local_file_path.c_str(), "w");
    if (outputFile == NULL) {
       printf("error: unable to open output file '%s'\n",
@@ -660,10 +660,10 @@ int64_t S3StorageSystem::get_object(const string& container_name,
 
    uint64_t startByte = 0;
    uint64_t byteCount = 0;
-   
+
    get_object_callback_data data;
    memset(&data, 0, sizeof(get_object_callback_data));
-   
+
    data.outfile = outputFile;
 
    showResponsePropertiesG = false;
@@ -683,7 +683,7 @@ int64_t S3StorageSystem::get_object(const string& container_name,
                     &getObjectHandler,    // const S3GetObjectHandler *handler
                     &data);               // callback data
    } while (S3_status_is_retryable(statusG) && should_retry());
-   
+
    fclose(outputFile);
 
    if (statusG == S3StatusOK) {
