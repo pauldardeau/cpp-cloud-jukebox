@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "KeyValuePairs.h"
+
 //namespace jukebox {
 
 class Utils {
@@ -39,9 +41,15 @@ public:
                                    std::vector<unsigned char>& file_bytes);
    static bool file_read_all_text(const std::string& file_path,
                                   std::string& file_contents);
+   static bool file_copy(const std::string& from_file, const std::string& to_file);
+   static bool file_set_permissions(const std::string& file_path,
+                                    int user_perms,
+                                    int group_perms,
+                                    int world_perms);
    static std::vector<std::string> file_read_lines(const std::string& file_path);
    static bool directory_delete_directory(const std::string& dir_path);
-   static std::string md5_for_file(const std::string& path_to_file);
+   static std::string md5_for_file(const std::string& ini_file_name,
+                                   const std::string& path_to_file);
    static bool file_get_mtime(const std::string& file_path, double& mtime);
    static bool execute_program(const std::string& program_path,
                                const std::vector<std::string>& program_args,
@@ -51,6 +59,13 @@ public:
    static bool launch_program(const std::string& program_path,
                               const std::vector<std::string>& program_args,
                               int& child_process_pid);
+   static std::string get_platform_identifier();
+   static bool get_platform_config_value(const std::string& ini_file_name,
+                                         const std::string& key,
+                                         std::string& config_value,
+                                         bool strip_quotes=true);
+   static bool get_platform_config_values(const std::string& ini_file_name,
+                                          chaudiere::KeyValuePairs& kvp);
 
 };
 

@@ -6,7 +6,8 @@
 #include "property_set.h"
 #include "jukebox_options.h"
 #include "jukebox.h"
-#include "s3_storage_system.h"
+//#include "s3_storage_system.h"
+#include "s3ext_storage_system.h"
 #include "utils.h"
 #include "OSUtils.h"
 #include "StringTokenizer.h"
@@ -96,7 +97,8 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
 StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                               string prefix,
                                               bool in_debug_mode,
-                                              bool in_update_mode)
+                                              bool in_update_mode,
+                                              bool use_external)
 {
    string aws_access_key = "";
    string aws_secret_key = "";
@@ -156,13 +158,23 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
          secret_key = aws_secret_key;
       }
 
-      //printf("Creating S3StorageSystem\n");
-      return new S3StorageSystem(access_key,
-                                 secret_key,
-                                 protocol,
-                                 host,
-                                 prefix,
-                                 in_debug_mode);
+      //if (use_external) {
+         //printf("Creating S3ExtStorageSystem\n");
+         return new S3ExtStorageSystem(access_key,
+                                       secret_key,
+                                       protocol,
+                                       host,
+                                       prefix,
+                                       in_debug_mode);
+      //} else {
+         //printf("Creating S3StorageSystem\n");
+      //   return new S3StorageSystem(access_key,
+      //                              secret_key,
+      //                              protocol,
+      //                              host,
+      //                              prefix,
+      //                              in_debug_mode);
+      //}
    }
    return NULL;
 }
@@ -255,7 +267,9 @@ StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
    if (system_name == "swift") {
       return connect_swift_system(credentials, prefix, in_debug_mode, in_update_mode);
    } else if (system_name == "s3") {
-      return connect_s3_system(credentials, prefix, in_debug_mode, in_update_mode);
+      return connect_s3_system(credentials, prefix, in_debug_mode, in_update_mode, false);
+   } else if (system_name == "s3ext") {
+      return connect_s3_system(credentials, prefix, in_debug_mode, in_update_mode, true);
    } else if (system_name == "azure") {
       return connect_azure_system(credentials, prefix, in_debug_mode, in_update_mode);
    } else if (system_name == "fs") {
@@ -409,6 +423,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
       StringSet supported_systems;
       supported_systems.add("swift");
       supported_systems.add("s3");
+      supported_systems.add("s3ext");
       supported_systems.add("azure");
       supported_systems.add("fs");
       if (!supported_systems.contains(storage)) {

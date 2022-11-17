@@ -19,7 +19,8 @@ public:
    StorageSystem* connect_s3_system(const PropertySet& credentials,
                                     std::string prefix,
                                     bool in_debug_mode,
-                                    bool in_update_mode);
+                                    bool in_update_mode,
+                                    bool use_external);
 
    StorageSystem* connect_azure_system(const PropertySet& credentials,
                                        std::string prefix,

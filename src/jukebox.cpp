@@ -26,6 +26,8 @@ using json = nlohmann::json;
 
 static Jukebox* g_jukebox_instance = NULL;
 
+static string ini_file_name = "audio_player.ini";
+
 void signal_handler(int signum) {
    if (g_jukebox_instance != NULL) {
       if (signum == SIGUSR1) {
@@ -583,7 +585,7 @@ bool Jukebox::check_file_integrity(const SongMetadata& song) {
             printf("checking integrity for %s\n", song.fm.file_uid.c_str());
          }
 
-         string playlist_md5 = Utils::md5_for_file(file_path);
+         string playlist_md5 = Utils::md5_for_file(ini_file_name, file_path);
          if (playlist_md5 == song.fm.md5_hash) {
             if (debug_print) {
                printf("integrity check SUCCESS\n");
@@ -595,7 +597,7 @@ bool Jukebox::check_file_integrity(const SongMetadata& song) {
          }
       } else {
          // file doesn't exist
-         printf("file doesn't exist\n");
+         printf("error: check_file_integrity - file doesn't exist\n");
          file_integrity_passed = false;
       }
    } else {
@@ -959,24 +961,12 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
       song_index = 0;
       install_signal_handlers();
 
-      string os_identifier;
+      string os_identifier = Utils::get_platform_identifier();
+      if (os_identifier == "unknown") {
+         printf("error: no audio-player specific lookup defined for this OS (unknown)\n");
+         return;
+      }
 
-#if defined(__APPLE__)
-      os_identifier = "mac";
-#elif defined(__linux__)
-      os_identifier = "linux";
-#elif defined(__FreeBSD__)
-      os_identifier = "freebsd";
-#elif defined(__unix__)
-      os_identifier = "unix";
-#elif defined(_WIN32)
-      os_identifier = "windows";
-#else
-      printf("error: no audio-player specific lookup defined for this OS (unknown)\n");
-      return;
-#endif
-
-      string ini_file_name = "audio_player.ini";
       audio_player_exe_file_name = "";
       audio_player_command_args = "";
       audio_player_resume_args = "";
@@ -1015,6 +1005,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
             audio_player_command_args = kvpAudioPlayer.getValue(key);
             if (chaudiere::StrUtils::startsWith(audio_player_command_args, "\"") &&
                 chaudiere::StrUtils::endsWith(audio_player_command_args, "\"")) {
+
                chaudiere::StrUtils::strip(audio_player_command_args, '"');
             }
             chaudiere::StrUtils::strip(audio_player_command_args);

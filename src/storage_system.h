@@ -118,6 +118,29 @@ public:
       }
    }
 
+   virtual bool put_object(const std::string& container_name,
+                           const std::string& object_name,
+                           const std::string& file_path,
+                           const PropertySet* headers=NULL) {
+      bool file_read = false;
+      bool put_success = false;
+      std::vector<unsigned char> file_contents;
+
+      if (Utils::file_read_all_bytes(file_path, file_contents)) {
+         file_read = true;
+      } else {
+         printf("error: unable to read file %s\n", file_path.c_str());
+      }
+
+      if (file_read) {
+         put_success = put_object(container_name,
+                                  object_name,
+                                  file_contents,
+                                  headers);
+      }
+      return put_success;
+   }
+
    virtual std::vector<std::string> list_account_containers() = 0;
 
    virtual bool create_container(const std::string& container_name) = 0;

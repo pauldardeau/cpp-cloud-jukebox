@@ -1,24 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <errno.h>
+#include <math.h>
 #include <time.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
 
 #include "utils.h"
 #include "DateTime.h"
 #include "StrUtils.h"
+#include "IniReader.h"
+#include "KeyValuePairs.h"
+#include "OSUtils.h"
+
 
 using namespace std;
 
+#define READ_PIPE 0
+#define WRITE_PIPE 1
+
 #define NS_PER_SEC 1000000000.0
 
+static bool finished_reading_child_fds = false;
 static const string EMPTY = "";
+
+void sig_child_handler(int signo) {
+   if (signo == SIGCHLD) {
+      finished_reading_child_fds = true;
+      wait(NULL);
+   }
+}
 
 string Utils::datetime_datetime_fromtimestamp(double ts) {
    // python datetime.datetime.fromtimestamp
@@ -378,62 +394,89 @@ bool Utils::file_write_all_bytes(const string& file_path,
    return write_success;
 }
 
-string Utils::md5_for_file(const string& path_to_file) {
+string Utils::md5_for_file(const string& ini_file_name,
+                           const string& path_to_file) {
+   if (!file_exists(ini_file_name)) {
+      printf("error (md5_for_file): ini file does not exist '%s'\n", ini_file_name.c_str());
+      return EMPTY;
+   }
+   
    if (!file_exists(path_to_file)) {
       printf("error (md5_for_file): file does not exist '%s'\n", path_to_file.c_str());
       return EMPTY;
    }
-
-   vector<unsigned char> file_contents;
-   if (!file_read_all_bytes(path_to_file, file_contents)) {
-      printf("error (md5_for_file): unable to read file '%s'\n", path_to_file.c_str());
-      return EMPTY;
+   
+   chaudiere::KeyValuePairs kvp;
+   if (get_platform_config_values(ini_file_name, kvp)) {
+      string key_exe = "md5_exe_file_name";
+      string key_field_number = "md5_hash_output_field";
+      if (kvp.hasKey(key_exe)) {
+         string md5_exe = kvp.getValue(key_exe);
+         if (!file_exists(md5_exe)) {
+            printf("error: md5 executable not found: '%s'\n", md5_exe.c_str());
+            return EMPTY;
+         }
+         
+         vector<string> program_args;
+         program_args.push_back(path_to_file);
+         int exit_code = 0;
+         string std_out;
+         string std_err;
+         
+         if (execute_program(md5_exe,
+                             program_args,
+                             exit_code,
+                             std_out,
+                             std_err)) {
+            if (exit_code == 0) {
+               if (std_out.length() > 0) {
+                  int field_number = 1;
+                  if (kvp.hasKey(key_field_number)) {
+                     string field_number_text = kvp.getValue(key_field_number);
+                     if (field_number_text.length() > 0) {
+                        try {
+                           field_number = chaudiere::StrUtils::parseInt(field_number_text);
+                        } catch (const exception& e) {
+                           printf("error: unable to convert value '%s' for '%s' to integer\n",
+                                  field_number_text.c_str(),
+                                  key_field_number.c_str());
+                           printf("will attempt to use first field\n");
+                        }
+                     }
+                  }
+                  vector<string> file_lines = chaudiere::StrUtils::split(std_out, "\n");
+                  if (file_lines.size() > 0) {
+                     string first_line = file_lines[0];
+                     vector<string> line_fields = chaudiere::StrUtils::split(first_line, " ");
+                     if (line_fields.size() > 0) {
+                        return line_fields[field_number-1];
+                     } else {
+                        if (first_line.length() > 0) {
+                           return first_line;
+                        } else {
+                           printf("error: md5_for_file - first stdout line is empty\n");
+                        }
+                     }
+                  } else {
+                     printf("error: md5_for_file - stdout split by lines is empty\n");
+                  }
+               } else {
+                  printf("error: md5_for_file - no content for stdout captured\n");
+               }
+            } else {
+               printf("error: md5_for_file - non-zero exit code for md5 utility. value=%d\n", exit_code);
+            }
+         } else {
+            printf("error: md5_for_file - unable to execute md5 sum utility '%s'\n", md5_exe.c_str());
+         }
+      } else {
+         printf("error: md5_for_file - no value present for '%s'\n", key_exe.c_str());
+      }
+   } else {
+      printf("error: md5_for_file - unable to retrieve platform config values\n");
    }
 
-   EVP_MD_CTX* ctx = EVP_MD_CTX_create();
-   if (ctx == NULL) {
-      printf("error (md5_for_file): failed to create EVP_MD_CTX\n");
-      return EMPTY;
-   }
-
-   if (1 != EVP_DigestInit_ex(ctx, EVP_md5(), NULL)) {
-      printf("error (md5_for_file): failed to init MD5 digest\n");
-      return EMPTY;
-   }
-
-   if (1 != EVP_DigestUpdate(ctx, file_contents.data(), file_contents.size())) {
-      printf("error (md5_for_file): failed to update digest\n");
-      return EMPTY;
-   }
-
-   unsigned int length = EVP_MD_size(EVP_md5());
-   unsigned char* digest = (unsigned char*)OPENSSL_malloc(length);
-   if (digest == NULL) {
-      printf("error (md5_for_file) failed to allocate memory for hash value\n");
-      return EMPTY;
-   }
-
-   if (1 != EVP_DigestFinal_ex(ctx, digest, &length)) {
-      OPENSSL_free(digest);
-      printf("error (md5_for_file): failed to finalize digest\n");
-      return EMPTY;
-   }
-
-   EVP_MD_CTX_destroy(ctx);
-
-   string hash = string((const char*)digest, length);
-   OPENSSL_free(digest);
-
-   string hex_formatted_hash;
-   char hex_char[3];
-   memset(hex_char, 0, sizeof(hex_char));
-
-   for (size_t i = 0; i < hash.length(); i++) {
-      sprintf(hex_char, "%02x", hash[i]);
-      hex_formatted_hash += hex_char;
-   }
-
-   return hex_formatted_hash;
+   return EMPTY;
 }
 
 bool Utils::file_get_mtime(const std::string& file_path, double& mtime) {
@@ -448,12 +491,85 @@ bool Utils::file_get_mtime(const std::string& file_path, double& mtime) {
    }
 }
 
+bool Utils::file_delete(const string& file_path) {
+   return chaudiere::OSUtils::deleteFile(file_path);
+}
+
+bool Utils::file_copy(const string& from_file, const string& to_file) {
+   string file_text;
+   if (file_read_all_text(from_file, file_text)) {
+      return file_write_all_text(to_file, file_text);
+   } else {
+      printf("Utils::file_copy - unable to read file '%s'\n", from_file.c_str());
+      return false;
+   }
+}
+
+bool Utils::file_set_permissions(const string& file_path,
+                                 int user_perms,
+                                 int group_perms,
+                                 int world_perms) {
+   bool success = false;
+   if (file_exists(file_path)) {
+      if ((user_perms > -1) && (group_perms > -1) && (world_perms > -1) &&
+          (user_perms < 8) && (group_perms < 8) && (world_perms < 8)) {
+         mode_t file_mode = 0;
+         if (user_perms > 3) {
+            file_mode |= S_IRUSR;
+            user_perms -= 4;
+         }
+         if (user_perms > 1) {
+            file_mode |= S_IWUSR;
+            user_perms -= 2;
+         }
+         if (user_perms > 0) {
+            file_mode |= S_IXUSR;
+         }
+         
+         if (group_perms > 3) {
+            file_mode |= S_IRGRP;
+            group_perms -= 4;
+         }
+         if (group_perms > 1) {
+            file_mode |= S_IWGRP;
+            group_perms -= 2;
+         }
+         if (group_perms > 0) {
+            file_mode |= S_IXGRP;
+         }
+         
+         if (world_perms > 3) {
+            file_mode |= S_IROTH;
+            world_perms -= 4;
+         }
+         if (world_perms > 1) {
+            file_mode |= S_IWOTH;
+            world_perms -= 2;
+         }
+         if (world_perms > 0) {
+            file_mode |= S_IXOTH;
+         }
+         
+         int rc = chmod(file_path.c_str(), file_mode);
+         if (rc == 0) {
+            success = true;
+         } else {
+            printf("Utils::file_set_permissions - chmod failed for '%s', errno = %d\n", file_path.c_str(), errno);
+         }
+      } else {
+         printf("Utils::file_set_permissions - error permission flags are octal (0-7)\n");
+      }
+   } else {
+      printf("Utils::file_set_permissions - file doesn't exist '%s'\n", file_path.c_str());
+   }
+   return success;
+}
+
 bool Utils::execute_program(const string& program_path,
                             const vector<string>& program_args,
                             int& exit_code,
                             string& std_out,
                             string& std_err) {
-   //TODO: capture stdout and stderr
    bool success = false;
 
    if (program_path.length() == 0) {
@@ -465,11 +581,36 @@ bool Utils::execute_program(const string& program_path,
       printf("error: program_path '%s' does not exist\n", program_path.c_str());
       return false;
    }
+   
+   int fd_stdout[2];
+   int fd_stderr[2];
+   int rc;
+   
+   rc = pipe(fd_stdout);
+   if (rc != 0) {
+      printf("error: unable to create pipe. errno = %d\n", errno);
+      return false;
+   }
+   
+   rc = pipe(fd_stderr);
+   if (rc != 0) {
+      printf("error: unable to create pipe. errno = %d\n", errno);
+      return false;
+   }
 
    pid_t pid = fork();
 
    if (pid == 0) {
       // child
+      dup2(fd_stdout[WRITE_PIPE], 1);
+      dup2(fd_stderr[WRITE_PIPE], 2);
+         
+      close(fd_stdout[READ_PIPE]);
+      close(fd_stdout[WRITE_PIPE]);
+	 
+      close(fd_stderr[READ_PIPE]);
+      close(fd_stderr[WRITE_PIPE]);
+
       vector<string> program_path_components = path_splitext(program_path);
       const string& program_file = program_path_components[1];
       const char* program_name = program_file.c_str();
@@ -486,9 +627,74 @@ bool Utils::execute_program(const string& program_path,
       int rc = execv(program_path.c_str(), (char **)argv);
       if (rc == -1) {
          delete [] argv;
+         string s = "error: unable to start executable";
+         ssize_t exp_bytes_written = (ssize_t) s.length();
+         ssize_t bytes_written = write(2, s.c_str(), exp_bytes_written);
+         if (bytes_written < exp_bytes_written) {
+            printf("error: unable to start executable\n");
+            printf("error: unable to write to stderr\n");
+         }
+         exit(1);
       }
    } else {
       // parent
+      
+      close(fd_stdout[WRITE_PIPE]);
+      close(fd_stderr[WRITE_PIPE]);
+      
+      char pipe_read_buffer[8192];
+      memset(pipe_read_buffer, 0, sizeof(pipe_read_buffer));
+      
+      fd_set read_fds;
+      
+      signal(SIGCHLD, sig_child_handler);
+      
+      do {
+         FD_ZERO(&read_fds);
+         FD_SET(fd_stdout[READ_PIPE], &read_fds);
+         FD_SET(fd_stderr[READ_PIPE], &read_fds);
+         int cnt = select(std::max(fd_stdout[READ_PIPE],
+                                   fd_stderr[READ_PIPE]) + 1,  // nfds
+                          &read_fds,                           // readfds
+                          NULL,                                // writefds
+                          NULL,                                // exceptfds
+                          NULL);                               // timeout
+	 if (cnt > 0) {
+            if (FD_ISSET(fd_stdout[READ_PIPE], &read_fds)) {
+               ssize_t bytes_read = read(fd_stdout[READ_PIPE],
+                                         pipe_read_buffer,
+                                         sizeof(pipe_read_buffer)-1);
+               if (bytes_read < 0) {
+                  printf("error: unable to read pipe. errno = %d\n", errno);
+               } else if (bytes_read > 0) {
+                  if (pipe_read_buffer[0] != 0) {
+                     std_out += string(pipe_read_buffer);
+                  }
+                  memset(pipe_read_buffer, 0, sizeof(pipe_read_buffer));
+               }
+            }
+
+	    if (FD_ISSET(fd_stderr[READ_PIPE], &read_fds)) {
+               ssize_t bytes_read = read(fd_stderr[READ_PIPE],
+                                         pipe_read_buffer,
+                                         sizeof(pipe_read_buffer)-1);
+               if (bytes_read < 0) {
+                  printf("error: unable to read pipe. errno = %d\n", errno);
+               } else if (bytes_read > 0) {
+                  if (pipe_read_buffer[0] != 0) {
+                     std_err += string(pipe_read_buffer);
+                  }
+                  memset(pipe_read_buffer, 0, sizeof(pipe_read_buffer));
+               }
+            }
+         } else if (cnt < 0) {
+            printf("error on select: errno = %d\n", errno);
+            finished_reading_child_fds = true;
+         }
+      } while (!finished_reading_child_fds);
+      close(fd_stdout[READ_PIPE]);
+      close(fd_stderr[READ_PIPE]);
+
       int status = 0;
       int options = 0;
 
@@ -503,8 +709,11 @@ bool Utils::execute_program(const string& program_path,
             printf("waitpid returned, but program not exited\n");
          }
       } else {
-         printf("waitpid return value (other than pid) = %d\n", wait_pid);
-         printf("errno = %d\n", errno);
+         if (errno == ECHILD) {
+            success = true;
+         } else {
+            printf("waitpid error. errno = %d\n", errno);
+         }
       }
    }
 
@@ -554,5 +763,82 @@ bool Utils::launch_program(const string& program_path,
    }
 
    return success;
+}
+
+string Utils::get_platform_identifier() {
+   string os_identifier;
+   
+#if defined(__APPLE__)
+   os_identifier = "mac";
+#elif defined(__linux__)
+   os_identifier = "linux";
+#elif defined(__FreeBSD__)
+   os_identifier = "freebsd";
+#elif defined(__unix__)
+   os_identifier = "unix";
+#elif defined(_WIN32)
+   os_identifier = "windows";
+#else
+   os_identifier = "unknown";
+#endif
+
+   return os_identifier;
+}
+
+bool Utils::get_platform_config_value(const string& ini_file_name,
+                                      const string& key,
+                                      string& config_value,
+                                      bool strip_quotes) {
+   string os_identifier = Utils::get_platform_identifier();
+   if (os_identifier == "unknown" || os_identifier.length() == 0) {
+      printf("error: unknown platform\n");
+      return false;
+   }
+
+   chaudiere::KeyValuePairs kvp;
+   if (get_platform_config_values(ini_file_name, kvp)) {   
+      if (kvp.hasKey(key)) {
+         config_value = kvp.getValue(key);
+         if (chaudiere::StrUtils::startsWith(config_value, "\"") &&
+             chaudiere::StrUtils::endsWith(config_value, "\"")) {
+            
+            chaudiere::StrUtils::strip(config_value, '"');
+         }
+         chaudiere::StrUtils::strip(config_value);
+
+         return true;
+      } else {
+         printf("error: %s missing value for '%s' within [%s]\n",
+                ini_file_name.c_str(),
+                key.c_str(),
+                os_identifier.c_str());
+         return false;
+      }
+   } else {
+      printf("error: unable to obtain config values\n");
+      return false;
+   }
+}
+
+bool Utils::get_platform_config_values(const string& ini_file_name,
+                                       chaudiere::KeyValuePairs& kvp) {
+   string os_identifier = Utils::get_platform_identifier();
+   if (os_identifier == "unknown" || os_identifier.length() == 0) {
+      printf("error: unknown platform\n");
+      return false;
+   }
+   
+   try {
+      chaudiere::IniReader ini_reader(ini_file_name);
+      if (!ini_reader.readSection(os_identifier, kvp)) {
+         printf("error: no config section present for '%s'\n", os_identifier.c_str());
+         return false;
+      } else {
+         return true;
+      }
+   } catch (const exception& e) {
+      printf("error: unable to read %s - %s\n", ini_file_name.c_str(), e.what());
+      return false;
+   }
 }
 

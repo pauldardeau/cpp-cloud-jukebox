@@ -16,6 +16,20 @@ private:
    PropertySet& operator=(const PropertySet&);
 
 public:
+   static const std::string PROP_CONTENT_LENGTH;
+   static const std::string PROP_CONTENT_TYPE;
+   static const std::string PROP_CONTENT_MD5;
+   static const std::string PROP_CONTENT_ENCODING;
+   //static const std::string PROP_CONTENT_DISPOSITION_FILENAME;
+   //static const std::string PROP_CACHE_CONTROL;
+   //static const std::string PROP_EXPIRES;
+   //static const std::string PROP_CANNED_ACL;
+   
+   //static const std::string ACL_PRIVATE;
+   //static const std::string ACL_PUBLIC_READ;
+   //static const std::string ACL_PUBLIC_READ_WRITE;
+   //static const std::string ACL_AUTHENTICATED_READ;
+
    PropertySet();
    ~PropertySet();
 
@@ -36,6 +50,18 @@ public:
    bool read_from_file(const std::string& file_path);
    size_t count() const;
    std::string to_string() const;
+   
+   // set ACL
+   void set_acl_private();
+   void set_acl_public_read();
+   void set_acl_public_read_write();
+   void set_acl_authenticated_read();
+   
+   void set_content_encoding(const std::string& content_encoding);
+   void set_content_length(unsigned long content_length);
+   void set_content_type(const std::string& content_type);
+   void set_content_md5(const std::string& md5_hash);
+   
 };
 
 #endif

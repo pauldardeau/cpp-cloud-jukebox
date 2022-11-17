@@ -17,6 +17,20 @@ static const string TYPE_ULONG = "ulong";
 static const string VALUE_TRUE = "true";
 static const string VALUE_FALSE = "false";
 
+const string PropertySet::PROP_CONTENT_ENCODING = "Content-Encoding";
+const string PropertySet::PROP_CONTENT_LENGTH = "Content-Length";
+const string PropertySet::PROP_CONTENT_TYPE = "Content-Type";
+const string PropertySet::PROP_CONTENT_MD5 = "Content-MD5";
+//const string PropertySet::PROP_CONTENT_DISPOSITION_FILENAME = "contentDispositionFilename";
+//const string PropertySet::PROP_CACHE_CONTROL = "Cache-Control";
+//const string PropertySet::PROP_EXPIRES = "expires";
+//const string PropertySet::PROP_CANNED_ACL = "cannedAcl";
+
+//const string PropertySet::ACL_PRIVATE = "private";
+//const string PropertySet::ACL_PUBLIC_READ = "public-read";
+//const string PropertySet::ACL_PUBLIC_READ_WRITE = "public-read-write";
+//const string PropertySet::ACL_AUTHENTICATED_READ = "authenticated-read";
+
 
 PropertySet::PropertySet() {
 }
@@ -221,4 +235,39 @@ std::string PropertySet::to_string() const {
 
    return props_string;
 }
+
+/*
+void PropertySet::set_acl_private() {
+   add(PROP_CANNED_ACL, new StrPropertyValue(ACL_PRIVATE));
+}
+
+void PropertySet::set_acl_public_read() {
+   add(PROP_CANNED_ACL, new StrPropertyValue(ACL_PUBLIC_READ));
+}
+
+void PropertySet::set_acl_public_read_write() {
+   add(PROP_CANNED_ACL, new StrPropertyValue(ACL_PUBLIC_READ_WRITE));
+}
+
+void PropertySet::set_acl_authenticated_read() {
+   add(PROP_CANNED_ACL, new StrPropertyValue(ACL_AUTHENTICATED_READ));
+}
+*/
+
+void PropertySet::set_content_encoding(const std::string& content_encoding) {
+   add(PROP_CONTENT_ENCODING, new StrPropertyValue(content_encoding));
+}
+
+void PropertySet::set_content_length(unsigned long content_length) {
+   add(PROP_CONTENT_LENGTH, new ULongPropertyValue(content_length));
+}
+
+void PropertySet::set_content_type(const std::string& content_type) {
+   add(PROP_CONTENT_TYPE, new StrPropertyValue(content_type));
+}
+
+void PropertySet::set_content_md5(const std::string& md5_hash) {
+   add(PROP_CONTENT_MD5, new StrPropertyValue(md5_hash));
+}
+
 

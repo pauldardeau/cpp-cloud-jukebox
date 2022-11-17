@@ -4,14 +4,20 @@
 
 using namespace std;
 
+//*****************************************************************************
+
 FSStorageSystem::FSStorageSystem(const string& the_root_dir, bool debug_mode) :
    StorageSystem("FS", debug_mode),
    root_dir(the_root_dir) {
 }
 
+//*****************************************************************************
+
 FSStorageSystem::~FSStorageSystem() {
    exit();
 }
+
+//*****************************************************************************
 
 bool FSStorageSystem::enter() {
    if (!chaudiere::OSUtils::directoryExists(root_dir)) {
@@ -20,12 +26,18 @@ bool FSStorageSystem::enter() {
    return chaudiere::OSUtils::directoryExists(root_dir);
 }
 
+//*****************************************************************************
+
 void FSStorageSystem::exit() {
 }
+
+//*****************************************************************************
 
 vector<string> FSStorageSystem::list_account_containers() {
    return chaudiere::OSUtils::listDirsInDirectory(root_dir);
 }
+
+//*****************************************************************************
 
 bool FSStorageSystem::create_container(const string& container_name) {
    bool container_created = false;
@@ -42,6 +54,8 @@ bool FSStorageSystem::create_container(const string& container_name) {
    return container_created;
 }
 
+//*****************************************************************************
+
 bool FSStorageSystem::delete_container(const string& container_name) {
    bool container_deleted = false;
    string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
@@ -55,6 +69,8 @@ bool FSStorageSystem::delete_container(const string& container_name) {
    return container_deleted;
 }
 
+//*****************************************************************************
+
 vector<string> FSStorageSystem::list_container_contents(const string& container_name) {
    vector<string> list_contents;
    string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
@@ -63,6 +79,8 @@ vector<string> FSStorageSystem::list_container_contents(const string& container_
    }
    return list_contents;
 }
+
+//*****************************************************************************
 
 bool FSStorageSystem::get_object_metadata(const std::string& container_name,
                                           const std::string& object_name,
@@ -79,6 +97,8 @@ bool FSStorageSystem::get_object_metadata(const std::string& container_name,
    }
    return false;
 }
+
+//*****************************************************************************
 
 bool FSStorageSystem::put_object(const string& container_name,
                                  const string& object_name,
@@ -126,6 +146,8 @@ bool FSStorageSystem::put_object(const string& container_name,
    return object_added;
 }
 
+//*****************************************************************************
+
 bool FSStorageSystem::delete_object(const string& container_name,
                                     const string& object_name) {
    bool object_deleted = false;
@@ -160,6 +182,8 @@ bool FSStorageSystem::delete_object(const string& container_name,
    return object_deleted;
 }
 
+//*****************************************************************************
+
 int64_t FSStorageSystem::get_object(const string& container_name,
                                     const string& object_name,
                                     const string& local_file_path) {
@@ -181,4 +205,6 @@ int64_t FSStorageSystem::get_object(const string& container_name,
    }
    return bytes_retrieved;
 }
+
+//*****************************************************************************
 
