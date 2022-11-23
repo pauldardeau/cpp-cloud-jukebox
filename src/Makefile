@@ -17,6 +17,7 @@ jukebox.o \
 jukebox_db.o \
 jukebox_main.o \
 main.o \
+mirror_storage_system.o \
 property_set.o \
 song_downloader.o \
 s3ext_storage_system.o \

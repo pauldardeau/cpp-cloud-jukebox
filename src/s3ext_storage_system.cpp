@@ -127,7 +127,7 @@ bool S3ExtStorageSystem::create_container(const string& container_name) {
    chaudiere::KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
-   
+
    string script_template = "s3-create-container.sh";
    string run_script = run_script_name_for_template(script_template);
 
@@ -167,7 +167,7 @@ bool S3ExtStorageSystem::delete_container(const string& container_name) {
          container_deleted = true;
       }
    }
-   
+
    Utils::file_delete(run_script);
 
    return container_deleted;
@@ -185,7 +185,7 @@ vector<string> S3ExtStorageSystem::list_container_contents(const string& contain
    chaudiere::KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
-   
+
    string script_template = "s3-list-container-contents.sh";
    string run_script = run_script_name_for_template(script_template);
 
@@ -230,7 +230,7 @@ bool S3ExtStorageSystem::get_object_metadata(const string& container_name,
          success = true;
       }
    }
-   
+
    Utils::file_delete(run_script);
 
    return success;
@@ -256,7 +256,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
    tmp_file += container_name;
    tmp_file += "_";
    tmp_file += object_name;
-   
+
    if (Utils::file_write_all_bytes(tmp_file, file_contents)) {
       Utils::file_set_permissions(tmp_file, 6, 0, 0);
       object_added = put_object(container_name,
@@ -267,7 +267,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
    } else {
       printf("error: put_object not able to write to tmp file\n");
    }
-   
+
    return object_added;
 }
 
@@ -286,7 +286,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
 
    bool object_added = false;
    string metadata_props;
-   
+
    /*
    put                  : Puts an object
      <bucket>/<key>     : Bucket/key to put object to
@@ -306,33 +306,33 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
      [cannedAcl]        : Canned ACL for the object (see Canned ACLs)
      [x-amz-meta-...]]  : Metadata headers to associate with the object
    */
-   
+
    // each metadata property (aside from predefined ones) gets "x-amz-meta-" prefix
-   
+
    // https://en.wikipedia.org/wiki/List_of_file_signatures
-   
+
    // mp3
    // ---
    // FF FB
    // FF F3
    // FF F2
-   
+
    // mp3 with ID3v2 container
    // ---
    // 49 44 33
-   
+
    // flac
    // ----
    // 66 4C 61 43
-   
+
    // gzip
    // ----
    // 1F 8B
-   
+
    // XZ compressed
    // -------------
    // FD 37 7A 58 5A 00
-   
+
    // PNG
    // ---
    // 89 50 4E 47 0D 0A 1A 0A
@@ -347,7 +347,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
    //   contentEncoding
    //   expires
    //   cannedAcl
-   
+
    if (headers != NULL) {
       if (headers->contains(PropertySet::PROP_CONTENT_LENGTH)) {
          unsigned long content_length =
@@ -356,7 +356,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
          metadata_props += chaudiere::StrUtils::toString(content_length);
          metadata_props += " ";
       }
-      
+
       if (headers->contains(PropertySet::PROP_CONTENT_TYPE)) {
          string content_type =
             headers->get_string_value(PropertySet::PROP_CONTENT_TYPE);
@@ -367,7 +367,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
             metadata_props += " ";
          }
       }
-      
+
       if (headers->contains(PropertySet::PROP_CONTENT_MD5)) {
          string content_md5 =
             headers->get_string_value(PropertySet::PROP_CONTENT_MD5);
@@ -378,7 +378,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
             metadata_props += " ";
          }
       }
-      
+
       if (headers->contains(PropertySet::PROP_CONTENT_ENCODING)) {
          string content_encoding =
             headers->get_string_value(PropertySet::PROP_CONTENT_ENCODING);
@@ -399,7 +399,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
    string script_template;
 
    chaudiere::StrUtils::strip(metadata_props);
-      
+
    if (metadata_props.length() > 0) {
       script_template = "s3-put-object-props.sh";
       kvp.addPair("%%METADATA_PROPERTIES%%", metadata_props);
@@ -414,9 +414,9 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
          object_added = true;
       }
    }
-   
+
    Utils::file_delete(run_script);
-      
+
    return object_added;
 }
 
@@ -444,7 +444,7 @@ bool S3ExtStorageSystem::delete_object(const string& container_name,
          object_deleted = true;
       }
    }
-   
+
    Utils::file_delete(run_script);
 
    return object_deleted;
@@ -465,7 +465,7 @@ int64_t S3ExtStorageSystem::get_object(const string& container_name,
       printf("error: local file path is empty\n");
       return 0;
    }
-   
+
    bool success = false;
 
    chaudiere::KeyValuePairs kvp;
@@ -482,9 +482,9 @@ int64_t S3ExtStorageSystem::get_object(const string& container_name,
          success = true;
       }
    }
-   
+
    Utils::file_delete(run_script);
-   
+
    if (success) {
       return Utils::get_file_size(local_file_path);
    } else {
@@ -519,15 +519,15 @@ void S3ExtStorageSystem::populate_object(chaudiere::KeyValuePairs& kvp,
 bool S3ExtStorageSystem::run_program(const string& program_path,
                                      vector<string>& list_output_lines) {
    bool success = false;
-   
+
    if (!Utils::file_exists(program_path)) {
       printf("run_program: error '%s' does not exist\n", program_path.c_str());
       return false;
    }
-   
+
    bool is_shell_script = false;
    string executable_path = program_path;
-   
+
    if (chaudiere::StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
       if (file_lines.size() == 0) {
@@ -543,16 +543,16 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
       }
       is_shell_script = true;
    }
-   
+
    vector<string> program_args;
    int exit_code = 0;
    string std_out;
    string std_err;
-   
+
    if (is_shell_script) {
       program_args.push_back(program_path);
    }
-   
+
    if (Utils::execute_program(executable_path,
                               program_args,
                               exit_code,
@@ -562,7 +562,7 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
       //printf("*********** START STDOUT **************\n");
       //printf("%s\n", std_out.c_str());
       //printf("*********** END STDOUT **************\n");
-      
+
       if (exit_code == 0) {
          if (std_out.length() > 0) {
             vector<string> output_lines = chaudiere::StrUtils::split(std_out, "\n");
@@ -587,15 +587,15 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
 bool S3ExtStorageSystem::run_program(const string& program_path,
                                      string& std_out_text) {
    bool success = false;
-   
+
    if (!Utils::file_exists(program_path)) {
       printf("run_program: error '%s' does not exist\n", program_path.c_str());
       return false;
    }
-   
+
    bool is_shell_script = false;
    string executable_path = program_path;
-   
+
    if (chaudiere::StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
       if (file_lines.size() == 0) {
@@ -611,16 +611,16 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
       }
       is_shell_script = true;
    }
-   
+
    vector<string> program_args;
    int exit_code = 0;
    string std_out;
    string std_err;
-   
+
    if (is_shell_script) {
       program_args.push_back(program_path);
    }
-   
+
    if (Utils::execute_program(executable_path,
                               program_args,
                               exit_code,
@@ -641,15 +641,15 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
 
 bool S3ExtStorageSystem::run_program(const string& program_path) {
    bool success = false;
-   
+
    if (!Utils::file_exists(program_path)) {
       printf("run_program: error '%s' does not exist\n", program_path.c_str());
       return false;
    }
-   
+
    bool is_shell_script = false;
    string executable_path = program_path;
-   
+
    if (chaudiere::StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
       if (file_lines.size() == 0) {
@@ -665,16 +665,16 @@ bool S3ExtStorageSystem::run_program(const string& program_path) {
       }
       is_shell_script = true;
    }
-   
+
    vector<string> program_args;
    int exit_code = 0;
    string std_out;
    string std_err;
-   
+
    if (is_shell_script) {
       program_args.push_back(program_path);
    }
-   
+
    if (Utils::execute_program(executable_path,
                               program_args,
                               exit_code,
@@ -693,31 +693,31 @@ bool S3ExtStorageSystem::run_program(const string& program_path) {
 bool S3ExtStorageSystem::prepare_run_script(const string& script_template,
                                             const chaudiere::KeyValuePairs& kvp) {
    string run_script = run_script_name_for_template(script_template);
-   
+
    if (!Utils::file_copy(script_template, run_script)) {
       return false;
    }
-   
+
    if (!Utils::file_set_permissions(run_script, 7, 0, 0)) {
       return false;
    }
-   
+
    string file_text;
    if (!Utils::file_read_all_text(run_script, file_text)) {
       return false;
    }
-   
+
    vector<string> kvp_keys;
    kvp.getKeys(kvp_keys);
    auto it = kvp_keys.begin();
    const auto it_end = kvp_keys.end();
-   
+
    for (; it != it_end; it++) {
       const string& key = *it;
       const string& value = kvp.getValue(key);
       chaudiere::StrUtils::replaceAll(file_text, key, value);
    }
-   
+
    if (!Utils::file_write_all_text(run_script, file_text)) {
       return false;
    }

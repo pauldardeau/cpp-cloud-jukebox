@@ -400,12 +400,12 @@ string Utils::md5_for_file(const string& ini_file_name,
       printf("error (md5_for_file): ini file does not exist '%s'\n", ini_file_name.c_str());
       return EMPTY;
    }
-   
+
    if (!file_exists(path_to_file)) {
       printf("error (md5_for_file): file does not exist '%s'\n", path_to_file.c_str());
       return EMPTY;
    }
-   
+
    chaudiere::KeyValuePairs kvp;
    if (get_platform_config_values(ini_file_name, kvp)) {
       string key_exe = "md5_exe_file_name";
@@ -416,13 +416,13 @@ string Utils::md5_for_file(const string& ini_file_name,
             printf("error: md5 executable not found: '%s'\n", md5_exe.c_str());
             return EMPTY;
          }
-         
+
          vector<string> program_args;
          program_args.push_back(path_to_file);
          int exit_code = 0;
          string std_out;
          string std_err;
-         
+
          if (execute_program(md5_exe,
                              program_args,
                              exit_code,
@@ -525,7 +525,7 @@ bool Utils::file_set_permissions(const string& file_path,
          if (user_perms > 0) {
             file_mode |= S_IXUSR;
          }
-         
+
          if (group_perms > 3) {
             file_mode |= S_IRGRP;
             group_perms -= 4;
@@ -537,7 +537,7 @@ bool Utils::file_set_permissions(const string& file_path,
          if (group_perms > 0) {
             file_mode |= S_IXGRP;
          }
-         
+
          if (world_perms > 3) {
             file_mode |= S_IROTH;
             world_perms -= 4;
@@ -549,7 +549,7 @@ bool Utils::file_set_permissions(const string& file_path,
          if (world_perms > 0) {
             file_mode |= S_IXOTH;
          }
-         
+
          int rc = chmod(file_path.c_str(), file_mode);
          if (rc == 0) {
             success = true;
@@ -581,17 +581,17 @@ bool Utils::execute_program(const string& program_path,
       printf("error: program_path '%s' does not exist\n", program_path.c_str());
       return false;
    }
-   
+
    int fd_stdout[2];
    int fd_stderr[2];
    int rc;
-   
+
    rc = pipe(fd_stdout);
    if (rc != 0) {
       printf("error: unable to create pipe. errno = %d\n", errno);
       return false;
    }
-   
+
    rc = pipe(fd_stderr);
    if (rc != 0) {
       printf("error: unable to create pipe. errno = %d\n", errno);
@@ -604,10 +604,10 @@ bool Utils::execute_program(const string& program_path,
       // child
       dup2(fd_stdout[WRITE_PIPE], 1);
       dup2(fd_stderr[WRITE_PIPE], 2);
-         
+
       close(fd_stdout[READ_PIPE]);
       close(fd_stdout[WRITE_PIPE]);
-	 
+
       close(fd_stderr[READ_PIPE]);
       close(fd_stderr[WRITE_PIPE]);
 
@@ -638,17 +638,17 @@ bool Utils::execute_program(const string& program_path,
       }
    } else {
       // parent
-      
+
       close(fd_stdout[WRITE_PIPE]);
       close(fd_stderr[WRITE_PIPE]);
-      
+
       char pipe_read_buffer[8192];
       memset(pipe_read_buffer, 0, sizeof(pipe_read_buffer));
-      
+
       fd_set read_fds;
-      
+
       signal(SIGCHLD, sig_child_handler);
-      
+
       do {
          FD_ZERO(&read_fds);
          FD_SET(fd_stdout[READ_PIPE], &read_fds);
@@ -767,7 +767,7 @@ bool Utils::launch_program(const string& program_path,
 
 string Utils::get_platform_identifier() {
    string os_identifier;
-   
+
 #if defined(__APPLE__)
    os_identifier = "mac";
 #elif defined(__linux__)
@@ -796,12 +796,11 @@ bool Utils::get_platform_config_value(const string& ini_file_name,
    }
 
    chaudiere::KeyValuePairs kvp;
-   if (get_platform_config_values(ini_file_name, kvp)) {   
+   if (get_platform_config_values(ini_file_name, kvp)) {
       if (kvp.hasKey(key)) {
          config_value = kvp.getValue(key);
          if (chaudiere::StrUtils::startsWith(config_value, "\"") &&
              chaudiere::StrUtils::endsWith(config_value, "\"")) {
-            
             chaudiere::StrUtils::strip(config_value, '"');
          }
          chaudiere::StrUtils::strip(config_value);
@@ -827,7 +826,7 @@ bool Utils::get_platform_config_values(const string& ini_file_name,
       printf("error: unknown platform\n");
       return false;
    }
-   
+
    try {
       chaudiere::IniReader ini_reader(ini_file_name);
       if (!ini_reader.readSection(os_identifier, kvp)) {
