@@ -496,6 +496,7 @@ bool Utils::file_delete(const string& file_path) {
 }
 
 bool Utils::file_copy(const string& from_file, const string& to_file) {
+   //TODO: re-write Utils::file_copy
    string file_text;
    if (file_read_all_text(from_file, file_text)) {
       return file_write_all_text(to_file, file_text);

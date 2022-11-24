@@ -53,6 +53,11 @@ public:
                    const std::vector<unsigned char>& file_contents,
                    const PropertySet* headers=NULL);
 
+   bool put_object_from_file(const std::string& container_name,
+                             const std::string& object_name,
+                             const std::string& object_file_path,
+                             const PropertySet* headers=NULL);
+
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);
 

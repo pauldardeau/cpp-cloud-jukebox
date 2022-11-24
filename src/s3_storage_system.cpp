@@ -590,6 +590,16 @@ bool S3StorageSystem::put_object(const string& container_name,
 
 //*****************************************************************************
 
+bool S3StorageSystem::put_object_from_file(const string& container_name,
+                                           const string& object_name,
+                                           const string& object_file_path,
+                                           const PropertySet* headers) {
+   //TODO: implement put_object_from_file
+   return false;
+}
+
+//******************************************************************************
+
 bool S3StorageSystem::delete_object(const string& container_name,
                                     const string& object_name) {
    if (debug_mode) {

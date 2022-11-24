@@ -259,10 +259,10 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
 
    if (Utils::file_write_all_bytes(tmp_file, file_contents)) {
       Utils::file_set_permissions(tmp_file, 6, 0, 0);
-      object_added = put_object(container_name,
-                                object_name,
-                                tmp_file,
-                                headers);
+      object_added = put_object_from_file(container_name,
+                                          object_name,
+                                          tmp_file,
+                                          headers);
       Utils::file_delete(tmp_file);
    } else {
       printf("error: put_object not able to write to tmp file\n");
@@ -273,12 +273,12 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
 
 //*****************************************************************************
 
-bool S3ExtStorageSystem::put_object(const string& container_name,
-                                    const string& object_name,
-                                    const string& file_path,
-                                    const PropertySet* headers) {
+bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
+                                              const string& object_name,
+                                              const string& file_path,
+                                              const PropertySet* headers) {
    if (debug_mode) {
-      printf("put_object: container=%s, object=%s, file_path=%s\n",
+      printf("put_object_from_file: container=%s, object=%s, file_path=%s\n",
              container_name.c_str(),
              object_name.c_str(),
              file_path.c_str());

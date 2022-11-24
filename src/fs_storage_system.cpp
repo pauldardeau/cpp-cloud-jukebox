@@ -105,7 +105,10 @@ bool FSStorageSystem::put_object(const string& container_name,
                                  const vector<unsigned char>& file_contents,
                                  const PropertySet* headers) {
    bool object_added = false;
-   if (container_name.length() > 0 && object_name.length() > 0 && file_contents.size() > 0) {
+   if (container_name.length() > 0 &&
+       object_name.length() > 0 &&
+       file_contents.size() > 0) {
+
       string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
       if (chaudiere::OSUtils::directoryExists(container_dir)) {
          string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
@@ -132,14 +135,12 @@ bool FSStorageSystem::put_object(const string& container_name,
       if (debug_mode) {
          if (container_name.length() == 0) {
             printf("container name is missing, can't put object\n");
-         } else {
-            if (object_name.length() == 0) {
-               printf("object name is missing, can't put object\n");
-            } else {
-               if (file_contents.size() == 0) {
-                  printf("object content is empty, can't put object\n");
-               }
-            }
+         }
+         if (object_name.length() == 0) {
+            printf("object name is missing, can't put object\n");
+         }
+         if (file_contents.size() == 0) {
+            printf("object content is empty, can't put object\n");
          }
       }
    }
@@ -147,6 +148,55 @@ bool FSStorageSystem::put_object(const string& container_name,
 }
 
 //*****************************************************************************
+
+bool FSStorageSystem::put_object_from_file(const string& container_name,
+                                           const string& object_name,
+                                           const string& object_file_path,
+                                           const PropertySet* headers) {
+   bool object_added = false;
+   if (container_name.length() > 0 &&
+       object_name.length() > 0 &&
+       object_file_path.length() > 0) {
+
+      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
+      if (chaudiere::OSUtils::directoryExists(container_dir)) {
+         string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+         object_added = Utils::file_copy(object_file_path, object_path);
+         if (object_added) {
+            if (debug_mode) {
+               printf("object added: %s/%s\n", container_name.c_str(), object_name.c_str());
+            }
+            if (headers != NULL) {
+               if (headers->count() > 0) {
+                  string meta_path = object_path + ".meta";
+                  headers->write_to_file(meta_path);
+               }
+            }
+         } else {
+            printf("file_copy failed to copy object contents, put failed\n");
+         }
+      } else {
+         if (debug_mode) {
+            printf("container doesn't exist, can't put object\n");
+         }
+      }
+   } else {
+      if (debug_mode) {
+         if (container_name.length() == 0) {
+            printf("container name is missing, can't put object\n");
+         }
+         if (object_name.length() == 0) {
+            printf("object name is missing, can't put object\n");
+         }
+         if (object_file_path.length() == 0) {
+            printf("object file path is empty, can't put object\n");
+         }
+      }
+   }
+   return object_added;
+}
+
+//******************************************************************************
 
 bool FSStorageSystem::delete_object(const string& container_name,
                                     const string& object_name) {

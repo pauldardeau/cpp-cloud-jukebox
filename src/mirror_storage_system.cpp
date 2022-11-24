@@ -2,7 +2,7 @@
 #include "utils.h"
 #include "OSUtils.h"
 #include "Runnable.h"
-#include "PThreadsThread.h"
+#include "PthreadsThread.h"
 
 using namespace std;
 
@@ -14,9 +14,18 @@ class DeleteObject;
 //******************************************************************************
 //******************************************************************************
 
+UpdateOperation::UpdateOperation(const string& op) :
+   storage_system(NULL),
+   op_name(op),
+   op_did_run(false),
+   op_did_succeed(false) {
+}
+
 UpdateOperation::UpdateOperation(const UpdateOperation& copy) :
    storage_system(NULL),
-   op_name(copy.op_name) {
+   op_name(copy.op_name),
+   op_did_run(false),
+   op_did_succeed(false) {
 }
 
 UpdateOperation& UpdateOperation::operator=(const UpdateOperation& copy) {
@@ -25,8 +34,28 @@ UpdateOperation& UpdateOperation::operator=(const UpdateOperation& copy) {
    }
 
    op_name = copy.op_name;
+   op_did_run = copy.op_did_run;
+   op_did_succeed = copy.op_did_succeed;
 
    return *this;
+}
+
+void UpdateOperation::setStorageSystem(StorageSystem* ss) {
+   storage_system = ss;
+}
+
+void UpdateOperation::reset() {
+   op_did_run = false;
+   op_did_succeed = false;
+}
+
+void UpdateOperation::run() {
+   if (storage_system != NULL) {
+      op_did_succeed = run_operation();
+   } else {
+      printf("error: cannot run UpdateOperation, no storage system set\n");
+   }
+   op_did_run = true;
 }
 
 //******************************************************************************
@@ -37,8 +66,8 @@ private:
    string container_name;
 
 public:
-   CreateContainer(StorageSystem* ss, const string& container) :
-      UpdateOperation(ss, "CreateContainer"),
+   CreateContainer(const string& container) :
+      UpdateOperation("CreateContainer"),
       container_name(container) {
    }
 
@@ -63,7 +92,12 @@ public:
       return new CreateContainer(*this);
    }
 
-   void run() {
+   bool run_operation() {
+      if (storage_system != NULL) {
+         return storage_system->create_container(container_name);
+      } else {
+         return false;
+      }
    }
 };
 
@@ -75,8 +109,8 @@ private:
    string container_name;
 
 public:
-   DeleteContainer(StorageSystem* ss, const string& container) :
-      UpdateOperation(ss, "DeleteContainer"),
+   DeleteContainer(const string& container) :
+      UpdateOperation("DeleteContainer"),
       container_name(container) {
    }
 
@@ -101,7 +135,12 @@ public:
       return new DeleteContainer(*this);
    }
 
-   void run() {
+   bool run_operation() {
+      if (storage_system != NULL) {
+         return storage_system->delete_container(container_name);
+      } else {
+         return false;
+      }
    }
 };
 
@@ -112,18 +151,31 @@ class PutObject : public UpdateOperation {
 private:
    string container_name;
    string object_name;
+   const vector<unsigned char>* object_bytes;
+   string file_path;
+   const PropertySet* headers;
 
 public:
-   PutObject(StorageSystem* ss, const string& container, const string& object) :
-      UpdateOperation(ss, "PutObject"),
+   PutObject(const string& container,
+	     const string& object,
+	     const vector<unsigned char>* object_contents,
+	     const string& object_file_path,
+	     const PropertySet* object_headers) :
+      UpdateOperation("PutObject"),
       container_name(container),
-      object_name(object) {
+      object_name(object),
+      object_bytes(object_contents),
+      file_path(object_file_path),
+      headers(object_headers) {
    }
 
    PutObject(const PutObject& copy) :
       UpdateOperation(copy),
       container_name(copy.container_name),
-      object_name(copy.object_name) {
+      object_name(copy.object_name),
+      object_bytes(copy.object_bytes),
+      file_path(copy.file_path),
+      headers(copy.headers) {
    }
 
    PutObject& operator=(const PutObject& copy) {
@@ -135,6 +187,9 @@ public:
 
       container_name = copy.container_name;
       object_name = copy.object_name;
+      object_bytes = copy.object_bytes;
+      file_path = copy.file_path;
+      headers = copy.headers;
 
       return *this;
    }
@@ -143,7 +198,18 @@ public:
       return new PutObject(*this);
    }
 
-   void run() {
+   bool run_operation() {
+      if (storage_system != NULL) {
+         if (object_bytes != NULL) {
+            return storage_system->put_object(container_name,
+                                              object_name,
+                                              *object_bytes,
+                                              headers);
+         } else if (file_path.length() > 0) {
+            //TODO: implement put_object call with file path
+         }
+      } 
+      return false;
    }
 };
 
@@ -156,8 +222,9 @@ private:
    string object_name;
 
 public:
-   DeleteObject(StorageSystem* ss, const string& container, const string& object) :
-      UpdateOperation(ss, "DeleteObject"),
+   DeleteObject(const string& container,
+                const string& object) :
+      UpdateOperation("DeleteObject"),
       container_name(container),
       object_name(object) {
    }
@@ -185,7 +252,12 @@ public:
       return new DeleteObject(*this);
    }
 
-   void run() {
+   bool run_operation() {
+      if (storage_system != NULL) {
+         return storage_system->delete_object(container_name, object_name);
+      } else {
+         return false;
+      }
    }
 };
 
@@ -194,13 +266,14 @@ public:
 
 //*****************************************************************************
 
-MirrorStorageSystem::MirrorStorageSystem(const string& ini_file_path, bool debug_mode) :
+MirrorStorageSystem::MirrorStorageSystem(const string& ini_file_path,
+                                         bool debug_mode) :
    StorageSystem("Mirror", debug_mode),
    ini_file(ini_file_path),
    primary_ss(NULL),
    secondary_ss(NULL),
    update_in_parallel(false),
-   min_updates(0) {
+   min_updates(1) {
 }
 
 //*****************************************************************************
@@ -240,20 +313,44 @@ bool MirrorStorageSystem::have_both_ss() const {
 
 bool MirrorStorageSystem::update(UpdateOperation& update_op) {
    if (have_both_ss()) {
-
+      int num_update_successes = 0;
       if (update_in_parallel) {
          update_op.setStorageSystem(primary_ss);
          UpdateOperation* secondary_op = update_op.clone();
          secondary_op->setStorageSystem(secondary_ss);
-         PthreadsThread primary_thread(&update_op);
-         PthreadsThread secondary_thread(secondary_op);
-         primary_thread.setThreadId("primary");
-         secondary_thread.setThreadId("secondary");
+	 chaudiere::PthreadsThread primary_thread(&update_op);
+	 chaudiere::PthreadsThread secondary_thread(secondary_op);
          bool primary_thread_started = primary_thread.start();
          bool secondary_thread_started = secondary_thread.start();
+	 if (primary_thread_started) {
+            while (!update_op.did_run()) {
+               //TODO: add sleep
+            }
+	    if (update_op.did_succeed()) {
+               num_update_successes++;
+            }
+         }
+	 if (secondary_thread_started) {
+            while (!secondary_op->did_run()) {
+               //TODO: add sleep
+            } 
+	    if (secondary_op->did_succeed()) {
+               num_update_successes++;
+            }
+         }
+	 delete secondary_op;
       } else {
          update_op.setStorageSystem(primary_ss);
-
+	 bool primary_success = update_op.run_operation();
+	 if (primary_success) {
+            num_update_successes++;
+         }
+	 update_op.setStorageSystem(secondary_ss);
+	 update_op.reset();
+	 bool secondary_success = update_op.run_operation();
+	 if (secondary_success) {
+            num_update_successes++;
+         }
       }
    }
    return false;
@@ -286,7 +383,7 @@ bool MirrorStorageSystem::create_container(const string& container_name) {
    bool container_created = false;
    if (have_both_ss()) {
       if (!has_container(container_name)) {
-         CreateContainer op(NULL, container_name);
+         CreateContainer op(container_name);
          return update(op);
       }
    }
@@ -298,7 +395,7 @@ bool MirrorStorageSystem::create_container(const string& container_name) {
 bool MirrorStorageSystem::delete_container(const string& container_name) {
    bool container_deleted = false;
    if (have_both_ss()) {
-      DeleteContainer op(NULL, container_name);
+      DeleteContainer op(container_name);
       return update(op);
    }
    return container_deleted;
@@ -371,9 +468,12 @@ bool MirrorStorageSystem::put_object(const string& container_name,
                                      const vector<unsigned char>& file_contents,
                                      const PropertySet* headers) {
    bool object_added = false;
-   if (container_name.length() > 0 && object_name.length() > 0 && file_contents.size() > 0) {
+   if (container_name.length() > 0 &&
+       object_name.length() > 0 &&
+       file_contents.size() > 0) {
+
       if (have_both_ss()) {
-         PutObject op(NULL, container_name, object_name);
+         PutObject op(container_name, object_name, &file_contents, "", headers);
          object_added = update(op);
       }
    } else {
@@ -394,12 +494,43 @@ bool MirrorStorageSystem::put_object(const string& container_name,
 
 //*****************************************************************************
 
+bool MirrorStorageSystem::put_object_from_file(const string& container_name,
+                                               const string& object_name,
+                                               const string& object_file_path,
+                                               const PropertySet* headers) {
+   bool object_added = false;
+   if (container_name.length() > 0 &&
+       object_name.length() > 0 &&
+       object_file_path.length() > 0) {
+
+      if (have_both_ss()) {
+         PutObject op(container_name, object_name, NULL, object_file_path, headers);
+         object_added = update(op);
+      }
+   } else {
+      if (debug_mode) {
+         if (container_name.length() == 0) {
+            printf("container name is missing, can't put object\n");
+         }
+         if (object_name.length() == 0) {
+            printf("object name is missing, can't put object\n");
+         }
+         if (object_file_path.length() == 0) {
+            printf("object file path is empty, can't put object\n");
+         }
+      }
+   }
+   return object_added;
+}
+
+//******************************************************************************
+
 bool MirrorStorageSystem::delete_object(const string& container_name,
                                         const string& object_name) {
    bool object_deleted = false;
    if (container_name.length() > 0 && object_name.length() > 0) {
       if (have_both_ss()) {
-         DeleteObject op(NULL, container_name, object_name);
+         DeleteObject op(container_name, object_name);
          object_deleted = update(op);
       }
    } else {

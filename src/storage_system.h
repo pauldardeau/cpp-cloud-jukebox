@@ -158,6 +158,11 @@ public:
                            const std::vector<unsigned char>& object_bytes,
                            const PropertySet* headers=NULL) = 0;
 
+   virtual bool put_object_from_file(const std::string& container_name,
+                                     const std::string& object_name,
+                                     const std::string& object_file_path,
+                                     const PropertySet* headers=NULL) = 0;
+
    virtual bool delete_object(const std::string& container_name,
                               const std::string& object_name) = 0;
 

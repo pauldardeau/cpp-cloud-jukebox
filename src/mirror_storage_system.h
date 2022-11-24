@@ -11,15 +11,16 @@
 
 
 class UpdateOperation : public chaudiere::Runnable {
-private:
+protected:
    StorageSystem* storage_system;
+
+private:
    std::string op_name;
+   bool op_did_run;
+   bool op_did_succeed;
 
 public:
-   UpdateOperation(StorageSystem* ss, const std::string& op) :
-      storage_system(ss),
-      op_name(op) {
-   }
+   UpdateOperation(const std::string& op);
    UpdateOperation(const UpdateOperation& copy);
    virtual ~UpdateOperation() {}
 
@@ -28,6 +29,12 @@ public:
    virtual UpdateOperation* clone() = 0;
 
    void setStorageSystem(StorageSystem* ss);
+   void reset();
+   bool did_run() const { return this->op_did_run; }
+   bool did_succeed() const { return this->op_did_succeed; }
+
+   virtual void run();
+   virtual bool run_operation() = 0;
 };
 
 
@@ -70,6 +77,11 @@ public:
                    const std::string& object_name,
                    const std::vector<unsigned char>& file_contents,
                    const PropertySet* headers=NULL);
+
+   bool put_object_from_file(const std::string& container_name,
+                             const std::string& object_name,
+                             const std::string& object_file_path,
+                             const PropertySet* headers=NULL);
 
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);
