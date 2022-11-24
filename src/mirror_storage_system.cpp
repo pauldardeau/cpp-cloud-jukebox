@@ -206,7 +206,10 @@ public:
                                               *object_bytes,
                                               headers);
          } else if (file_path.length() > 0) {
-            //TODO: implement put_object call with file path
+	    return storage_system->put_object_from_file(container_name,
+                                                        object_name,
+                                                        file_path,
+                                                        headers);
          }
       } 
       return false;
@@ -365,11 +368,11 @@ vector<string> MirrorStorageSystem::list_account_containers() {
       try {
          list_containers = primary_ss->list_account_containers();
       } catch (exception& e) {
-         //TODO: add logging
+         printf("MSS::list_account_containers on primary exception: %s\n", e.what());
          try {
             list_containers = secondary_ss->list_account_containers();
          } catch (exception& e) {
-            //TODO: add logging
+            printf("MSS::list_account_containers on secondary exception: %s\n", e.what());
          }
       }
    }
@@ -409,11 +412,11 @@ vector<string> MirrorStorageSystem::list_container_contents(const string& contai
       try {
          list_contents = primary_ss->list_container_contents(container_name);
       } catch (exception& e) {
-         //TODO: add logging
+         printf("MSS::list_container_contents exception on primary - %s\n", e.what());
          try {
             list_contents = secondary_ss->list_container_contents(container_name);
          } catch (exception& e) {
-            //TODO: add logging
+            printf("MSS::list_container_contents exception on secondary - %s\n", e.what());
          }
       }
    }
@@ -434,7 +437,7 @@ bool MirrorStorageSystem::get_object_metadata(const std::string& container_name,
                return true;
             }
          } catch (exception& e) {
-            //TODO: add logging
+            printf("MSS::get_object_metadata exception on primary - %s\n", e.what());
          }
 
          try {
@@ -444,7 +447,7 @@ bool MirrorStorageSystem::get_object_metadata(const std::string& container_name,
                return true;
             }
          } catch (exception& e) {
-            //TODO: add logging
+            printf("MSS::get_object_metadata exception on secondary - %s\n", e.what());
             return false;
          }
       }
@@ -561,7 +564,7 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
                return bytes_retrieved;
             }
          } catch (exception& e) {
-            //TODO: add logging
+            printf("MSS::get_object exception on primary - %s\n", e.what());
          }
 
          try {
@@ -569,7 +572,7 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
                                             object_name,
                                             local_file_path);
          } catch (exception& e) {
-            //TODO: add logging
+            printf("MSS::get_object exception on secondary - %s\n", e.what());
             return 0;
          }
       }
