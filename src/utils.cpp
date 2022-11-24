@@ -496,14 +496,61 @@ bool Utils::file_delete(const string& file_path) {
 }
 
 bool Utils::file_copy(const string& from_file, const string& to_file) {
-   //TODO: re-write Utils::file_copy
-   string file_text;
-   if (file_read_all_text(from_file, file_text)) {
-      return file_write_all_text(to_file, file_text);
-   } else {
-      printf("Utils::file_copy - unable to read file '%s'\n", from_file.c_str());
+   if (!file_exists(from_file)) {
       return false;
    }
+
+   long file_size = get_file_size(from_file);
+
+   FILE* f_source = fopen(from_file.c_str(), "r");
+   if (f_source == NULL) {
+      return false;
+   }
+
+   FILE* f_dest = fopen(to_file.c_str(), "w");
+   if (f_dest == NULL) {
+      fclose(f_source);
+      return false;
+   }
+
+   long bytes_remaining = file_size;
+   size_t bytes_to_copy = 4096;
+   size_t bytes_transferred;
+   unsigned char byte_buffer[4096];
+
+   while (bytes_remaining > 0) {
+      if (bytes_remaining < 4096) {
+         bytes_to_copy = bytes_remaining;
+      }
+      bytes_transferred = fread(byte_buffer,
+                                1,
+				bytes_to_copy,
+				f_source);
+      if (bytes_transferred < bytes_to_copy) {
+         fclose(f_source);
+	 fclose(f_dest);
+	 file_delete(to_file);
+	 return false;
+      } else {
+         bytes_transferred = fwrite(byte_buffer,
+                                    1,
+				    bytes_to_copy,
+				    f_dest);
+	 if (bytes_transferred < bytes_to_copy) {
+            fclose(f_source);
+	    fclose(f_dest);
+	    file_delete(to_file);
+	    return false;
+         } else {
+            bytes_remaining -= bytes_to_copy;
+         }
+      }
+   }
+
+   fclose(f_source);
+   fclose(f_dest);
+
+   return true;
 }
 
 bool Utils::file_set_permissions(const string& file_path,
