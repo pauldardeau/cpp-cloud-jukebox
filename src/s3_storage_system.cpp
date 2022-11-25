@@ -520,16 +520,24 @@ bool S3StorageSystem::get_object_metadata(const string& container_name,
 
 //*****************************************************************************
 
-bool S3StorageSystem::put_object(const string& container_name,
-                                 const string& object_name,
-                                 const vector<unsigned char>& file_contents,
-                                 const PropertySet* headers) {
+bool S3StorageSystem::do_put_object(const string& container_name,
+                                    const string& object_name,
+                                    const vector<unsigned char>& file_contents,
+                                    const string& object_file_path,
+                                    const PropertySet* headers) {
 
    if (debug_mode) {
-      printf("put_object: container=%s, object=%s, length=%ld\n",
-             container_name.c_str(),
-             object_name.c_str(),
-             file_contents.size());
+      if (object_file_path.length() > 0) {
+         printf("do_put_object: container=%s, object=%s, object_file=%s\n",
+                container_name.c_str(),
+                object_name.c_str(),
+                object_file_path.c_str());	
+      } else {
+         printf("do_put_object: container=%s, object=%s, length=%ld\n",
+                container_name.c_str(),
+                object_name.c_str(),
+                file_contents.size());
+      }
    }
 
    bool object_added = false;
@@ -552,8 +560,18 @@ bool S3StorageSystem::put_object(const string& container_name,
    put_object_callback_data data;
    memset(&data, 0, sizeof(put_object_callback_data));
 
-   data.contentBuffer = &file_contents;
-   data.contentLength = contentLength;
+   if (object_file_path.length() > 0) {
+      FILE* f = fopen(object_file_path.c_str(), "r");
+      if (f == NULL) {
+         printf("do_put_object: unable to open input file '%s'\n",
+                object_file_path.c_str());
+	 return false;
+      }
+      data.infile = f;
+   } else {
+      data.contentBuffer = &file_contents;
+      data.contentLength = contentLength;
+   }
 
    S3PutProperties putProperties =
    {
@@ -585,17 +603,38 @@ bool S3StorageSystem::put_object(const string& container_name,
                     &data);              // void* callbackData
    } while (S3_status_is_retryable(statusG) && should_retry());
 
+   if (data.infile != NULL) {
+      fclose(data.infile);
+   }
+
    return object_added;
 }
 
 //*****************************************************************************
 
+bool S3StorageSystem::put_object(const string& container_name,
+                                 const string& object_name,
+                                 const vector<unsigned char>& file_contents,
+                                 const PropertySet* headers) {
+   return do_put_object(container_name,
+                        object_name,
+                        file_contents,
+                        "",
+                        headers);
+}
+
+//******************************************************************************
+
 bool S3StorageSystem::put_object_from_file(const string& container_name,
                                            const string& object_name,
                                            const string& object_file_path,
                                            const PropertySet* headers) {
-   //TODO: implement put_object_from_file
-   return false;
+   vector<unsigned char> empty_vector;
+   return do_put_object(container_name,
+                        object_name,
+			empty_vector,
+			object_file_path,
+			headers);
 }
 
 //******************************************************************************
