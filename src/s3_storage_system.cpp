@@ -547,15 +547,17 @@ bool S3StorageSystem::do_put_object(const string& container_name,
 
    uint64_t contentLength = file_contents.size();
 
+   //TODO: add metadata properties to put
+
    int metaPropertiesCount = 0;
    S3NameValue metaProperties[S3_MAX_METADATA_COUNT];
    int64_t expires = -1;
    S3CannedAcl cannedAcl = S3CannedAclPrivate;
-   const char *contentDispositionFilename = 0;
-   const char *contentEncoding = 0;
-   const char *cacheControl = 0;
-   const char *contentType = 0;
-   const char *md5 = 0;
+   const char* contentDispositionFilename = 0;
+   const char* contentEncoding = 0;
+   const char* cacheControl = 0;
+   const char* contentType = 0;
+   const char* md5 = 0;
 
    put_object_callback_data data;
    memset(&data, 0, sizeof(put_object_callback_data));
