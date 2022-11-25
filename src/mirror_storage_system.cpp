@@ -288,7 +288,7 @@ MirrorStorageSystem::~MirrorStorageSystem() {
 //*****************************************************************************
 
 bool MirrorStorageSystem::enter() {
-   //TODO:
+   //TODO: implement MirrorStorageSystem::enter
    return false;
 }
 
@@ -327,7 +327,7 @@ bool MirrorStorageSystem::update(UpdateOperation& update_op) {
          bool secondary_thread_started = secondary_thread.start();
 	 if (primary_thread_started) {
             while (!update_op.did_run()) {
-               //TODO: add sleep
+               Utils::time_sleep_millis(200);
             }
 	    if (update_op.did_succeed()) {
                num_update_successes++;
@@ -335,7 +335,7 @@ bool MirrorStorageSystem::update(UpdateOperation& update_op) {
          }
 	 if (secondary_thread_started) {
             while (!secondary_op->did_run()) {
-               //TODO: add sleep
+               Utils::time_sleep_millis(200);
             } 
 	    if (secondary_op->did_succeed()) {
                num_update_successes++;
