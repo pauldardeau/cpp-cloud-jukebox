@@ -71,8 +71,8 @@ protected:
    bool do_put_object(const std::string& container_name,
                       const std::string& object_name,
                       const std::vector<unsigned char>& file_contents,
-		      const std::string& object_file_path,
-		      const PropertySet* headers);
+                      const std::string& object_file_path,
+                      const PropertySet* headers);
 };
 
 #endif

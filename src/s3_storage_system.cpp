@@ -531,7 +531,7 @@ bool S3StorageSystem::do_put_object(const string& container_name,
          printf("do_put_object: container=%s, object=%s, object_file=%s\n",
                 container_name.c_str(),
                 object_name.c_str(),
-                object_file_path.c_str());	
+                object_file_path.c_str());
       } else {
          printf("do_put_object: container=%s, object=%s, length=%ld\n",
                 container_name.c_str(),
@@ -567,7 +567,7 @@ bool S3StorageSystem::do_put_object(const string& container_name,
       if (f == NULL) {
          printf("do_put_object: unable to open input file '%s'\n",
                 object_file_path.c_str());
-	 return false;
+         return false;
       }
       data.infile = f;
    } else {
@@ -634,9 +634,9 @@ bool S3StorageSystem::put_object_from_file(const string& container_name,
    vector<unsigned char> empty_vector;
    return do_put_object(container_name,
                         object_name,
-			empty_vector,
-			object_file_path,
-			headers);
+                        empty_vector,
+                        object_file_path,
+                        headers);
 }
 
 //******************************************************************************

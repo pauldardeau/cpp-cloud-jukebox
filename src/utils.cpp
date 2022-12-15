@@ -524,23 +524,23 @@ bool Utils::file_copy(const string& from_file, const string& to_file) {
       }
       bytes_transferred = fread(byte_buffer,
                                 1,
-				bytes_to_copy,
-				f_source);
+                                bytes_to_copy,
+                                f_source);
       if (bytes_transferred < bytes_to_copy) {
          fclose(f_source);
-	 fclose(f_dest);
-	 file_delete(to_file);
-	 return false;
+         fclose(f_dest);
+         file_delete(to_file);
+         return false;
       } else {
          bytes_transferred = fwrite(byte_buffer,
                                     1,
-				    bytes_to_copy,
-				    f_dest);
-	 if (bytes_transferred < bytes_to_copy) {
+                                    bytes_to_copy,
+                                    f_dest);
+         if (bytes_transferred < bytes_to_copy) {
             fclose(f_source);
-	    fclose(f_dest);
-	    file_delete(to_file);
-	    return false;
+            fclose(f_dest);
+            file_delete(to_file);
+            return false;
          } else {
             bytes_remaining -= bytes_to_copy;
          }
@@ -707,7 +707,7 @@ bool Utils::execute_program(const string& program_path,
                           NULL,                                // writefds
                           NULL,                                // exceptfds
                           NULL);                               // timeout
-	 if (cnt > 0) {
+         if (cnt > 0) {
             if (FD_ISSET(fd_stdout[READ_PIPE], &read_fds)) {
                ssize_t bytes_read = read(fd_stdout[READ_PIPE],
                                          pipe_read_buffer,
@@ -722,7 +722,7 @@ bool Utils::execute_program(const string& program_path,
                }
             }
 
-	    if (FD_ISSET(fd_stderr[READ_PIPE], &read_fds)) {
+            if (FD_ISSET(fd_stderr[READ_PIPE], &read_fds)) {
                ssize_t bytes_read = read(fd_stderr[READ_PIPE],
                                          pipe_read_buffer,
                                          sizeof(pipe_read_buffer)-1);

@@ -157,10 +157,10 @@ private:
 
 public:
    PutObject(const string& container,
-	     const string& object,
-	     const vector<unsigned char>* object_contents,
-	     const string& object_file_path,
-	     const PropertySet* object_headers) :
+             const string& object,
+             const vector<unsigned char>* object_contents,
+             const string& object_file_path,
+             const PropertySet* object_headers) :
       UpdateOperation("PutObject"),
       container_name(container),
       object_name(object),
@@ -206,12 +206,12 @@ public:
                                               *object_bytes,
                                               headers);
          } else if (file_path.length() > 0) {
-	    return storage_system->put_object_from_file(container_name,
+            return storage_system->put_object_from_file(container_name,
                                                         object_name,
                                                         file_path,
                                                         headers);
          }
-      } 
+      }
       return false;
    }
 };
@@ -321,37 +321,37 @@ bool MirrorStorageSystem::update(UpdateOperation& update_op) {
          update_op.setStorageSystem(primary_ss);
          UpdateOperation* secondary_op = update_op.clone();
          secondary_op->setStorageSystem(secondary_ss);
-	 chaudiere::PthreadsThread primary_thread(&update_op);
-	 chaudiere::PthreadsThread secondary_thread(secondary_op);
+         chaudiere::PthreadsThread primary_thread(&update_op);
+         chaudiere::PthreadsThread secondary_thread(secondary_op);
          bool primary_thread_started = primary_thread.start();
          bool secondary_thread_started = secondary_thread.start();
-	 if (primary_thread_started) {
+         if (primary_thread_started) {
             while (!update_op.did_run()) {
                Utils::time_sleep_millis(200);
             }
-	    if (update_op.did_succeed()) {
+            if (update_op.did_succeed()) {
                num_update_successes++;
             }
          }
-	 if (secondary_thread_started) {
+         if (secondary_thread_started) {
             while (!secondary_op->did_run()) {
                Utils::time_sleep_millis(200);
-            } 
-	    if (secondary_op->did_succeed()) {
+            }
+            if (secondary_op->did_succeed()) {
                num_update_successes++;
             }
          }
-	 delete secondary_op;
+         delete secondary_op;
       } else {
          update_op.setStorageSystem(primary_ss);
-	 bool primary_success = update_op.run_operation();
-	 if (primary_success) {
+         bool primary_success = update_op.run_operation();
+         if (primary_success) {
             num_update_successes++;
          }
-	 update_op.setStorageSystem(secondary_ss);
-	 update_op.reset();
-	 bool secondary_success = update_op.run_operation();
-	 if (secondary_success) {
+         update_op.setStorageSystem(secondary_ss);
+         update_op.reset();
+         bool secondary_success = update_op.run_operation();
+         if (secondary_success) {
             num_update_successes++;
          }
       }

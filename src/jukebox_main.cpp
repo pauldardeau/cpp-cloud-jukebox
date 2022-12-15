@@ -74,7 +74,7 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
 
          printf("error: no swift credentials given. please specify swift_account, "
                 "swift_user, and swift_password in credentials\n");
-	 return NULL;
+         return NULL;
       }
 
       string user = "";
@@ -219,7 +219,7 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
       if (azure_account_name.length() == 0 || azure_account_key.length() == 0) {
          printf("error: no azure credentials given. please specify azure_account_name "
                 "and azure_account_key in credentials file\n");
-	 return NULL;
+         return NULL;
       } else {
          string account_name = "";
          string account_key = "";
@@ -519,12 +519,12 @@ int JukeboxMain::run(const vector<string>& console_args) {
          options.encryption_key = StrUtils::strip(encryption_key);
       } else {
          printf("error: unable to read key file %s\n", keyfile.c_str());
-	 return 1;
+         return 1;
       }
 
       if (options.encryption_key.length() == 0) {
          printf("error: no key found in file %s\n", keyfile.c_str());
-	 return 1;
+         return 1;
       }
    }
 
@@ -539,7 +539,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
       if (!supported_systems.contains(storage)) {
          printf("error: invalid storage type %s\n", storage.c_str());
          printf("supported systems are: %s\n", supported_systems.to_string().c_str());
-	 return 1;
+         return 1;
       } else {
          if (debug_mode) {
             printf("setting storage system to %s\n", storage.c_str());
@@ -696,19 +696,19 @@ int JukeboxMain::run(const vector<string>& console_args) {
                         Jukebox jukebox(options, *storage_system);
                         if (jukebox.enter()) {
                            exit_code = run_jukebox_command(jukebox, command);
-		           jukebox.exit();
+                           jukebox.exit();
                         } else {
                            printf("error: unable to enter jukebox\n");
-		           exit_code = 1;
+                           exit_code = 1;
                         }
-	             }
-	          } else {
+                     }
+                  } else {
                      printf("error: unable to enter storage system\n");
-		     exit_code = 1;
-	          }
+                     exit_code = 1;
+                  }
                } else {
                   printf("error: unable to connect to storage system\n");
-		  exit_code = 1;
+                  exit_code = 1;
                }
             }
             catch (exception& e)
