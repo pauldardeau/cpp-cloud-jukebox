@@ -7,47 +7,50 @@
 
 class StorageSystem;
 class PropertySet;
-
+class Jukebox;
 
 class JukeboxMain {
+private:
+   std::string artist;
+   std::string album;
+   std::string song;
+   std::string playlist;
+   bool update_mode;
+   bool debug_mode;
+
+   JukeboxMain(const JukeboxMain&);
+   JukeboxMain& operator=(const JukeboxMain&);
+
 public:
+   JukeboxMain();
+
    StorageSystem* connect_swift_system(const PropertySet& credentials,
-                                       std::string prefix,
-                                       bool in_debug_mode,
-                                       bool in_update_mode);
+                                       std::string prefix);
 
    StorageSystem* connect_s3_system(const PropertySet& credentials,
                                     std::string prefix,
-                                    bool in_debug_mode,
-                                    bool in_update_mode,
                                     bool use_external);
 
    StorageSystem* connect_azure_system(const PropertySet& credentials,
-                                       std::string prefix,
-                                       bool in_debug_mode,
-                                       bool in_update_mode);
+                                       std::string prefix);
 
    StorageSystem* connect_memory_system(const PropertySet& credentials,
-                                        std::string prefix,
-                                        bool in_debug_mode,
-                                        bool in_update_mode);
+                                        std::string prefix);
 
    StorageSystem* connect_fs_system(const PropertySet& credentials,
-                                    std::string prefix,
-                                    bool in_debug_mode,
-                                    bool in_update_mode);
+                                    std::string prefix);
 
    StorageSystem* connect_storage_system(const std::string& system_name,
                                          const PropertySet& credentials,
-                                         std::string prefix,
-                                         bool in_debug_mode,
-                                         bool in_update_mode);
+                                         std::string prefix);
 
-   void init_storage_system(StorageSystem* storage_sys);
+   bool init_storage_system(StorageSystem* storage_sys);
 
    void show_usage() const;
 
-   void run(const std::vector<std::string>& console_args);
+   int run(const std::vector<std::string>& console_args);
+
+   int run_jukebox_command(Jukebox& jukebox, const std::string& command);
 };
 
 #endif

@@ -13,6 +13,6 @@ int main(int argc, char* argv[])
    }
 
    JukeboxMain jb_main;
-   jb_main.run(args);
+   return jb_main.run(args);
 }
 

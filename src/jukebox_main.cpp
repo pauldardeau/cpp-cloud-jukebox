@@ -18,14 +18,17 @@ using namespace std;
 using namespace chaudiere;
 
 
+JukeboxMain::JukeboxMain() :
+   update_mode(false),
+   debug_mode(false) {
+}
+
 StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
-                                                 string prefix,
-                                                 bool in_debug_mode,
-                                                 bool in_update_mode)
+                                                 string prefix)
 {
       //if (!swift.is_available()) {
       //   printf("error: swift is not supported on this system. please install swiftclient first.");
-      //   Utils::sys_exit(1);
+      //   return NULL;
       //}
 
       string swift_auth_host = "";
@@ -54,7 +57,7 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
          update_swift_password = credentials.get_string_value("update_swift_password");
       }
 
-      if (in_debug_mode) {
+      if (debug_mode) {
          printf("swift_auth_host=%s\n", swift_auth_host.c_str());
          printf("swift_account=%s\n", swift_account.c_str());
          printf("swift_user=%s\n", swift_user.c_str());
@@ -71,13 +74,13 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
 
          printf("error: no swift credentials given. please specify swift_account, "
                 "swift_user, and swift_password in credentials\n");
-         Utils::sys_exit(1);
+	 return NULL;
       }
 
       string user = "";
       string password = "";
 
-      if (in_update_mode) {
+      if (update_mode) {
          user = update_swift_user;
          password = update_swift_password;
       } else {
@@ -96,8 +99,6 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
 
 StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                               string prefix,
-                                              bool in_debug_mode,
-                                              bool in_update_mode,
                                               bool use_external)
 {
    string aws_access_key = "";
@@ -127,7 +128,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
       update_aws_secret_key = credentials.get_string_value("update_aws_secret_key");
    }
 
-   if (in_debug_mode) {
+   if (debug_mode) {
       printf("aws_access_key=%s\n", aws_access_key.c_str());
       printf("aws_secret_key=%s\n", aws_secret_key.c_str());
       if (update_aws_access_key.length() > 0 && update_aws_secret_key.length() > 0) {
@@ -150,7 +151,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
       string access_key = "";
       string secret_key = "";
 
-      if (in_update_mode) {
+      if (update_mode) {
          access_key = update_aws_access_key;
          secret_key = update_aws_secret_key;
       } else {
@@ -165,7 +166,7 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                        protocol,
                                        host,
                                        prefix,
-                                       in_debug_mode);
+                                       debug_mode);
       //} else {
          //printf("Creating S3StorageSystem\n");
       //   return new S3StorageSystem(access_key,
@@ -173,20 +174,18 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
       //                              protocol,
       //                              host,
       //                              prefix,
-      //                              in_debug_mode);
+      //                              debug_mode);
       //}
    }
    return NULL;
 }
 
 StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
-                                                 string prefix,
-                                                 bool in_debug_mode,
-                                                 bool in_update_mode)
+                                                 string prefix)
 {
       //if (!azure.is_available()) {
       //   printf("error: azure is not supported on this system. please install azure client first.");
-      //   Utils::sys_exit(1);
+      //   return NULL;
       //}
 
       string azure_account_name = "";
@@ -208,7 +207,7 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
          update_azure_account_key = credentials.get_string_value("update_azure_account_key");
       }
 
-      if (in_debug_mode) {
+      if (debug_mode) {
          printf("azure_account_name=%s\n", azure_account_name.c_str());
          printf("azure_account_key=%s\n", azure_account_key.c_str());
          if (update_azure_account_name.length() > 0 && update_azure_account_key.length() > 0) {
@@ -220,12 +219,12 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
       if (azure_account_name.length() == 0 || azure_account_key.length() == 0) {
          printf("error: no azure credentials given. please specify azure_account_name "
                 "and azure_account_key in credentials file\n");
-         Utils::sys_exit(1);
+	 return NULL;
       } else {
          string account_name = "";
          string account_key = "";
 
-         if (in_update_mode) {
+         if (update_mode) {
             account_name = update_azure_account_name;
             account_key = update_azure_account_key;
          } else {
@@ -237,22 +236,20 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
          //return new AzureStorageSystem(account_name,
          //                              account_key,
          //                              prefix,
-         //                              in_debug_mode);
+         //                              debug_mode);
       }
 
       return NULL;
 }
 
 StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
-                                              string prefix,
-                                              bool in_debug_mode,
-                                              bool in_update_mode) {
+                                              string prefix) {
    if (credentials.contains("root_dir")) {
       const string& root_dir = credentials.get_string_value("root_dir");
-      if (in_debug_mode) {
+      if (debug_mode) {
          printf("root_dir = '%s'\n", root_dir.c_str());
       }
-      return new FSStorageSystem(root_dir, in_debug_mode);
+      return new FSStorageSystem(root_dir, debug_mode);
    } else {
       printf("error: 'root_dir' must be specified in fs_creds.txt\n");
       return NULL;
@@ -261,33 +258,33 @@ StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
 
 StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
                                                    const PropertySet& credentials,
-                                                   string prefix,
-                                                   bool in_debug_mode,
-                                                   bool in_update_mode) {
+                                                   string prefix) {
    if (system_name == "swift") {
-      return connect_swift_system(credentials, prefix, in_debug_mode, in_update_mode);
+      return connect_swift_system(credentials, prefix);
    } else if (system_name == "s3") {
-      return connect_s3_system(credentials, prefix, in_debug_mode, in_update_mode, false);
+      return connect_s3_system(credentials, prefix, false);
    } else if (system_name == "s3ext") {
-      return connect_s3_system(credentials, prefix, in_debug_mode, in_update_mode, true);
+      return connect_s3_system(credentials, prefix, true);
    } else if (system_name == "azure") {
-      return connect_azure_system(credentials, prefix, in_debug_mode, in_update_mode);
+      return connect_azure_system(credentials, prefix);
    } else if (system_name == "fs") {
-      return connect_fs_system(credentials, prefix, in_debug_mode, in_update_mode);
+      return connect_fs_system(credentials, prefix);
    } else {
       printf("error: unrecognized storage system %s\n", system_name.c_str());
       return NULL;
    }
 }
 
-void JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
+bool JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
+   bool success;
    if (Jukebox::initialize_storage_system(*storage_sys)) {
       printf("storage system successfully initialized\n");
+      success = true;
    } else {
       printf("error: unable to initialize storage system\n");
-      delete storage_sys;
-      Utils::sys_exit(1);
+      success = false;
    }
+   return success;
 }
 
 void JukeboxMain::show_usage() const {
@@ -321,15 +318,128 @@ void JukeboxMain::show_usage() const {
    printf("\n");
 }
 
-void JukeboxMain::run(const vector<string>& console_args) {
+int JukeboxMain::run_jukebox_command(Jukebox& jukebox, const string& command) {
    int exit_code = 0;
-   bool debug_mode = false;
-   string storage_type = "swift";
-   string artist = "";
    bool shuffle = false;
-   string playlist;
-   string song = "";
-   string album = "";
+
+   try {
+      if (command == "import-songs") {
+         jukebox.import_songs();
+      } else if (command == "import-playlists") {
+         jukebox.import_playlists();
+      } else if (command == "play") {
+         shuffle = false;
+         jukebox.play_songs(shuffle, artist, album);
+      } else if (command == "shuffle-play") {
+         shuffle = true;
+         jukebox.play_songs(shuffle, artist, album);
+      } else if (command == "list-songs") {
+         jukebox.show_listings();
+      } else if (command == "list-artists") {
+         jukebox.show_artists();
+      } else if (command == "list-containers") {
+         jukebox.show_list_containers();
+      } else if (command == "list-genres") {
+         jukebox.show_genres();
+      } else if (command == "list-albums") {
+         jukebox.show_albums();
+      } else if (command == "show-album") {
+         if (album.length() > 0) {
+            jukebox.show_album(album);
+         } else {
+            printf("error: album must be specified using --album option\n");
+            exit_code = 1;
+         }
+      } else if (command == "list-playlists") {
+         jukebox.show_playlists();
+      } else if (command == "show-playlist") {
+         if (playlist.length() > 0) {
+            jukebox.show_playlist(playlist);
+         } else {
+            printf("error: playlist must be specified using --playlist option\n");
+            exit_code = 1;
+         }
+      } else if (command == "play-playlist") {
+         if (playlist.length() > 0) {
+            jukebox.play_playlist(playlist);
+         } else {
+            printf("error: playlist must be specified using --playlist option\n");
+            exit_code = 1;
+         }
+      } else if (command == "retrieve-catalog") {
+         printf("retrieve-catalog not yet implemented\n");
+      } else if (command == "delete-song") {
+         if (song.length() > 0) {
+            if (jukebox.delete_song(song)) {
+               printf("song deleted\n");
+            } else {
+               printf("error: unable to delete song\n");
+               exit_code = 1;
+            }
+         } else {
+            printf("error: song must be specified using --song option\n");
+            exit_code = 1;
+         }
+      } else if (command == "delete-artist") {
+         if (artist.length() > 0) {
+            if (jukebox.delete_artist(artist)) {
+               printf("artist deleted\n");
+            } else {
+               printf("error: unable to delete artist\n");
+               exit_code = 1;
+            }
+         } else {
+            printf("error: artist must be specified using --artist option\n");
+            exit_code = 1;
+         }
+      } else if (command == "delete-album") {
+         if (album.length() > 0) {
+            if (jukebox.delete_album(album)) {
+               printf("album deleted\n");
+            } else {
+               printf("error: unable to delete album\n");
+               exit_code = 1;
+            }
+         } else {
+            printf("error: album must be specified using --album option\n");
+            exit_code = 1;
+         }
+      } else if (command == "delete-playlist") {
+         if (playlist.length() > 0) {
+            if (jukebox.delete_playlist(playlist)) {
+               printf("playlist deleted\n");
+            } else {
+               printf("error: unable to delete playlist\n");
+               exit_code = 1;
+            }
+         } else {
+            printf("error: playlist must be specified using --playlist option\n");
+            exit_code = 1;
+         }
+      } else if (command == "upload-metadata-db") {
+         if (jukebox.upload_metadata_db()) {
+            printf("metadata db uploaded\n");
+         } else {
+            printf("error: unable to upload metadata db\n");
+            exit_code = 1;
+         }
+      } else if (command == "import-album-art") {
+         jukebox.import_album_art();
+      }
+   }
+   catch (exception& e) {
+      printf("exception caught: %s\n", e.what());
+   }
+   catch (...) {
+      printf("unknown exception caught\n");
+   }
+
+   return exit_code;
+}
+
+int JukeboxMain::run(const vector<string>& console_args) {
+   int exit_code = 0;
+   string storage_type = "swift";
 
    ArgumentParser opt_parser;
    opt_parser.addOptionalBoolFlag("--debug", "run in debug mode");
@@ -349,7 +459,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
    PropertySet* args = opt_parser.parse_args(console_args);
    if (args == NULL) {
       printf("error: unable to obtain command-line arguments\n");
-      Utils::sys_exit(1);
+      return 1;
    }
 
    JukeboxOptions options;
@@ -409,12 +519,12 @@ void JukeboxMain::run(const vector<string>& console_args) {
          options.encryption_key = StrUtils::strip(encryption_key);
       } else {
          printf("error: unable to read key file %s\n", keyfile.c_str());
-         Utils::sys_exit(1);
+	 return 1;
       }
 
       if (options.encryption_key.length() == 0) {
          printf("error: no key found in file %s\n", keyfile.c_str());
-         Utils::sys_exit(1);
+	 return 1;
       }
    }
 
@@ -429,7 +539,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
       if (!supported_systems.contains(storage)) {
          printf("error: invalid storage type %s\n", storage.c_str());
          printf("supported systems are: %s\n", supported_systems.to_string().c_str());
-         Utils::sys_exit(1);
+	 return 1;
       } else {
          if (debug_mode) {
             printf("setting storage system to %s\n", storage.c_str());
@@ -554,7 +664,7 @@ void JukeboxMain::run(const vector<string>& console_args) {
             show_usage();
          } else {
             if (!options.validate_options()) {
-               Utils::sys_exit(1);
+               return 1;
             }
 
             StorageSystem* storage_system = NULL;
@@ -567,159 +677,38 @@ void JukeboxMain::run(const vector<string>& console_args) {
                   options.suppress_metadata_download = false;
                }
 
-               bool in_update_mode = false;
-
                if (update_cmds.contains(command)) {
-                  in_update_mode = true;
+                  update_mode = true;
                }
 
                storage_system = connect_storage_system(storage_type,
                                                        creds,
-                                                       container_prefix,
-                                                       debug_mode,
-                                                       in_update_mode);
-               if (storage_system == NULL) {
-                  printf("error: unable to connect to storage system\n");
-                  Utils::sys_exit(1);
-               }
-
-               if (!storage_system->enter()) {
-                  printf("error: unable to enter storage system\n");
-                  delete storage_system;
-                  Utils::sys_exit(1);
-               }
-
-               if (command == "init-storage") {
-                  init_storage_system(storage_system);
-                  delete storage_system;
-                  Utils::sys_exit(0);
-               }
-
-               Jukebox jukebox(options, *storage_system);
-               if (!jukebox.enter()) {
-                  printf("error: unable to enter jukebox\n");
-                  delete storage_system;
-                  Utils::sys_exit(1);
-               }
-
-               try {
-                  if (command == "import-songs") {
-                     jukebox.import_songs();
-                  } else if (command == "import-playlists") {
-                     jukebox.import_playlists();
-                  } else if (command == "play") {
-                     shuffle = false;
-                     jukebox.play_songs(shuffle, artist, album);
-                  } else if (command == "shuffle-play") {
-                     shuffle = true;
-                     jukebox.play_songs(shuffle, artist, album);
-                  } else if (command == "list-songs") {
-                     jukebox.show_listings();
-                  } else if (command == "list-artists") {
-                     jukebox.show_artists();
-                  } else if (command == "list-containers") {
-                     jukebox.show_list_containers();
-                  } else if (command == "list-genres") {
-                     jukebox.show_genres();
-                  } else if (command == "list-albums") {
-                     jukebox.show_albums();
-                  } else if (command == "show-album") {
-                     if (album.length() > 0) {
-                        jukebox.show_album(album);
-                     } else {
-                        printf("error: album must be specified using --album option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "list-playlists") {
-                     jukebox.show_playlists();
-                  } else if (command == "show-playlist") {
-                     if (playlist.length() > 0) {
-                        jukebox.show_playlist(playlist);
-                     } else {
-                        printf("error: playlist must be specified using --playlist option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "play-playlist") {
-                     if (playlist.length() > 0) {
-                        jukebox.play_playlist(playlist);
-                     } else {
-                        printf("error: playlist must be specified using --playlist option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "retrieve-catalog") {
-                     printf("retrieve-catalog not yet implemented\n");
-                  } else if (command == "delete-song") {
-                     if (song.length() > 0) {
-                        if (jukebox.delete_song(song)) {
-                           printf("song deleted\n");
-                        } else {
-                           printf("error: unable to delete song\n");
-                           exit_code = 1;
-                        }
-                     } else {
-                        printf("error: song must be specified using --song option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "delete-artist") {
-                     if (artist.length() > 0) {
-                        if (jukebox.delete_artist(artist)) {
-                           printf("artist deleted\n");
-                        } else {
-                           printf("error: unable to delete artist\n");
-                           exit_code = 1;
-                        }
-                     } else {
-                        printf("error: artist must be specified using --artist option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "delete-album") {
-                     if (album.length() > 0) {
-                        if (jukebox.delete_album(album)) {
-                           printf("album deleted\n");
-                        } else {
-                           printf("error: unable to delete album\n");
-                           exit_code = 1;
-                        }
-                     } else {
-                        printf("error: album must be specified using --album option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "delete-playlist") {
-                     if (playlist.length() > 0) {
-                        if (jukebox.delete_playlist(playlist)) {
-                           printf("playlist deleted\n");
-                        } else {
-                           printf("error: unable to delete playlist\n");
-                           exit_code = 1;
-                        }
-                     } else {
-                        printf("error: playlist must be specified using --playlist option\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "upload-metadata-db") {
-                     if (jukebox.upload_metadata_db()) {
-                        printf("metadata db uploaded\n");
-                     } else {
-                        printf("error: unable to upload metadata db\n");
-                        exit_code = 1;
-                     }
-                  } else if (command == "import-album-art") {
-                     jukebox.import_album_art();
-                  }
-               }
-               catch (exception& e)
-               {
-                  printf("exception caught: %s\n", e.what());
-               }
-               catch (...)
-               {
-                  printf("unknown exception caught\n");
-               }
-
-               jukebox.exit();
+                                                       container_prefix);
                if (storage_system != NULL) {
-                  delete storage_system;
-                  storage_system = NULL;
+                  if (storage_system->enter()) {
+                     if (command == "init-storage") {
+                        if (init_storage_system(storage_system)) {
+                           exit_code = 0;
+                        } else {
+                           exit_code = 1;
+                        }
+                     } else {
+                        Jukebox jukebox(options, *storage_system);
+                        if (jukebox.enter()) {
+                           exit_code = run_jukebox_command(jukebox, command);
+		           jukebox.exit();
+                        } else {
+                           printf("error: unable to enter jukebox\n");
+		           exit_code = 1;
+                        }
+	             }
+	          } else {
+                     printf("error: unable to enter storage system\n");
+		     exit_code = 1;
+	          }
+               } else {
+                  printf("error: unable to connect to storage system\n");
+		  exit_code = 1;
                }
             }
             catch (exception& e)
@@ -742,6 +731,6 @@ void JukeboxMain::run(const vector<string>& console_args) {
       delete args;
       args = NULL;
    }
-   Utils::sys_exit(exit_code);
+   return exit_code;
 }
 

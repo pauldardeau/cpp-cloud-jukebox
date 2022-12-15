@@ -1122,7 +1122,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
             chaudiere::OSUtils::deleteFile("jukebox.pid");
          } else {
             printf("error: unable to download songs\n");
-            Utils::sys_exit(1);
+            return;
          }
       } catch (exception& e) {
          printf("exception caught: %s\n", e.what());
