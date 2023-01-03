@@ -79,6 +79,7 @@ public:
    std::string metadata_db_file;
    std::string metadata_container;
    std::string playlist_container;
+   std::string album_container;
    std::string album_art_container;
    std::vector<SongMetadata> song_list;
    int number_songs;
@@ -167,7 +168,7 @@ public:
                            std::vector<SongMetadata>& list_songs);
    bool get_album_songs(const std::string& album,
                         std::vector<SongMetadata>& list_songs);
-   void show_album(const std::string& album);
+   void show_album(const std::string& artist, const std::string& album);
    void show_playlist(const std::string& playlist);
    void play_playlist(const std::string& playlist);
 
@@ -180,6 +181,9 @@ public:
    void display_info() const;
 
    static bool initialize_storage_system(StorageSystem& storage_sys, std::string prefix="");
+   bool retrieve_album_track_object_list(const std::string& artist,
+                                         const std::string& album,
+                                         std::vector<std::string>& list_track_objects);
 };
 
 #endif

@@ -282,7 +282,7 @@ MirrorStorageSystem::MirrorStorageSystem(const string& ini_file_path,
 //*****************************************************************************
 
 MirrorStorageSystem::~MirrorStorageSystem() {
-   exit();
+   MirrorStorageSystem::exit();
 }
 
 //*****************************************************************************

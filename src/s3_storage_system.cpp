@@ -296,7 +296,7 @@ S3StorageSystem::S3StorageSystem(const string& access_key,
 //*****************************************************************************
 
 S3StorageSystem::~S3StorageSystem() {
-   exit();
+   S3StorageSystem::exit();
 }
 
 //*****************************************************************************

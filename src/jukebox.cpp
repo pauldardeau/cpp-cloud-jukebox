@@ -60,7 +60,8 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    download_extension(".download"),
    metadata_db_file("jukebox_db.sqlite3"),
    metadata_container("music-metadata"),
-   playlist_container("playlists"),
+   playlist_container("cj-playlists"),
+   album_container("cj-albums"),
    album_art_container("album-art"),
    number_songs(0),
    song_index(-1),
@@ -921,8 +922,39 @@ void Jukebox::downloader_cleanup() {
 }
 
 void Jukebox::play_songs(bool shuffle, string artist, string album) {
-   song_list = jukebox_db->retrieve_album_songs(artist, album);
-   play_retrieved_songs(shuffle);
+   if (jukebox_db != NULL) {
+      bool have_songs = false;
+      /*
+      if ((artist.length() > 0) && (album.length() > 0)) {
+         vector<SongMetadata> a_song_list;
+         vector<string> list_track_objects;
+         if (retrieve_album_track_object_list(artist, album, list_track_objects)) {
+            if (list_track_objects.size() > 0) {
+               auto it = list_track_objects.begin();
+	       const auto it_end = list_track_objects.end();
+	       for (; it != it_end; it++) {
+                  const string& track_object_name = *it;
+	          SongMetadata song;
+	          if (jukebox_db->retrieve_song(track_object_name, song)) {
+                     a_song_list.push_back(song);
+                  }
+               }
+
+	       if (a_song_list.size() == list_track_objects.size()) {
+                  have_songs = true;
+	          song_list = a_song_list;
+               }
+            }
+         }
+      }
+      */
+
+      if (!have_songs) {
+         song_list = jukebox_db->retrieve_album_songs(artist, album);
+      }
+
+      play_retrieved_songs(shuffle);
+   }
 }
 
 void Jukebox::play_retrieved_songs(bool shuffle) {
@@ -1383,15 +1415,39 @@ bool Jukebox::get_playlist_songs(const string& playlist_name,
    return success;
 }
 
-void Jukebox::show_album(const string& album) {
-   vector<SongMetadata> list_songs;
-   if (get_album_songs(album, list_songs)) {
-      auto it = list_songs.begin();
-      const auto it_end = list_songs.end();
-      for (; it != it_end; it++) {
-         const SongMetadata& song = *it;
-         printf("%s\n", song.song_name.c_str());
+void Jukebox::show_album(const string& artist, const string& album) {
+   string encoded_artist = JBUtils::encode_value(artist);
+   string encoded_album = JBUtils::encode_value(album);
+   string json_file_name = encoded_artist + "--" + encoded_album + ".json";
+   string local_json_file = chaudiere::OSUtils::pathJoin(song_play_dir, json_file_name);
+   if (storage_system.get_object(album_container,
+                                 json_file_name,
+                                 local_json_file) > 0) {
+      string album_json_contents;
+      if (Utils::file_read_all_text(local_json_file, album_json_contents)) {
+         if (album_json_contents.length() > 0) {
+            json album_json = json::parse(album_json_contents);
+            if (album_json.contains("tracks")) {
+               auto& track_list = album_json["tracks"];
+
+	       printf("Album: %s, Artist: %s, Tracks:\n", album.c_str(), artist.c_str());
+	       int i = 0;
+               for (auto& track : track_list) {
+                  i++;
+                  const string& track_name = track["title"].get<std::string>();
+		  if (track_name.length() > 0) {
+                     printf("%d  %s\n", i, track_name.c_str());
+                  }
+               }
+            }
+         } else {
+            printf("error: album json file is empty %s\n", local_json_file.c_str());
+         }
+      } else {
+         printf("error: unable to read album json file %s\n", local_json_file.c_str());
       }
+   } else {
+      printf("error: unable to retrieve album json (%s) from storage system (%s)\n", json_file_name.c_str(), album_container.c_str());
    }
 }
 
@@ -1637,5 +1693,44 @@ bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
    }
 
    return true;
+}
+
+bool Jukebox::retrieve_album_track_object_list(const string& artist,
+                                               const string& album,
+                                               vector<string>& list_track_objects) {
+   bool success = false;
+   string encoded_artist = JBUtils::encode_value(artist);
+   string encoded_album = JBUtils::encode_value(album);
+   string json_file_name = encoded_artist + "--" + encoded_album + ".json";
+   string local_json_file = chaudiere::OSUtils::pathJoin(song_play_dir, json_file_name);
+   if (storage_system.get_object(album_container,
+                                 json_file_name,
+                                 local_json_file) > 0) {
+      string album_json_contents;
+      if (Utils::file_read_all_text(local_json_file, album_json_contents)) {
+         if (album_json_contents.length() > 0) {
+            json album_json = json::parse(album_json_contents);
+	    if (album_json.contains("tracks")) {
+               auto& track_list = album_json["tracks"];
+
+	       for (auto& track : track_list) {
+                  list_track_objects.push_back(track["object"].get<std::string>());
+	       }
+	       if (list_track_objects.size() > 0) {
+                  success = true;
+	       }
+	    }
+         } else {
+            printf("error: album json file is empty %s\n", local_json_file.c_str());
+         }
+      } else {
+         printf("error: unable to read album json file %s\n", local_json_file.c_str());
+      }
+   } else {
+      printf("Unable to retrieve '%s' from '%s'\n",
+             json_file_name.c_str(),
+	     album_container.c_str());
+   }
+   return success;
 }
 

@@ -14,7 +14,7 @@ FSStorageSystem::FSStorageSystem(const string& the_root_dir, bool debug_mode) :
 //*****************************************************************************
 
 FSStorageSystem::~FSStorageSystem() {
-   exit();
+   FSStorageSystem::exit();
 }
 
 //*****************************************************************************

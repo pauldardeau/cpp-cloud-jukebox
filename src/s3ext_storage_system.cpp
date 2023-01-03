@@ -62,7 +62,7 @@ S3ExtStorageSystem::S3ExtStorageSystem(const string& access_key,
 //*****************************************************************************
 
 S3ExtStorageSystem::~S3ExtStorageSystem() {
-   exit();
+   S3ExtStorageSystem::exit();
 }
 
 //*****************************************************************************
@@ -714,8 +714,7 @@ bool S3ExtStorageSystem::prepare_run_script(const string& script_template,
 
    for (; it != it_end; it++) {
       const string& key = *it;
-      const string& value = kvp.getValue(key);
-      chaudiere::StrUtils::replaceAll(file_text, key, value);
+      chaudiere::StrUtils::replaceAll(file_text, key, kvp.getValue(key));
    }
 
    if (!Utils::file_write_all_text(run_script, file_text)) {

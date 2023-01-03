@@ -344,10 +344,15 @@ int JukeboxMain::run_jukebox_command(Jukebox& jukebox, const string& command) {
       } else if (command == "list-albums") {
          jukebox.show_albums();
       } else if (command == "show-album") {
-         if (album.length() > 0) {
-            jukebox.show_album(album);
+         if (artist.length() > 0) {
+            if (album.length() > 0) {
+               jukebox.show_album(artist, album);
+            } else {
+               printf("error: album must be specified using --album option\n");
+               exit_code = 1;
+            }
          } else {
-            printf("error: album must be specified using --album option\n");
+            printf("error: artist must be specified using --artist option\n");
             exit_code = 1;
          }
       } else if (command == "list-playlists") {
