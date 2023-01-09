@@ -291,10 +291,15 @@ bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
          vector<SongMetadata> song_results;
          if (songs_for_query(rs, song_results)) {
             delete rs;
-            song = song_results[0];
-            success = true;
+            rs = NULL;
+            if (song_results.size() > 0) {
+               song = song_results[0];
+               success = true;
+            }
          }
-         delete rs;
+         if (rs != NULL) {
+            delete rs;
+         }
       }
    }
    return success;
