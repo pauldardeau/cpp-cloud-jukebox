@@ -31,7 +31,7 @@ clean :
 	rm -f $(EXE_NAME)
 
 $(EXE_NAME) : $(OBJS)
-	$(LINK_CMD) $(OBJS) -o $(EXE_NAME) ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so -L../lib $(LINK_LIBS)
+	$(LINK_CMD) $(OBJS) -o $(EXE_NAME) ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so -L/usr/local/lib -L../lib $(LINK_LIBS)
 
 %.o : %.cpp
 	$(CC) $(CC_OPTS) $< -o $@
