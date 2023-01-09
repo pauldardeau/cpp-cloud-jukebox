@@ -924,7 +924,6 @@ void Jukebox::downloader_cleanup() {
 void Jukebox::play_songs(bool shuffle, string artist, string album) {
    if (jukebox_db != NULL) {
       bool have_songs = false;
-      /*
       if ((artist.length() > 0) && (album.length() > 0)) {
          vector<SongMetadata> a_song_list;
          vector<string> list_track_objects;
@@ -947,7 +946,6 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
             }
          }
       }
-      */
 
       if (!have_songs) {
          song_list = jukebox_db->retrieve_album_songs(artist, album);
