@@ -1421,6 +1421,11 @@ bool Jukebox::get_playlist_songs(const string& playlist_name,
                if (pl_json.contains("songs")) {
                   json songs = pl_json["songs"];
                   int songs_added = 0;
+                  vector<string> file_extensions;
+                  file_extensions.push_back(".flac");
+                  file_extensions.push_back(".m4a");
+                  file_extensions.push_back(".mp3");
+
                   for (auto it = songs.begin(); it != songs.end(); it++) {
                      json song_dict = it.value();
                      if (song_dict.contains("artist") &&
@@ -1438,11 +1443,21 @@ bool Jukebox::get_playlist_songs(const string& playlist_name,
                               JBUtils::encode_artist_album_song(artist,
                                                                 album,
                                                                 song_name);
-                           SongMetadata song;
-                           if (jukebox_db->retrieve_song(encoded_song, song)) {
-                              list_songs.push_back(song);
-                              songs_added++;
-                           } else {
+                           auto itExt = file_extensions.begin();
+                           const auto itExtEnd = file_extensions.end();
+                           bool song_found = false;
+                           for (; itExt != itExtEnd; itExt++) {
+                              string song_uid = encoded_song + *itExt;
+                              SongMetadata song;
+                              if (jukebox_db->retrieve_song(song_uid, song)) {
+                                 list_songs.push_back(song);
+                                 songs_added++;
+                                 song_found = true;
+                                 break;
+                              }
+                           }
+
+                           if (!song_found) {
                               printf("error: unable to retrieve metadata for '%s'\n",
                                      encoded_song.c_str());
                            }
