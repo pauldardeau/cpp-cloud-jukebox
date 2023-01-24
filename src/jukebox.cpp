@@ -847,6 +847,7 @@ void Jukebox::play_song(const SongMetadata& song) {
                printf("errno = %d\n", errno);
             }
             audio_player_process = -1;
+            player_active = false;
          } else {
             printf("error: unable to start audio player\n");
             ::exit(1);
@@ -968,18 +969,18 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
                                               list_track_objects)) {
             if (list_track_objects.size() > 0) {
                auto it = list_track_objects.begin();
-	       const auto it_end = list_track_objects.end();
-	       for (; it != it_end; it++) {
+               const auto it_end = list_track_objects.end();
+               for (; it != it_end; it++) {
                   const string& track_object_name = *it;
-	          SongMetadata song;
-	          if (jukebox_db->retrieve_song(track_object_name, song)) {
+                  SongMetadata song;
+                  if (jukebox_db->retrieve_song(track_object_name, song)) {
                      a_song_list.push_back(song);
                   }
                }
 
-	       if (a_song_list.size() == list_track_objects.size()) {
+               if (a_song_list.size() == list_track_objects.size()) {
                   have_songs = true;
-	          song_list = a_song_list;
+                  song_list = a_song_list;
                }
             }
          }
@@ -1349,6 +1350,7 @@ void Jukebox::import_playlists() {
 
       for (; it != it_end; it++) {
          const string& listing_entry = *it;
+         printf("'%s'\n", listing_entry.c_str());
          string full_path =
             chaudiere::OSUtils::pathJoin(playlist_import_dir, listing_entry);
          // ignore it if it's not a file
@@ -1369,8 +1371,14 @@ void Jukebox::import_playlists() {
                   } else {
                      file_import_count += 1;
                   }
+               } else {
+                  printf("error: unable to store playlist '%s' in '%s'\n", object_name.c_str(), playlist_container.c_str());
                }
+            } else {
+               printf("error: unable to read file '%s'\n", full_path.c_str());
             }
+         } else {
+            printf("item is not a file: '%s'\n", full_path.c_str());
          }
       }
 
@@ -1498,14 +1506,14 @@ void Jukebox::show_album(const string& artist, const string& album) {
             if (album_json.contains("tracks")) {
                auto& track_list = album_json["tracks"];
 
-	       printf("Album: %s, Artist: %s, Tracks:\n",
+               printf("Album: %s, Artist: %s, Tracks:\n",
                       album.c_str(),
                       artist.c_str());
-	       int i = 0;
+               int i = 0;
                for (auto& track : track_list) {
                   i++;
                   const string& track_name = track["title"].get<std::string>();
-		  if (track_name.length() > 0) {
+                  if (track_name.length() > 0) {
                      printf("%d  %s\n", i, track_name.c_str());
                   }
                }
@@ -1798,16 +1806,16 @@ bool Jukebox::retrieve_album_track_object_list(const string& artist,
       if (Utils::file_read_all_text(local_json_file, album_json_contents)) {
          if (album_json_contents.length() > 0) {
             json album_json = json::parse(album_json_contents);
-	    if (album_json.contains("tracks")) {
+            if (album_json.contains("tracks")) {
                auto& track_list = album_json["tracks"];
 
-	       for (auto& track : track_list) {
+               for (auto& track : track_list) {
                   list_track_objects.push_back(track["object"].get<std::string>());
-	       }
-	       if (list_track_objects.size() > 0) {
+               }
+               if (list_track_objects.size() > 0) {
                   success = true;
-	       }
-	    }
+               }
+            }
          } else {
             printf("error: album json file is empty %s\n",
                    local_json_file.c_str());
@@ -1819,7 +1827,7 @@ bool Jukebox::retrieve_album_track_object_list(const string& artist,
    } else {
       printf("Unable to retrieve '%s' from '%s'\n",
              json_file_name.c_str(),
-	     album_container.c_str());
+             album_container.c_str());
    }
    return success;
 }
