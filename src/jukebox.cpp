@@ -1410,83 +1410,77 @@ bool Jukebox::get_album_songs(const string& album,
 bool Jukebox::get_playlist_songs(const string& playlist_name,
                                  vector<SongMetadata>& list_songs) {
    bool success = false;
-   if (jukebox_db != NULL) {
-      // look up the playlist_uid in the DB
-      string playlist_uid = jukebox_db->get_playlist(playlist_name);
+   string playlist_file = JBUtils::encode_value(playlist_name) +
+                          JSON_FILE_EXT; 
 
-      if (playlist_uid.length() > 0) {
-         // retrieve the playlist file from storage
-         string local_file_path =
-            chaudiere::OSUtils::pathJoin(chaudiere::OSUtils::getCurrentDirectory(),
-                                         playlist_uid);
-         if (storage_system.get_object(playlist_container,
-                                       playlist_uid,
-                                       local_file_path) > 0) {
-            string file_contents;
-            if (Utils::file_read_all_text(local_file_path, file_contents)) {
-               json pl_json = json::parse(file_contents);
-               // print the list of songs
-               if (pl_json.contains("songs")) {
-                  json songs = pl_json["songs"];
-                  int songs_added = 0;
-                  vector<string> file_extensions;
-                  file_extensions.push_back(".flac");
-                  file_extensions.push_back(".m4a");
-                  file_extensions.push_back(".mp3");
+   // retrieve the playlist file from storage
+   string local_file_path =
+      chaudiere::OSUtils::pathJoin(chaudiere::OSUtils::getCurrentDirectory(),
+                                   playlist_file);
+   if (storage_system.get_object(playlist_container,
+                                 playlist_file,
+                                 local_file_path) > 0) {
+      string file_contents;
+      if (Utils::file_read_all_text(local_file_path, file_contents)) {
+         json pl_json = json::parse(file_contents);
+         // print the list of songs
+         if (pl_json.contains("songs")) {
+            json songs = pl_json["songs"];
+            int songs_added = 0;
+            vector<string> file_extensions;
+            file_extensions.push_back(".flac");
+            file_extensions.push_back(".m4a");
+            file_extensions.push_back(".mp3");
 
-                  for (auto it = songs.begin(); it != songs.end(); it++) {
-                     json song_dict = it.value();
-                     if (song_dict.contains("artist") &&
-                         song_dict.contains("album") &&
-                         song_dict.contains("song")) {
+            for (auto it = songs.begin(); it != songs.end(); it++) {
+               json song_dict = it.value();
+               if (song_dict.contains("artist") &&
+                   song_dict.contains("album") &&
+                   song_dict.contains("song")) {
 
-                        string artist = song_dict["artist"];
-                        string album = song_dict["album"];
-                        string song_name = song_dict["song"];
+                  string artist = song_dict["artist"];
+                  string album = song_dict["album"];
+                  string song_name = song_dict["song"];
 
-                        if (artist.length() > 0 &&
-                            album.length() > 0 &&
-                            song_name.length() > 0) {
-                           string encoded_song =
-                              JBUtils::encode_artist_album_song(artist,
-                                                                album,
-                                                                song_name);
-                           auto itExt = file_extensions.begin();
-                           const auto itExtEnd = file_extensions.end();
-                           bool song_found = false;
-                           for (; itExt != itExtEnd; itExt++) {
-                              string song_uid = encoded_song + *itExt;
-                              SongMetadata song;
-                              if (jukebox_db->retrieve_song(song_uid, song)) {
-                                 list_songs.push_back(song);
-                                 songs_added++;
-                                 song_found = true;
-                                 break;
-                              }
-                           }
+                  if (artist.length() > 0 &&
+                      album.length() > 0 &&
+                      song_name.length() > 0) {
+                     string encoded_song =
+                        JBUtils::encode_artist_album_song(artist,
+                                                          album,
+                                                          song_name);
+                     encoded_song = JBUtils::remove_punctuation(encoded_song);
 
-                           if (!song_found) {
-                              printf("error: unable to retrieve metadata for '%s'\n",
-                                     encoded_song.c_str());
-                           }
+                     auto itExt = file_extensions.begin();
+                     const auto itExtEnd = file_extensions.end();
+                     bool song_found = false;
+                     for (; itExt != itExtEnd; itExt++) {
+                        string song_uid = encoded_song + *itExt;
+                        SongMetadata song;
+                        if (jukebox_db->retrieve_song(song_uid, song)) {
+                           list_songs.push_back(song);
+                           songs_added++;
+                           song_found = true;
+                           break;
                         }
                      }
+
+                     if (!song_found) {
+                        printf("error: unable to retrieve metadata for '%s'\n",
+                               encoded_song.c_str());
+                     }
                   }
-                  success = (songs_added > 0);
-               } else {
-                  printf("error: playlist json does not contain 'songs' element\n");
                }
-            } else {
-               printf("error: unable to read file '%s'\n", local_file_path.c_str());
             }
+            success = (songs_added > 0);
          } else {
-            printf("error: playlist not found '%s'\n", playlist_uid.c_str());
+            printf("error: playlist json does not contain 'songs' element\n");
          }
       } else {
-         printf("error: playlist not found in DB: '%s'\n", playlist_name.c_str());
+         printf("error: unable to read file '%s'\n", local_file_path.c_str());
       }
    } else {
-      printf("error: DB is not open\n");
+      printf("error: playlist not found '%s'\n", playlist_file.c_str());
    }
    return success;
 }

@@ -13,6 +13,7 @@ public:
    static std::string encode_artist_album_song(const std::string& artist,
                                                const std::string& album,
                                                const std::string& song);
+   static std::string remove_punctuation(const std::string& s);
 };
 
 #endif

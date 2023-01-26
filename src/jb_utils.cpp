@@ -1,3 +1,4 @@
+#include <string.h>
 #include "jb_utils.h"
 #include "StrUtils.h"
 
@@ -28,4 +29,26 @@ string JBUtils::encode_artist_album_song(const string& artist,
                                          const string& song) {
    return encode_artist_album(artist, album) + DOUBLE_DASHES +
           encode_value(song);
+}
+
+string JBUtils::remove_punctuation(const string& s) {
+   size_t s_len = s.length();
+   size_t pos_punct = strcspn(s.c_str(), "'!?");
+   if (pos_punct < s_len) {
+      bool removing_punctuation = true;
+      string updated = s;
+      while (removing_punctuation) {
+         pos_punct = strcspn(updated.c_str(), "'!?");
+         if (pos_punct < updated.length()) {
+            string before = updated.substr(0, pos_punct);
+	    string after = updated.substr(pos_punct+1, updated.length()-pos_punct-1);
+	    updated = before + after;
+         } else {
+            removing_punctuation = false;
+         }
+      }
+      return updated;
+   } else {
+      return string(s);
+   }
 }
