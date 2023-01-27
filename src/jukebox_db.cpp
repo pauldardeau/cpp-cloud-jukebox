@@ -133,22 +133,10 @@ bool JukeboxDB::create_tables() {
                                     "object_name TEXT NOT NULL,"
                                     "album_uid TEXT REFERENCES album(album_uid))";
 
-      string create_playlist_table = "CREATE TABLE playlist ("
-                                        "playlist_uid TEXT UNIQUE NOT NULL,"
-                                        "playlist_name TEXT UNIQUE NOT NULL,"
-                                        "playlist_description TEXT)";
-
-      string create_playlist_song_table = "CREATE TABLE playlist_song ("
-                                             "playlist_song_uid TEXT UNIQUE NOT NULL,"
-                                             "playlist_uid TEXT NOT NULL REFERENCES playlist(playlist_uid),"
-                                             "song_uid TEXT NOT NULL REFERENCES song(song_uid))";
-
       return create_table(create_genre_table) &&
              create_table(create_artist_table) &&
              create_table(create_album_table) &&
-             create_table(create_song_table) &&
-             create_table(create_playlist_table) &&
-             create_table(create_playlist_song_table);
+             create_table(create_song_table);
    } else {
       printf("create_tables: db_is_open is false\n");
       return false;
@@ -177,29 +165,6 @@ bool JukeboxDB::have_tables() {
    }
 
    return have_tables_in_db;
-}
-
-string JukeboxDB::get_playlist(const string& playlist_name) {
-   string pl_object;
-   if (playlist_name.length() > 0 && db_connection != NULL) {
-      string sql = "SELECT playlist_uid "
-                   "FROM playlist "
-                   "WHERE playlist_name = ?";
-      DBStatementArgs args;
-      args.add(new DBString(playlist_name));
-      DBResultSet* rs = db_connection->executeQuery(sql, args);
-      if (rs != NULL) {
-         if (rs->next()) {
-            string* playlist_uid = rs->stringForColumnIndex(0);
-            if (playlist_uid != NULL) {
-               pl_object = *playlist_uid;
-               delete playlist_uid;
-            }
-         }
-         delete rs;
-      }
-   }
-   return pl_object;
 }
 
 bool JukeboxDB::songs_for_query(DBResultSet* rs,
@@ -303,50 +268,6 @@ bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
       }
    }
    return success;
-}
-
-bool JukeboxDB::insert_playlist(const string& pl_uid,
-                                const string& pl_name,
-                                string pl_desc) {
-   bool insert_success = false;
-
-   if (db_is_open && pl_uid.length() > 0 && pl_name.length() > 0) {
-      string sql = "INSERT INTO playlist VALUES (?,?,?)";
-      DBStatementArgs args;
-      args.add(new DBString(pl_uid));
-      args.add(new DBString(pl_name));
-      args.add(new DBString(pl_desc));
-      unsigned long rowsAffectedCount = 0L;
-      if (db_connection->executeUpdate(sql, args, rowsAffectedCount)) {
-         if (rowsAffectedCount == 1L) {
-            insert_success = true;
-         }
-      } else {
-         printf("error inserting playlist\n");
-      }
-   }
-
-   return insert_success;
-}
-
-bool JukeboxDB::delete_playlist(const string& pl_name) {
-   bool delete_success = false;
-
-   if (db_is_open && pl_name.length() > 0) {
-      string sql = "DELETE "
-                   "FROM playlist "
-                   "WHERE playlist_name = ?";
-      DBStatementArgs args;
-      args.add(new DBString(pl_name));
-      unsigned long rowsAffectedCount = 0L;
-      if (db_connection->executeUpdate(sql, args, rowsAffectedCount)) {
-         if (rowsAffectedCount == 1L) {
-            delete_success = true;
-         }
-      }
-   }
-
-   return delete_success;
 }
 
 bool JukeboxDB::insert_song(const SongMetadata& song) {
@@ -662,27 +583,6 @@ void JukeboxDB::show_albums() {
             }
             delete album_name;
             delete artist_name;
-         }
-         delete rs;
-      }
-   }
-}
-
-void JukeboxDB::show_playlists() {
-   if (db_is_open) {
-      string sql = "SELECT playlist_uid, playlist_name "
-                   "FROM playlist "
-                   "ORDER BY playlist_uid";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
-         while (rs->next()) {
-            string* playlist_uid = rs->stringForColumnIndex(0);
-            string* playlist_name = rs->stringForColumnIndex(1);
-            if (playlist_uid != NULL && playlist_name != NULL) {
-               printf("%s - %s\n", playlist_uid->c_str(), playlist_name->c_str());
-            }
-            delete playlist_uid;
-            delete playlist_name;
          }
          delete rs;
       }

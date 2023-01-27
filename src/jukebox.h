@@ -123,8 +123,6 @@ public:
    static void vector_to_string(const std::vector<unsigned char>& v, std::string& s);
 
    bool store_song_metadata(const SongMetadata& fs_song);
-   bool store_song_playlist(const std::string& file_name,
-                            const std::string& file_contents);
    void get_encryptor();
 
    std::string get_container_suffix();

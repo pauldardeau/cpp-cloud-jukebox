@@ -322,18 +322,6 @@ bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
    }
 }
 
-bool Jukebox::store_song_playlist(const string& file_name,
-                                  const string& file_contents) {
-   json pl = json::parse(file_contents);
-   if (pl.contains("name")) {
-      string pl_name = pl["name"];
-      string pl_uid = file_name;
-      return jukebox_db->insert_playlist(pl_uid, pl_name);
-   } else {
-      return false;
-   }
-}
-
 void Jukebox::get_encryptor() {
    //FUTURE: encryption (get_encryptor)
    // key_block_size = 16  // AES-128
@@ -1364,13 +1352,7 @@ void Jukebox::import_playlists() {
                                              object_name,
                                              v_file_contents,
                                              NULL)) {
-                  if (!store_song_playlist(object_name, file_contents)) {
-                     printf("storing of playlist to db failed\n");
-                     storage_system.delete_object(playlist_container,
-                                                  object_name);
-                  } else {
-                     file_import_count += 1;
-                  }
+                  file_import_count += 1;
                } else {
                   printf("error: unable to store playlist '%s' in '%s'\n", object_name.c_str(), playlist_container.c_str());
                }
@@ -1384,8 +1366,6 @@ void Jukebox::import_playlists() {
 
       if (file_import_count > 0) {
          printf("%d playlists imported\n", file_import_count);
-         // upload metadata DB file
-         upload_metadata_db();
       } else {
          printf("no files imported\n");
       }
@@ -1393,8 +1373,13 @@ void Jukebox::import_playlists() {
 }
 
 void Jukebox::show_playlists() {
-   if (jukebox_db != NULL) {
-      jukebox_db->show_playlists();
+   vector<string> container_contents =
+      storage_system.list_container_contents(playlist_container);
+
+   auto it = container_contents.begin();
+   const auto it_end = container_contents.end();
+   for (; it != it_end; it++) {
+      printf("%s\n", it->c_str());
    }
 }
 
@@ -1410,6 +1395,7 @@ bool Jukebox::get_album_songs(const string& album,
 bool Jukebox::get_playlist_songs(const string& playlist_name,
                                  vector<SongMetadata>& list_songs) {
    bool success = false;
+   //TODO: only add JSON_FILE_EXT if it's not already there
    string playlist_file = JBUtils::encode_value(playlist_name) +
                           JSON_FILE_EXT; 
 
@@ -1640,28 +1626,11 @@ bool Jukebox::delete_album(const string& album) {
 
 bool Jukebox::delete_playlist(const string& playlist_name) {
    bool is_deleted = false;
-   string object_name = jukebox_db->get_playlist(playlist_name);
-   if (object_name.length() > 0) {
-      bool db_deleted = jukebox_db->delete_playlist(playlist_name);
-      if (db_deleted) {
-         printf("container=%s, object=%s\n",
-                playlist_container.c_str(),
-                object_name.c_str());
-         if (storage_system.delete_object(playlist_container, object_name)) {
-            is_deleted = true;
-         } else {
-            printf("error: object delete failed\n");
-         }
-      } else {
-         printf("error: database delete failed\n");
-      }
-      if (is_deleted) {
-         upload_metadata_db();
-      } else {
-         printf("delete of playlist failed\n");
-      }
+   //TODO: append JSON_FILE_EXT if not already present
+   if (storage_system.delete_object(playlist_container, playlist_name)) {
+      is_deleted = true;
    } else {
-      printf("invalid playlist name\n");
+      printf("error: object delete failed\n");
    }
 
    return is_deleted;
