@@ -197,7 +197,7 @@ vector<string> Utils::path_split(const string& path) {
       }
    }
 
-   vector<string> components;
+   vector<string> components(2);
    components.push_back(head);
    components.push_back(tail);
    return components;
@@ -239,7 +239,7 @@ vector<string> Utils::path_splitext(const string& path) {
       }
    }
 
-   vector<string> components;
+   vector<string> components(2);
    components.push_back(root);
    components.push_back(ext);
    return components;
