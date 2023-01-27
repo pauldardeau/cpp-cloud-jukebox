@@ -1395,9 +1395,11 @@ bool Jukebox::get_album_songs(const string& album,
 bool Jukebox::get_playlist_songs(const string& playlist_name,
                                  vector<SongMetadata>& list_songs) {
    bool success = false;
-   //TODO: only add JSON_FILE_EXT if it's not already there
-   string playlist_file = JBUtils::encode_value(playlist_name) +
-                          JSON_FILE_EXT; 
+
+   string playlist_file = JBUtils::encode_value(playlist_name);
+   if (!chaudiere::StrUtils::endsWith(playlist_file, JSON_FILE_EXT)) {
+      playlist_file += JSON_FILE_EXT;
+   }
 
    // retrieve the playlist file from storage
    string local_file_path =
@@ -1626,8 +1628,13 @@ bool Jukebox::delete_album(const string& album) {
 
 bool Jukebox::delete_playlist(const string& playlist_name) {
    bool is_deleted = false;
-   //TODO: append JSON_FILE_EXT if not already present
-   if (storage_system.delete_object(playlist_container, playlist_name)) {
+
+   string object_file_name = playlist_name;
+   if (!chaudiere::StrUtils::endsWith(object_file_name, JSON_FILE_EXT)) {
+      object_file_name += JSON_FILE_EXT;
+   }
+
+   if (storage_system.delete_object(playlist_container, object_file_name)) {
       is_deleted = true;
    } else {
       printf("error: object delete failed\n");
