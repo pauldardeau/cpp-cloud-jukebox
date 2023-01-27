@@ -249,7 +249,7 @@ vector<string> Jukebox::components_from_file_name(const string& file_name) {
 
    vector<string> tokens = chaudiere::StrUtils::split(base_file_name, "--");
    if (tokens.size() == 3) {
-      vector<string> ret_vet;
+      vector<string> ret_vet(3);
       ret_vet.push_back(JBUtils::unencode_value(tokens[0]));
       ret_vet.push_back(JBUtils::unencode_value(tokens[1]));
       ret_vet.push_back(JBUtils::unencode_value(tokens[2]));
@@ -1415,7 +1415,7 @@ bool Jukebox::get_playlist_songs(const string& playlist_name,
          if (pl_json.contains("songs")) {
             json songs = pl_json["songs"];
             int songs_added = 0;
-            vector<string> file_extensions;
+            vector<string> file_extensions(3);
             file_extensions.push_back(".flac");
             file_extensions.push_back(".m4a");
             file_extensions.push_back(".mp3");
@@ -1731,7 +1731,7 @@ bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
    }
 
    // create the other (non-song) containers
-   vector<string> cnr_names;
+   vector<string> cnr_names(4);
    cnr_names.push_back("music-metadata");
    cnr_names.push_back("album-art");
    cnr_names.push_back("albums");
