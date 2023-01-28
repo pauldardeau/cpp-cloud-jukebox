@@ -1383,15 +1383,6 @@ void Jukebox::show_playlists() {
    }
 }
 
-bool Jukebox::get_album_songs(const string& album,
-                              vector<SongMetadata>& list_songs) {
-   bool success = false;
-
-   //TODO: implement get_album_songs
-
-   return success;
-}
-
 bool Jukebox::get_playlist_songs(const string& playlist_name,
                                  vector<SongMetadata>& list_songs) {
    bool success = false;
