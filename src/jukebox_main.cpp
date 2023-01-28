@@ -6,7 +6,6 @@
 #include "property_set.h"
 #include "jukebox_options.h"
 #include "jukebox.h"
-//#include "s3_storage_system.h"
 #include "s3ext_storage_system.h"
 #include "utils.h"
 #include "OSUtils.h"
@@ -159,23 +158,12 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
          secret_key = aws_secret_key;
       }
 
-      //if (use_external) {
-         //printf("Creating S3ExtStorageSystem\n");
-         return new S3ExtStorageSystem(access_key,
-                                       secret_key,
-                                       protocol,
-                                       host,
-                                       prefix,
-                                       debug_mode);
-      //} else {
-         //printf("Creating S3StorageSystem\n");
-      //   return new S3StorageSystem(access_key,
-      //                              secret_key,
-      //                              protocol,
-      //                              host,
-      //                              prefix,
-      //                              debug_mode);
-      //}
+      return new S3ExtStorageSystem(access_key,
+                                    secret_key,
+                                    protocol,
+                                    host,
+                                    prefix,
+                                    debug_mode);
    }
    return NULL;
 }
