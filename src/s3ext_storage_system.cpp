@@ -309,45 +309,6 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
 
    // each metadata property (aside from predefined ones) gets "x-amz-meta-" prefix
 
-   // https://en.wikipedia.org/wiki/List_of_file_signatures
-
-   // mp3
-   // ---
-   // FF FB
-   // FF F3
-   // FF F2
-
-   // mp3 with ID3v2 container
-   // ---
-   // 49 44 33
-
-   // flac
-   // ----
-   // 66 4C 61 43
-
-   // gzip
-   // ----
-   // 1F 8B
-
-   // XZ compressed
-   // -------------
-   // FD 37 7A 58 5A 00
-
-   // PNG
-   // ---
-   // 89 50 4E 47 0D 0A 1A 0A
-
-
-   // predefined properties:
-   //   contentLength
-   //   cacheControl
-   //   contentType
-   //   md5
-   //   contentDispositionFilename
-   //   contentEncoding
-   //   expires
-   //   cannedAcl
-
    if (headers != NULL) {
       if (headers->contains(PropertySet::PROP_CONTENT_LENGTH)) {
          unsigned long content_length =
