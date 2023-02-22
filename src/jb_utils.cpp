@@ -41,8 +41,8 @@ string JBUtils::remove_punctuation(const string& s) {
          pos_punct = strcspn(updated.c_str(), "'!?");
          if (pos_punct < updated.length()) {
             string before = updated.substr(0, pos_punct);
-	    string after = updated.substr(pos_punct+1, updated.length()-pos_punct-1);
-	    updated = before + after;
+            string after = updated.substr(pos_punct+1, updated.length()-pos_punct-1);
+            updated = before + after;
          } else {
             removing_punctuation = false;
          }
