@@ -78,7 +78,8 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    player_active(false),
    downloader_ready_to_delete(false),
    num_successive_play_failures(0),
-   song_play_is_resume(false)
+   song_play_is_resume(false),
+   is_repeat_mode(false)
 {
    g_jukebox_instance = this;
 
@@ -1177,7 +1178,11 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
                   song_play_is_resume = false;
                   song_seconds_offset = 0;
                   if (song_index >= number_songs) {
-                     song_index = 0;
+                     if (is_repeat_mode) {
+                        song_index = 0;
+                     } else {
+                        exit_requested = true;
+                     }
                   }
                } else {
                   Utils::time_sleep(1);

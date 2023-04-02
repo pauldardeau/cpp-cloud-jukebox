@@ -100,6 +100,7 @@ public:
    bool downloader_ready_to_delete;
    int num_successive_play_failures;
    bool song_play_is_resume;
+   bool is_repeat_mode;
 
    Jukebox(const JukeboxOptions& jb_options,
            StorageSystem& storage_sys,
