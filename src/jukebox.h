@@ -56,6 +56,8 @@ public:
       read_success = copy.read_success;
       file_bytes = copy.file_bytes;
       num_file_bytes = copy.num_file_bytes;
+
+      return *this;
    }
 };
 
