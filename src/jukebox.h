@@ -20,30 +20,31 @@ class SongDownloader;
 
 class ReadFileResults {
 private:
+   bool m_read_success;
+   std::vector<unsigned char> m_file_bytes;
+   long m_num_file_bytes;
+
    ReadFileResults();
 
-public:
-   bool read_success;
-   std::vector<unsigned char> file_bytes;
-   long num_file_bytes;
 
+public:
    ReadFileResults(bool success,
                    const std::vector<unsigned char>& the_file_bytes,
                    long num_bytes) :
-      read_success(success),
-      file_bytes(the_file_bytes),
-      num_file_bytes(num_bytes) {
+      m_read_success(success),
+      m_file_bytes(the_file_bytes),
+      m_num_file_bytes(num_bytes) {
    }
 
    ReadFileResults(const ReadFileResults& copy) :
-      read_success(copy.read_success),
-      file_bytes(copy.file_bytes),
-      num_file_bytes(copy.num_file_bytes) {
+      m_read_success(copy.m_read_success),
+      m_file_bytes(copy.m_file_bytes),
+      m_num_file_bytes(copy.m_num_file_bytes) {
    }
 
    ReadFileResults(bool success) :
-      read_success(success),
-      num_file_bytes(0L) {
+      m_read_success(success),
+      m_num_file_bytes(0L) {
    }
 
    ~ReadFileResults() {
@@ -54,11 +55,31 @@ public:
          return *this;
       }
 
-      read_success = copy.read_success;
-      file_bytes = copy.file_bytes;
-      num_file_bytes = copy.num_file_bytes;
+      m_read_success = copy.m_read_success;
+      m_file_bytes = copy.m_file_bytes;
+      m_num_file_bytes = copy.m_num_file_bytes;
 
       return *this;
+   }
+
+   bool read_success() const {
+      return m_read_success;
+   }
+
+   std::vector<unsigned char>::size_type get_file_bytes_size() const {
+      return m_file_bytes.size();
+   }
+
+   bool file_bytes_empty() const {
+      return m_file_bytes.empty();
+   }
+
+   const std::vector<unsigned char>& get_file_bytes() const {
+      return m_file_bytes;
+   }
+
+   long get_num_file_bytes() const {
+      return m_num_file_bytes;
    }
 };
 

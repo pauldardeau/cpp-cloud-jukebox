@@ -12,32 +12,45 @@
 
 
 class StorageSystem {
-public:
-   bool debug_mode;
-   bool authenticated;
-   bool compress_files;
-   bool encrypt_files;
-   std::vector<std::string> list_containers;
-   std::string container_prefix;
-   std::string metadata_prefix;
-   std::string storage_system_type;
+private:
+   bool m_debug_mode;
+   bool m_authenticated;
+   bool m_compress_files;
+   bool m_encrypt_files;
+   std::vector<std::string> m_list_containers;
+   std::string m_container_prefix;
+   std::string m_metadata_prefix;
+   std::string m_storage_system_type;
 
+public:
    StorageSystem(const std::string& system_type, bool debug=false) :
-      debug_mode(debug),
-      authenticated(false),
-      compress_files(false),
-      encrypt_files(false),
-      storage_system_type(system_type) {
+      m_debug_mode(debug),
+      m_authenticated(false),
+      m_compress_files(false),
+      m_encrypt_files(false),
+      m_storage_system_type(system_type) {
    }
 
    virtual ~StorageSystem() {}
 
+   void set_authenticated(bool b) {
+      m_authenticated = b;
+   }
+
+   void set_list_containers(const std::vector<std::string>& list_containers) {
+      m_list_containers = list_containers;
+   }
+
+   bool debug_mode() const {
+      return m_debug_mode;
+   }
+
    std::string un_prefixed_container(const std::string& container_name) {
-      if (container_prefix.length() > 0 && container_name.length() > 0) {
+      if (!m_container_prefix.empty() && !container_name.empty()) {
          // does the container name begin with the prefix?
-         if (container_name.rfind(container_prefix, 0) == 0) {
-            int unprefixed_len = container_name.length() - container_prefix.length();
-            return container_name.substr(container_prefix.length(),
+         if (container_name.rfind(m_container_prefix, 0) == 0) {
+            int unprefixed_len = container_name.length() - m_container_prefix.length();
+            return container_name.substr(m_container_prefix.length(),
                                          unprefixed_len);
          }
       }
@@ -45,12 +58,12 @@ public:
    }
 
    std::string prefixed_container(const std::string& container_name) const {
-      return container_prefix + container_name;
+      return m_container_prefix + container_name;
    }
 
    bool has_container(const std::string& container_name) const {
       bool container_found = false;
-      for (const auto& cName : list_containers) {
+      for (const auto& cName : m_list_containers) {
          if (cName == container_name) {
             container_found = true;
             break;
@@ -60,22 +73,22 @@ public:
    }
 
    void add_container(const std::string& container_name) {
-      list_containers.push_back(container_name);
+      m_list_containers.push_back(container_name);
    }
 
    void remove_container(const std::string& container_name) {
-      auto it = list_containers.begin();
-      const auto it_end = list_containers.end();
+      auto it = m_list_containers.begin();
+      const auto it_end = m_list_containers.end();
       for (; it != it_end; it++) {
          if (*it == container_name) {
-            list_containers.erase(it);
+            m_list_containers.erase(it);
             break;
          }
       }
    }
 
    int retrieve_file(const FileMetadata& fm, const std::string& local_directory) {
-      if (local_directory.length() > 0) {
+      if (!local_directory.empty()) {
          std::string file_path = chaudiere::OSUtils::pathJoin(local_directory,
                                                               fm.get_file_uid());
          // print("retrieving container=%s" % fm.container_name);
@@ -86,9 +99,9 @@ public:
    }
 
    bool store_file(const FileMetadata& fm, std::vector<unsigned char>& file_contents) {
-      if (file_contents.size() > 0) {
+      if (!file_contents.empty()) {
          PropertySet dict_props;
-         fm.to_dictionary(dict_props, metadata_prefix);
+         fm.to_dictionary(dict_props, m_metadata_prefix);
          return put_object(fm.get_container_name(),
                            fm.get_object_name(),
                            file_contents,
@@ -100,13 +113,13 @@ public:
    bool add_file_from_path(const std::string& container_name,
                            const std::string& object_name,
                            const std::string& file_path) {
-      if (container_name.length() > 0 &&
-          object_name.length() > 0 &&
-          file_path.length() > 0) {
+      if (!container_name.empty() &&
+          !object_name.empty() &&
+          !file_path.empty()) {
 
          std::vector<unsigned char> file_contents;
          bool success = Utils::file_read_all_bytes(file_path, file_contents);
-         if (success && file_contents.size() > 0) {
+         if (success && !file_contents.empty()) {
             return put_object(container_name, object_name, file_contents, nullptr);
          } else {
             printf("error: unable to read file %s\n", file_path.c_str());

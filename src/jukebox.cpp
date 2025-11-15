@@ -94,7 +94,7 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    m_album_art_import_dir = OSUtils::pathJoin(m_current_dir,
                                                        "album-art-import");
 
-   if (jb_options.debug_mode) {
+   if (jb_options.get_debug_mode()) {
       m_debug_print = true;
    }
 
@@ -122,7 +122,7 @@ bool Jukebox::enter() {
 
    // look for stored metadata in the storage system
    if (m_storage_system.has_container(m_metadata_container) &&
-       !m_jukebox_options.suppress_metadata_download) {
+       !m_jukebox_options.get_suppress_metadata_download()) {
 
       // metadata container exists, retrieve container listing
       vector<string> container_contents =
@@ -354,11 +354,13 @@ void Jukebox::get_encryptor() {
 
 string Jukebox::get_container_suffix() {
    string suffix = "";
-   if (m_jukebox_options.use_encryption && m_jukebox_options.use_compression) {
+   if (m_jukebox_options.get_use_encryption() &&
+       m_jukebox_options.get_use_compression()) {
+
       suffix += "-ez";
-   } else if (m_jukebox_options.use_encryption) {
+   } else if (m_jukebox_options.get_use_encryption()) {
       suffix += "-e";
-   } else if (m_jukebox_options.use_compression) {
+   } else if (m_jukebox_options.get_use_compression()) {
       suffix += "-z";
    }
    return suffix;
@@ -368,11 +370,13 @@ string Jukebox::get_container_suffix() {
 
 string Jukebox::object_file_suffix() {
    string suffix = "";
-   if (m_jukebox_options.use_encryption && m_jukebox_options.use_compression) {
+   if (m_jukebox_options.get_use_encryption() &&
+       m_jukebox_options.get_use_compression()) {
+
       suffix = ".egz";
-   } else if (m_jukebox_options.use_encryption) {
+   } else if (m_jukebox_options.get_use_encryption()) {
       suffix = ".e";
-   } else if (m_jukebox_options.use_compression) {
+   } else if (m_jukebox_options.get_use_compression()) {
       suffix = ".gz";
    }
    return suffix;
@@ -465,8 +469,8 @@ void Jukebox::import_songs() {
                   fs_song.set_artist_name(artist);
                   fs_song.set_song_name(song);
                   fs_song.set_md5_hash(Utils::md5_for_file(ini_file_name, full_path));
-                  fs_song.set_compressed(m_jukebox_options.use_compression ? 1 : 0);
-                  fs_song.set_encrypted(m_jukebox_options.use_encryption ? 1 : 0);
+                  fs_song.set_compressed(m_jukebox_options.get_use_compression() ? 1 : 0);
+                  fs_song.set_encrypted(m_jukebox_options.get_use_encryption() ? 1 : 0);
                   fs_song.set_object_name(object_name);
                   fs_song.set_pad_char_count(0);
 
@@ -486,7 +490,7 @@ void Jukebox::import_songs() {
                      if (file_contents.size() > 0) {
                         // for general purposes, it might be useful or helpful to have
                         // a minimum size for compressing
-                        if (m_jukebox_options.use_compression) {
+                        if (m_jukebox_options.get_use_compression()) {
                            if (m_debug_print) {
                               printf("compressing file\n");
                            }
@@ -496,7 +500,7 @@ void Jukebox::import_songs() {
                            //file_contents = zlib.compress(file_bytes, 9);
                         }
 
-                        if (m_jukebox_options.use_encryption) {
+                        if (m_jukebox_options.get_use_encryption()) {
                            if (m_debug_print) {
                               printf("encrypting file\n");
                            }
@@ -612,7 +616,7 @@ string Jukebox::song_path_in_playlist(const SongMetadata& song) {
 bool Jukebox::check_file_integrity(const SongMetadata& song) {
    bool file_integrity_passed = true;
 
-   if (m_jukebox_options.check_data_integrity) {
+   if (m_jukebox_options.get_check_data_integrity()) {
       string file_path = song_path_in_playlist(song);
       if (Utils::file_exists(file_path)) {
          if (m_debug_print) {
@@ -714,7 +718,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
       // are we checking data integrity?
       // if so, verify that the storage system retrieved the same length that
       // has been stored
-      if (m_jukebox_options.check_data_integrity) {
+      if (m_jukebox_options.get_check_data_integrity()) {
          //printf("checking data integrity\n");
          if (m_debug_print) {
             printf("verifying data integrity\n");
@@ -925,7 +929,7 @@ void Jukebox::download_songs() {
       }
    }
 
-   unsigned int file_cache_count = m_jukebox_options.file_cache_count;
+   unsigned int file_cache_count = m_jukebox_options.get_file_cache_count();
 
    if (song_file_count < file_cache_count) {
       vector<SongMetadata> dl_songs;
@@ -1298,7 +1302,7 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
       if (file_contents.size() > 0) {
          // for general purposes, it might be useful or helpful to have
          // a minimum size for compressing
-         if (m_jukebox_options.use_compression) {
+         if (m_jukebox_options.get_use_compression()) {
             //FUTURE: compression (read_file_contents)
             /*
             if (debug_print) {
@@ -1310,7 +1314,7 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
             */
          }
 
-         if (allow_encryption && m_jukebox_options.use_encryption) {
+         if (allow_encryption && m_jukebox_options.get_use_encryption()) {
             //FUTURE: encryption (read_file_contents)
             /*
             if (debug_print) {
@@ -1708,11 +1712,11 @@ void Jukebox::import_album_art() {
          if (Utils::path_isfile(full_path)) {
             string object_name = listing_entry;
             ReadFileResults read_results = read_file_contents(full_path);
-            if (read_results.read_success &&
-                read_results.file_bytes.size() > 0) {
+            if (read_results.read_success() &&
+                !read_results.file_bytes_empty()) {
                if (m_storage_system.put_object(m_album_art_container,
                                                object_name,
-                                               read_results.file_bytes)) {
+                                               read_results.get_file_bytes())) {
                   file_import_count += 1;
                }
             }

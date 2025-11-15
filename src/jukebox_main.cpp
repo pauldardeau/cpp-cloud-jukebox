@@ -476,7 +476,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
 
    if (args->contains("debug")) {
       m_debug_mode = true;
-      options.debug_mode = true;
+      options.set_debug_mode(true);
    }
 
    if (args->contains("file_cache_count")) {
@@ -484,28 +484,28 @@ int JukeboxMain::run(const vector<string>& console_args) {
       if (m_debug_mode) {
          printf("setting file cache count=%d\n", file_cache_count);
       }
-      options.file_cache_count = file_cache_count;
+      options.set_file_cache_count(file_cache_count);
    }
 
    if (args->contains("integrity_checks")) {
       if (m_debug_mode) {
          printf("setting integrity checks on\n");
       }
-      options.check_data_integrity = true;
+      options.set_check_data_integrity(true);
    }
 
    if (args->contains("compress")) {
       if (m_debug_mode) {
          printf("setting compression on\n");
       }
-      options.use_compression = true;
+      options.set_use_compression(true);
    }
 
    if (args->contains("encrypt")) {
       if (m_debug_mode) {
          printf("setting encryption on\n");
       }
-      options.use_encryption = true;
+      options.set_use_encryption(true);
    }
 
    if (args->contains("key")) {
@@ -513,7 +513,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
       if (m_debug_mode) {
          printf("setting encryption key=%s\n", key.c_str());
       }
-      options.encryption_key = key;
+      options.set_encryption_key(key);
    }
 
    if (args->contains("keyfile")) {
@@ -526,13 +526,13 @@ int JukeboxMain::run(const vector<string>& console_args) {
       if (Utils::file_read_all_text(keyfile, encryption_key) &&
           !encryption_key.empty()) {
 
-         options.encryption_key = StrUtils::strip(encryption_key);
+         options.set_encryption_key(StrUtils::strip(encryption_key));
       } else {
          printf("error: unable to read key file %s\n", keyfile.c_str());
          return 1;
       }
 
-      if (options.encryption_key.length() == 0) {
+      if (options.get_encryption_key().empty()) {
          printf("error: no key found in file %s\n", keyfile.c_str());
          return 1;
       }
@@ -617,7 +617,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
          printf("no creds file (%s)\n", creds_file_path.c_str());
       }
 
-      options.encryption_iv = "sw4mpb1ts.juk3b0x";
+      options.set_encryption_iv("sw4mpb1ts.juk3b0x");
 
       string command = args->get_string_value("command");
       args.reset();
@@ -681,9 +681,9 @@ int JukeboxMain::run(const vector<string>& console_args) {
             try
             {
                if (command == "upload-metadata-db") {
-                  options.suppress_metadata_download = true;
+                  options.set_suppress_metadata_download(true);
                } else {
-                  options.suppress_metadata_download = false;
+                  options.set_suppress_metadata_download(false);
                }
 
                if (update_cmds.contains(command)) {

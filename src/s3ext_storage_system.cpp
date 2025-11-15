@@ -50,7 +50,7 @@ S3ExtStorageSystem::S3ExtStorageSystem(const string& access_key,
       }
    }
 
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("S3ExtStorageSystem parameters:\n");
       printf("access_key=%s\n", m_aws_access_key.c_str());
       printf("secret_key=%s\n", m_aws_secret_key.c_str());
@@ -69,29 +69,30 @@ S3ExtStorageSystem::~S3ExtStorageSystem() {
 //*****************************************************************************
 
 bool S3ExtStorageSystem::enter() {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("S3ExtStorageSystem.enter\n");
    }
 
-   list_containers = list_account_containers();
+   set_list_containers(list_account_containers());
+
    return true;
 }
 
 //*****************************************************************************
 
 void S3ExtStorageSystem::exit() {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("S3ExtStorageSystem.exit\n");
    }
 
    m_connected = false;
-   authenticated = false;
+   set_authenticated(false);
 }
 
 //*****************************************************************************
 
 vector<string> S3ExtStorageSystem::list_account_containers() {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("list_account_containers\n");
    }
 
@@ -119,7 +120,7 @@ vector<string> S3ExtStorageSystem::list_account_containers() {
 //*****************************************************************************
 
 bool S3ExtStorageSystem::create_container(const string& container_name) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("create_container: %s\n", container_name.c_str());
    }
 
@@ -150,7 +151,7 @@ bool S3ExtStorageSystem::create_container(const string& container_name) {
 //*****************************************************************************
 
 bool S3ExtStorageSystem::delete_container(const string& container_name) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("delete_container: %s\n", container_name.c_str());
    }
 
@@ -177,7 +178,7 @@ bool S3ExtStorageSystem::delete_container(const string& container_name) {
 //*****************************************************************************
 
 vector<string> S3ExtStorageSystem::list_container_contents(const string& container_name) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("list_container_contents: %s\n", container_name.c_str());
    }
 
@@ -209,7 +210,7 @@ vector<string> S3ExtStorageSystem::list_container_contents(const string& contain
 bool S3ExtStorageSystem::get_object_metadata(const string& container_name,
                                              const string& object_name,
                                              PropertySet& properties) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("get_object_metadata: container=%s, object=%s\n",
              container_name.c_str(), object_name.c_str());
    }
@@ -244,7 +245,7 @@ bool S3ExtStorageSystem::put_object(const string& container_name,
                                     const vector<unsigned char>& file_contents,
                                     const PropertySet* headers) {
 
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("put_object: container=%s, object=%s, length=%ld\n",
              container_name.c_str(),
              object_name.c_str(),
@@ -278,7 +279,7 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
                                               const string& object_name,
                                               const string& file_path,
                                               const PropertySet* headers) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("put_object_from_file: container=%s, object=%s, file_path=%s\n",
              container_name.c_str(),
              object_name.c_str(),
@@ -386,7 +387,7 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
 
 bool S3ExtStorageSystem::delete_object(const string& container_name,
                                        const string& object_name) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("delete_object: container=%s, object=%s\n",
              container_name.c_str(), object_name.c_str());
    }
@@ -417,7 +418,7 @@ bool S3ExtStorageSystem::delete_object(const string& container_name,
 int64_t S3ExtStorageSystem::get_object(const string& container_name,
                                        const string& object_name,
                                        const string& local_file_path) {
-   if (debug_mode) {
+   if (debug_mode()) {
       printf("get_object: container=%s, object=%s, local_file_path=%s\n",
              container_name.c_str(), object_name.c_str(),
              local_file_path.c_str());

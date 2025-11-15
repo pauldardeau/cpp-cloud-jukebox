@@ -458,7 +458,7 @@ bool MirrorStorageSystem::get_object_metadata(const std::string& container_name,
          }
       }
    } else {
-      if (debug_mode) {
+      if (debug_mode()) {
          if (container_name.empty()) {
             printf("container name is missing, can't get object metadata\n");
          }
@@ -486,7 +486,7 @@ bool MirrorStorageSystem::put_object(const string& container_name,
          object_added = update(op);
       }
    } else {
-      if (debug_mode) {
+      if (debug_mode()) {
          if (container_name.length() == 0) {
             printf("container name is missing, can't put object\n");
          }
@@ -517,7 +517,7 @@ bool MirrorStorageSystem::put_object_from_file(const string& container_name,
          object_added = update(op);
       }
    } else {
-      if (debug_mode) {
+      if (debug_mode()) {
          if (container_name.length() == 0) {
             printf("container name is missing, can't put object\n");
          }
@@ -543,7 +543,7 @@ bool MirrorStorageSystem::delete_object(const string& container_name,
          object_deleted = update(op);
       }
    } else {
-      if (debug_mode) {
+      if (debug_mode()) {
          printf("cannot delete object, container name or object name is missing\n");
       }
    }
@@ -583,7 +583,7 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
          }
       }
    } else {
-      if (debug_mode) {
+      if (debug_mode()) {
          if (container_name.length() == 0) {
             printf("container name is missing, can't get object\n");
          }
