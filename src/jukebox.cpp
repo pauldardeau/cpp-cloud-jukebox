@@ -1,3 +1,5 @@
+// jukebox.cpp
+
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
@@ -16,21 +18,23 @@
 #include "IniReader.h"
 #include "KeyValuePairs.h"
 #include "OSUtils.h"
-#include "StringTokenizer.h"
 #include "StrUtils.h"
 #include "PthreadsThread.h"
 #include "nlohmann/json.hpp"
 
 using namespace std;
 using json = nlohmann::json;
+using namespace chaudiere;
 
-static Jukebox* g_jukebox_instance = NULL;
+static Jukebox* g_jukebox_instance = nullptr;
 
 static const string JSON_FILE_EXT = ".json";
 static const string ini_file_name = "audio_player.ini";
 
+//*****************************************************************************
+
 void signal_handler(int signum) {
-   if (g_jukebox_instance != NULL) {
+   if (g_jukebox_instance != nullptr) {
       if (signum == SIGUSR1) {
          g_jukebox_instance->toggle_pause_play();
       } else if (signum == SIGUSR2) {
@@ -43,6 +47,8 @@ void signal_handler(int signum) {
    }
 }
 
+//*****************************************************************************
+
 void install_signal_handlers() {
    signal(SIGUSR1, signal_handler);
    signal(SIGUSR2, signal_handler);
@@ -50,6 +56,7 @@ void install_signal_handlers() {
    signal(SIGWINCH, signal_handler);
 }
 
+//*****************************************************************************
 
 Jukebox::Jukebox(const JukeboxOptions& jb_options,
                  StorageSystem& storage_sys,
@@ -57,7 +64,6 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    jukebox_options(jb_options),
    storage_system(storage_sys),
    debug_print(debugging),
-   jukebox_db(NULL),
    download_extension(".download"),
    metadata_db_file("jukebox_db.sqlite3"),
    metadata_container("music-metadata"),
@@ -73,8 +79,6 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    is_paused(false),
    song_start_time(0.0),
    song_seconds_offset(0),
-   downloader(NULL),
-   download_thread(NULL),
    player_active(false),
    downloader_ready_to_delete(false),
    num_successive_play_failures(0),
@@ -83,12 +87,11 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
 {
    g_jukebox_instance = this;
 
-   current_dir = chaudiere::OSUtils::getCurrentDirectory();
-   song_import_dir = chaudiere::OSUtils::pathJoin(current_dir, "song-import");
-   playlist_import_dir = chaudiere::OSUtils::pathJoin(current_dir,
-                                                      "playlist-import");
-   song_play_dir = chaudiere::OSUtils::pathJoin(current_dir, "song-play");
-   album_art_import_dir = chaudiere::OSUtils::pathJoin(current_dir,
+   current_dir = OSUtils::getCurrentDirectory();
+   song_import_dir = OSUtils::pathJoin(current_dir, "song-import");
+   playlist_import_dir = OSUtils::pathJoin(current_dir, "playlist-import");
+   song_play_dir = OSUtils::pathJoin(current_dir, "song-play");
+   album_art_import_dir = OSUtils::pathJoin(current_dir,
                                                        "album-art-import");
 
    if (jb_options.debug_mode) {
@@ -102,20 +105,15 @@ Jukebox::Jukebox(const JukeboxOptions& jb_options,
    }
 }
 
+//*****************************************************************************
+
 Jukebox::~Jukebox() {
-   g_jukebox_instance = NULL;
+   g_jukebox_instance = nullptr;
 
    exit();
-
-   if (downloader != NULL) {
-      delete downloader;
-      downloader = NULL;
-   }
-   if (download_thread != NULL) {
-      delete download_thread;
-      download_thread = NULL;
-   }
 }
+
+//*****************************************************************************
 
 bool Jukebox::enter() {
    if (debug_print) {
@@ -131,10 +129,9 @@ bool Jukebox::enter() {
          storage_system.list_container_contents(metadata_container);
 
       bool metadata_db_file_found = false;
-      auto it = container_contents.begin();
-      const auto it_end = container_contents.end();
-      for (; it != it_end; it++) {
-         if (*it == metadata_db_file) {
+
+      for (const auto& object_name : container_contents) {
+         if (object_name == metadata_db_file) {
             metadata_db_file_found = true;
             break;
          }
@@ -157,7 +154,7 @@ bool Jukebox::enter() {
                if (debug_print) {
                   printf("deleting existing metadata DB file\n");
                }
-               chaudiere::OSUtils::deleteFile(metadata_db_file_path);
+               OSUtils::deleteFile(metadata_db_file_path);
             }
             // rename downloaded file
             if (debug_print) {
@@ -182,8 +179,8 @@ bool Jukebox::enter() {
       }
    }
 
-   jukebox_db = new JukeboxDB(get_metadata_db_file_path());
-   if (!jukebox_db->open()) {
+   m_jukebox_db.reset(new JukeboxDB(get_metadata_db_file_path()));
+   if (!m_jukebox_db->open()) {
       printf("unable to connect to database\n");
       return false;
    }
@@ -191,19 +188,22 @@ bool Jukebox::enter() {
    return true;
 }
 
+//*****************************************************************************
+
 void Jukebox::exit() {
    if (debug_print) {
       printf("Jukebox.exit\n");
    }
 
-   if (jukebox_db != NULL) {
-      if (jukebox_db->is_open()) {
-         jukebox_db->close();
+   if (m_jukebox_db) {
+      if (m_jukebox_db->is_open()) {
+         m_jukebox_db->close();
       }
-      delete jukebox_db;
-      jukebox_db = NULL;
+      m_jukebox_db.reset();
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::toggle_pause_play() {
    is_paused = !is_paused;
@@ -221,6 +221,8 @@ void Jukebox::toggle_pause_play() {
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::advance_to_next_song() {
    printf("advancing to next song\n");
    if (audio_player_process > 0) {
@@ -231,9 +233,13 @@ void Jukebox::advance_to_next_song() {
    }
 }
 
+//*****************************************************************************
+
 string Jukebox::get_metadata_db_file_path() {
-   return chaudiere::OSUtils::pathJoin(current_dir, metadata_db_file);
+   return OSUtils::pathJoin(current_dir, metadata_db_file);
 }
+
+//*****************************************************************************
 
 vector<string> Jukebox::components_from_file_name(const string& file_name) {
    if (file_name.length() == 0) {
@@ -248,7 +254,7 @@ vector<string> Jukebox::components_from_file_name(const string& file_name) {
       base_file_name = file_name;
    }
 
-   vector<string> tokens = chaudiere::StrUtils::split(base_file_name, "--");
+   vector<string> tokens = StrUtils::split(base_file_name, "--");
    if (tokens.size() == 3) {
       vector<string> ret_vet(3);
       ret_vet.push_back(JBUtils::unencode_value(tokens[0]));
@@ -260,6 +266,8 @@ vector<string> Jukebox::components_from_file_name(const string& file_name) {
    }
 }
 
+//*****************************************************************************
+
 string Jukebox::artist_from_file_name(const string& file_name) {
    if (file_name.length() > 0) {
       vector<string> components = components_from_file_name(file_name);
@@ -269,6 +277,8 @@ string Jukebox::artist_from_file_name(const string& file_name) {
    }
    return string("");
 }
+
+//*****************************************************************************
 
 string Jukebox::album_from_file_name(const string& file_name) {
    if (file_name.length() > 0) {
@@ -280,6 +290,8 @@ string Jukebox::album_from_file_name(const string& file_name) {
    return string("");
 }
 
+//*****************************************************************************
+
 string Jukebox::song_from_file_name(const string& file_name) {
    if (file_name.length() > 0) {
       vector<string> components = components_from_file_name(file_name);
@@ -290,38 +302,43 @@ string Jukebox::song_from_file_name(const string& file_name) {
    return string("");
 }
 
+//*****************************************************************************
+
 void Jukebox::string_to_vector(const string& s, vector<unsigned char>& v) {
    std::copy(s.begin(), s.end(), std::back_inserter(v));
 }
+
+//*****************************************************************************
 
 void Jukebox::vector_to_string(const vector<unsigned char>& v, string& s) {
    // ensure that string has required capacity
    s.reserve(v.size());
 
    // copy each character
-   auto it = v.begin();
-   const auto it_end = v.end();
-   for (; it != it_end; it++) {
-      unsigned char u_char = *it;
+   for (const auto& u_char : v) {
       char s_char = (char) u_char;
       // append character to string
       s.push_back(s_char);
    }
 }
 
+//*****************************************************************************
+
 bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
    SongMetadata db_song;
-   if (jukebox_db->retrieve_song(fs_song.fm.file_uid, db_song)) {
+   if (m_jukebox_db->retrieve_song(fs_song.fm.file_uid, db_song)) {
       if (fs_song != db_song) {
-         return jukebox_db->update_song(fs_song);
+         return m_jukebox_db->update_song(fs_song);
       } else {
          return true;  // no insert or update needed (already up-to-date)
       }
    } else {
       // song is not in the database, insert it
-      return jukebox_db->insert_song(fs_song);
+      return m_jukebox_db->insert_song(fs_song);
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::get_encryptor() {
    //FUTURE: encryption (get_encryptor)
@@ -332,6 +349,8 @@ void Jukebox::get_encryptor() {
    //                          jukebox_options.encryption_key,
    //                          jukebox_options.encryption_iv);
 }
+
+//*****************************************************************************
 
 string Jukebox::get_container_suffix() {
    string suffix = "";
@@ -345,6 +364,8 @@ string Jukebox::get_container_suffix() {
    return suffix;
 }
 
+//*****************************************************************************
+
 string Jukebox::object_file_suffix() {
    string suffix = "";
    if (jukebox_options.use_encryption && jukebox_options.use_compression) {
@@ -357,6 +378,8 @@ string Jukebox::object_file_suffix() {
    return suffix;
 }
 
+//*****************************************************************************
+
 string Jukebox::container_for_song(const string& song_uid) {
    if (song_uid.length() == 0) {
       return string("");
@@ -365,25 +388,27 @@ string Jukebox::container_for_song(const string& song_uid) {
 
    string artist = artist_from_file_name(song_uid);
    string artist_letter = "";
-   if (chaudiere::StrUtils::startsWith(artist, "A ")) {
+   if (StrUtils::startsWith(artist, "A ")) {
       artist_letter = artist.substr(2, 1);
-   } else if (chaudiere::StrUtils::startsWith(artist, "The ")) {
+   } else if (StrUtils::startsWith(artist, "The ")) {
       artist_letter = artist.substr(4, 1);
    } else {
       artist_letter = artist.substr(0, 1);
    }
 
    string container_name = artist_letter;
-   chaudiere::StrUtils::toLowerCase(container_name);
+   StrUtils::toLowerCase(container_name);
    container_name += container_suffix;
 
    return container_name;
 }
 
+//*****************************************************************************
+
 void Jukebox::import_songs() {
-   if (jukebox_db != NULL && jukebox_db->is_open()) {
+   if (m_jukebox_db && m_jukebox_db->is_open()) {
       vector<string> dir_listing =
-         chaudiere::OSUtils::listFilesInDirectory(song_import_dir);
+         OSUtils::listFilesInDirectory(song_import_dir);
       float num_entries = (float) dir_listing.size();
       double progressbar_chars = 0.0;
       int progressbar_width = 40;
@@ -393,32 +418,28 @@ void Jukebox::import_songs() {
 
       if (!debug_print) {
          // setup progressbar
-         string bar = chaudiere::StrUtils::makeStringOfChar('*', progressbar_width);
+         string bar = StrUtils::makeStringOfChar('*', progressbar_width);
          string bar_text = "[" + bar + "]";
          Utils::sys_stdout_write(bar_text);
          Utils::sys_stdout_flush();
-         bar = chaudiere::StrUtils::makeStringOfChar('\b', progressbar_width + 1);
+         bar = StrUtils::makeStringOfChar('\b', progressbar_width + 1);
          Utils::sys_stdout_write(bar);  // return to start of line, after '['
       }
 
       //FUTURE: encryption support (import_songs)
-      //if (jukebox_options != NULL && jukebox_options.use_encryption) {
+      //if (jukebox_options != nullptr && jukebox_options.use_encryption) {
       //   encryption = get_encryptor();
       //} else {
-      //   encryption = NULL;
+      //   encryption = nullptr;
       //}
 
       double cumulative_upload_time = 0.0;
       int cumulative_upload_bytes = 0;
       int file_import_count = 0;
 
-      auto it = dir_listing.begin();
-      const auto it_end = dir_listing.end();
-
-      for (; it != it_end; it++) {
-         const string& listing_entry = *it;
-         string full_path = chaudiere::OSUtils::pathJoin(song_import_dir,
-                                                         listing_entry);
+      for (const auto& listing_entry : dir_listing) {
+         string full_path = OSUtils::pathJoin(song_import_dir,
+                                              listing_entry);
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string file_name = listing_entry;
@@ -506,7 +527,7 @@ void Jukebox::import_songs() {
                      if (storage_system.put_object(fs_song.fm.container_name,
                                                    fs_song.fm.object_name,
                                                    file_contents,
-                                                   NULL)) {
+                                                   nullptr)) {
                         double end_upload_time = Utils::time_time();
                         double upload_elapsed_time = end_upload_time - start_upload_time;
                         cumulative_upload_time += upload_elapsed_time;
@@ -580,9 +601,13 @@ void Jukebox::import_songs() {
    }
 }
 
+//*****************************************************************************
+
 string Jukebox::song_path_in_playlist(const SongMetadata& song) {
-   return chaudiere::OSUtils::pathJoin(song_play_dir, song.fm.file_uid);
+   return OSUtils::pathJoin(song_play_dir, song.fm.file_uid);
 }
+
+//*****************************************************************************
 
 bool Jukebox::check_file_integrity(const SongMetadata& song) {
    bool file_integrity_passed = true;
@@ -619,10 +644,14 @@ bool Jukebox::check_file_integrity(const SongMetadata& song) {
    return file_integrity_passed;
 }
 
+//*****************************************************************************
+
 void Jukebox::batch_download_start() {
    cumulative_download_bytes = 0;
    cumulative_download_time = 0.0;
 }
+
+//*****************************************************************************
 
 void Jukebox::batch_download_complete() {
    if (!exit_requested) {
@@ -636,11 +665,15 @@ void Jukebox::batch_download_complete() {
    }
 }
 
-void Jukebox::notifyRunComplete(chaudiere::Runnable* runnable) {
-   if (runnable == downloader) {
+//*****************************************************************************
+
+void Jukebox::notifyRunComplete(Runnable* runnable) {
+   if (runnable == m_downloader.get()) {
       downloader_ready_to_delete = true;
    }
 }
+
+//*****************************************************************************
 
 bool Jukebox::download_song(const SongMetadata& song) {
    if (debug_print) {
@@ -733,13 +766,15 @@ bool Jukebox::download_song(const SongMetadata& song) {
          // if file exists, remove it
          printf("integrity check failed, deleting file\n");
          if (Utils::file_exists(file_path)) {
-            chaudiere::OSUtils::deleteFile(file_path);
+            OSUtils::deleteFile(file_path);
          }
       }
    }
 
    return false;
 }
+
+//*****************************************************************************
 
 void Jukebox::play_song(const SongMetadata& song) {
    if (player_active) {
@@ -763,26 +798,26 @@ void Jukebox::play_song(const SongMetadata& song) {
                string song_start_time;
                int minutes = song_seconds_offset / 60;
                if (minutes > 0) {
-                  song_start_time = chaudiere::StrUtils::toString(minutes);
+                  song_start_time = StrUtils::toString(minutes);
                   song_start_time += ":";
                   int remaining_seconds = song_seconds_offset % 60;
                   string seconds_text =
-                     chaudiere::StrUtils::toString(remaining_seconds);
+                     StrUtils::toString(remaining_seconds);
                   if (seconds_text.length() == 1) {
                      seconds_text = string("0") + seconds_text;
                   }
                   song_start_time += seconds_text;
                } else {
                   song_start_time =
-                     chaudiere::StrUtils::toString(song_seconds_offset);
+                     StrUtils::toString(song_seconds_offset);
                }
                //printf("resuming at '%s'\n", song_start_time.c_str());
-               chaudiere::StrUtils::replaceAll(command_args,
-                                               "%%START_SONG_TIME_OFFSET%%",
-                                               song_start_time);
-               chaudiere::StrUtils::replaceAll(command_args,
-                                               "%%AUDIO_FILE_PATH%%",
-                                               song_file_path);
+               StrUtils::replaceAll(command_args,
+                                    "%%START_SONG_TIME_OFFSET%%",
+                                    song_start_time);
+               StrUtils::replaceAll(command_args,
+                                    "%%AUDIO_FILE_PATH%%",
+                                    song_file_path);
                did_resume = true;
                //printf("command_args: '%s'\n", command_args.c_str());
             }
@@ -790,13 +825,12 @@ void Jukebox::play_song(const SongMetadata& song) {
 
          if (!did_resume) {
             command_args = audio_player_command_args;
-            chaudiere::StrUtils::replaceAll(command_args,
-                                            "%%AUDIO_FILE_PATH%%",
-                                            song_file_path);
+            StrUtils::replaceAll(command_args,
+                                 "%%AUDIO_FILE_PATH%%",
+                                 song_file_path);
          }
 
-         vector<string> vec_args =
-            chaudiere::StrUtils::split(command_args, " ");
+         vector<string> vec_args = StrUtils::split(command_args, " ");
          int child_process_id = 0;
          pid_t pid;
          int exit_code = -1;
@@ -862,7 +896,7 @@ void Jukebox::play_song(const SongMetadata& song) {
 
       if (!is_paused) {
          // delete the song file from the play list directory
-         chaudiere::OSUtils::deleteFile(song_file_path);
+         OSUtils::deleteFile(song_file_path);
       }
    } else {
       printf("file not found: %s\n", song.fm.file_uid.c_str());
@@ -870,17 +904,17 @@ void Jukebox::play_song(const SongMetadata& song) {
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::download_songs() {
    // scan the play list directory to see if we need to download more songs
    vector<string> dir_listing =
-      chaudiere::OSUtils::listFilesInDirectory(song_play_dir);
+      OSUtils::listFilesInDirectory(song_play_dir);
    unsigned int song_file_count = 0;
-   auto it = dir_listing.begin();
-   const auto it_end = dir_listing.end();
-   for (; it != it_end; it++) {
-      const string& listing_entry = *it;
+
+   for (const auto& listing_entry : dir_listing) {
       string full_path =
-         chaudiere::OSUtils::pathJoin(song_play_dir, listing_entry);
+         OSUtils::pathJoin(song_play_dir, listing_entry);
       if (Utils::path_isfile(full_path)) {
          vector<string> path_elems = Utils::path_splitext(full_path);
          const string& extension = path_elems[1];
@@ -915,40 +949,42 @@ void Jukebox::download_songs() {
       }
 
       if (dl_songs.size() > 0) {
-         if (downloader == NULL && download_thread == NULL) {
+         if (!m_downloader && !m_download_thread) {
             if (debug_print) {
                printf("creating SongDownloader and download thread\n");
             }
-            downloader = new SongDownloader(*this, dl_songs);
-            download_thread = new chaudiere::PthreadsThread(downloader);
-            downloader->setCompletionObserver(this);
-            download_thread->start();
+            m_downloader.reset(new SongDownloader(*this, dl_songs));
+            m_download_thread.reset(new PthreadsThread(m_downloader.get()));
+            m_downloader->setCompletionObserver(this);
+            m_download_thread->start();
          } else {
             if (debug_print) {
-               printf("Not downloading more songs b/c downloader != NULL or download_thread != NULL\n");
+               printf("Not downloading more songs b/c downloader != nullptr or download_thread != nullptr\n");
             }
          }
       }
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::downloader_cleanup() {
    if (downloader_ready_to_delete) {
-      if (downloader != NULL && download_thread != NULL) {
+      if (m_downloader && m_download_thread) {
          //printf("deleting downloader and download thread\n");
          downloader_ready_to_delete = false;
-         delete downloader;
-         downloader = NULL;
-         delete download_thread;
-         download_thread = NULL;
+         m_downloader.reset();         
+         m_download_thread.reset();
       } else {
-         printf("NOT deleting b/c 1 or both is NULL\n");
+         printf("NOT deleting b/c 1 or both is nullptr\n");
       }
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::play_songs(bool shuffle, string artist, string album) {
-   if (jukebox_db != NULL) {
+   if (m_jukebox_db) {
       bool have_songs = false;
       if ((artist.length() > 0) && (album.length() > 0)) {
          vector<SongMetadata> a_song_list;
@@ -957,12 +993,9 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
                                               album,
                                               list_track_objects)) {
             if (list_track_objects.size() > 0) {
-               auto it = list_track_objects.begin();
-               const auto it_end = list_track_objects.end();
-               for (; it != it_end; it++) {
-                  const string& track_object_name = *it;
+               for (const auto& track_object_name : list_track_objects) {
                   SongMetadata song;
-                  if (jukebox_db->retrieve_song(track_object_name, song)) {
+                  if (m_jukebox_db->retrieve_song(track_object_name, song)) {
                      a_song_list.push_back(song);
                   }
                }
@@ -976,12 +1009,14 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
       }
 
       if (!have_songs) {
-         song_list = jukebox_db->retrieve_album_songs(artist, album);
+         song_list = m_jukebox_db->retrieve_album_songs(artist, album);
       }
 
       play_retrieved_songs(shuffle);
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::play_retrieved_songs(bool shuffle) {
    if (song_list.size() > 0) {
@@ -993,11 +1028,11 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
       }
 
       // does play list directory exist?
-      if (!chaudiere::OSUtils::directoryExists(song_play_dir)) {
+      if (!OSUtils::directoryExists(song_play_dir)) {
          if (debug_print) {
             printf("song-play directory does not exist, creating it\n");
          }
-         chaudiere::OSUtils::createDirectory(song_play_dir);
+         OSUtils::createDirectory(song_play_dir);
       } else {
          // play list directory exists, delete any files in it
          if (debug_print) {
@@ -1005,15 +1040,12 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          }
 
          vector<string> list_files =
-            chaudiere::OSUtils::listFilesInDirectory(song_play_dir);
-         auto it = list_files.begin();
-         const auto it_end = list_files.end();
-         for (; it != it_end; it++) {
-            const string& theFile = *it;
+            OSUtils::listFilesInDirectory(song_play_dir);
+         for (const auto& theFile : list_files) {
             string file_path =
-               chaudiere::OSUtils::pathJoin(song_play_dir, theFile);
+               OSUtils::pathJoin(song_play_dir, theFile);
             if (Utils::path_isfile(file_path)) {
-               chaudiere::OSUtils::deleteFile(file_path);
+               OSUtils::deleteFile(file_path);
             }
          }
       }
@@ -1032,8 +1064,8 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
       audio_player_resume_args = "";
 
       try {
-         chaudiere::IniReader ini_reader(ini_file_name);
-         chaudiere::KeyValuePairs kvpAudioPlayer;
+         IniReader ini_reader(ini_file_name);
+         KeyValuePairs kvpAudioPlayer;
          if (!ini_reader.readSection(os_identifier, kvpAudioPlayer)) {
             printf("error: no config section present for '%s'\n",
                    os_identifier.c_str());
@@ -1043,11 +1075,11 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          string key = "audio_player_exe_file_name";
          if (kvpAudioPlayer.hasKey(key)) {
             audio_player_exe_file_name = kvpAudioPlayer.getValue(key);
-            if (chaudiere::StrUtils::startsWith(audio_player_exe_file_name, "\"") &&
-                chaudiere::StrUtils::endsWith(audio_player_exe_file_name, "\"")) {
-               chaudiere::StrUtils::strip(audio_player_exe_file_name, '"');
+            if (StrUtils::startsWith(audio_player_exe_file_name, "\"") &&
+                StrUtils::endsWith(audio_player_exe_file_name, "\"")) {
+               StrUtils::strip(audio_player_exe_file_name, '"');
             }
-            chaudiere::StrUtils::strip(audio_player_exe_file_name);
+            StrUtils::strip(audio_player_exe_file_name);
             if (audio_player_exe_file_name.length() == 0) {
                printf("error: no value given for '%s' within [%s]\n",
                       key.c_str(),
@@ -1064,12 +1096,12 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          key = "audio_player_command_args";
          if (kvpAudioPlayer.hasKey(key)) {
             audio_player_command_args = kvpAudioPlayer.getValue(key);
-            if (chaudiere::StrUtils::startsWith(audio_player_command_args, "\"") &&
-                chaudiere::StrUtils::endsWith(audio_player_command_args, "\"")) {
+            if (StrUtils::startsWith(audio_player_command_args, "\"") &&
+                StrUtils::endsWith(audio_player_command_args, "\"")) {
 
-               chaudiere::StrUtils::strip(audio_player_command_args, '"');
+               StrUtils::strip(audio_player_command_args, '"');
             }
-            chaudiere::StrUtils::strip(audio_player_command_args);
+            StrUtils::strip(audio_player_command_args);
             if (audio_player_command_args.length() == 0) {
                printf("error: no value given for '%s' within [%s]\n",
                       key.c_str(),
@@ -1097,11 +1129,11 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          key = "audio_player_resume_args";
          if (kvpAudioPlayer.hasKey(key)) {
             audio_player_resume_args = kvpAudioPlayer.getValue(key);
-            if (chaudiere::StrUtils::startsWith(audio_player_resume_args, "\"") &&
-                chaudiere::StrUtils::endsWith(audio_player_resume_args, "\"")) {
-               chaudiere::StrUtils::strip(audio_player_resume_args, '"');
+            if (StrUtils::startsWith(audio_player_resume_args, "\"") &&
+                StrUtils::endsWith(audio_player_resume_args, "\"")) {
+               StrUtils::strip(audio_player_resume_args, '"');
             }
-            chaudiere::StrUtils::strip(audio_player_resume_args);
+            StrUtils::strip(audio_player_resume_args);
             if (audio_player_resume_args.length() > 0) {
                string placeholder = "%%START_SONG_TIME_OFFSET%%";
                string::size_type pos_placeholder =
@@ -1157,7 +1189,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
                downloader_cleanup();
 
                if (!is_paused) {
-                  if (downloader == NULL && download_thread == NULL) {
+                  if (!m_downloader && !m_download_thread) {
                      if (debug_print) {
                         printf("calling download_songs\n");
                      }
@@ -1188,7 +1220,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
                   Utils::time_sleep(1);
                }
             }
-            chaudiere::OSUtils::deleteFile("jukebox.pid");
+            OSUtils::deleteFile("jukebox.pid");
          } else {
             printf("error: unable to download songs\n");
             return;
@@ -1196,19 +1228,18 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
       } catch (exception& e) {
          printf("exception caught: %s\n", e.what());
          printf("\nexiting jukebox\n");
-         chaudiere::OSUtils::deleteFile("jukebox.pid");
+         OSUtils::deleteFile("jukebox.pid");
          exit_requested = true;
       }
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::show_list_containers() {
    vector<string> containers = storage_system.list_account_containers();
-   if (containers.size() > 0) {
-      auto it = containers.begin();
-      const auto it_end = containers.end();
-      for (; it != it_end; it++) {
-         const string& container_name = *it;
+   if (!containers.empty()) {
+      for (const auto& container_name : containers) {
          printf("%s\n", container_name.c_str());
       }
    } else {
@@ -1216,29 +1247,39 @@ void Jukebox::show_list_containers() {
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::show_listings() {
-   if (jukebox_db != NULL) {
-      jukebox_db->show_listings();
+   if (m_jukebox_db) {
+      m_jukebox_db->show_listings();
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::show_artists() {
-   if (jukebox_db != NULL) {
-      jukebox_db->show_artists();
+   if (m_jukebox_db) {
+      m_jukebox_db->show_artists();
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::show_genres() {
-   if (jukebox_db != NULL) {
-      jukebox_db->show_genres();
+   if (m_jukebox_db) {
+      m_jukebox_db->show_genres();
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::show_albums() {
-   if (jukebox_db != NULL) {
-      jukebox_db->show_albums();
+   if (m_jukebox_db) {
+      m_jukebox_db->show_albums();
    }
 }
+
+//*****************************************************************************
 
 ReadFileResults Jukebox::read_file_contents(const string& file_path,
                                             bool allow_encryption) {
@@ -1294,6 +1335,8 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
    return ReadFileResults(file_read, file_contents, pad_chars);
 }
 
+//*****************************************************************************
+
 bool Jukebox::upload_metadata_db() {
    bool metadata_db_upload = false;
 
@@ -1301,8 +1344,8 @@ bool Jukebox::upload_metadata_db() {
       printf("uploading metadata db file to storage system\n");
    }
 
-   jukebox_db->close();
-   jukebox_db = NULL;
+   m_jukebox_db->close();
+   m_jukebox_db.reset();
 
    // upload metadata DB file
    vector<unsigned char> db_file_contents;
@@ -1312,7 +1355,7 @@ bool Jukebox::upload_metadata_db() {
       metadata_db_upload = storage_system.put_object(metadata_container,
                                                      metadata_db_file,
                                                      db_file_contents,
-                                                     NULL);
+                                                     nullptr);
 
       if (debug_print) {
          if (metadata_db_upload) {
@@ -1328,24 +1371,22 @@ bool Jukebox::upload_metadata_db() {
    return metadata_db_upload;
 }
 
+//*****************************************************************************
+
 void Jukebox::import_playlists() {
-   if (jukebox_db != NULL && jukebox_db->is_open()) {
+   if (m_jukebox_db && m_jukebox_db->is_open()) {
       int file_import_count = 0;
       vector<string> dir_listing =
-         chaudiere::OSUtils::listFilesInDirectory(playlist_import_dir);
+         OSUtils::listFilesInDirectory(playlist_import_dir);
       if (dir_listing.size() == 0) {
          printf("no playlists found\n");
          return;
       }
 
-      auto it = dir_listing.begin();
-      const auto it_end = dir_listing.end();
-
-      for (; it != it_end; it++) {
-         const string& listing_entry = *it;
+      for (const auto& listing_entry : dir_listing) {
          printf("'%s'\n", listing_entry.c_str());
          string full_path =
-            chaudiere::OSUtils::pathJoin(playlist_import_dir, listing_entry);
+            OSUtils::pathJoin(playlist_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::file_exists(full_path)) {
             string object_name = listing_entry;
@@ -1356,7 +1397,7 @@ void Jukebox::import_playlists() {
                if (storage_system.put_object(playlist_container,
                                              object_name,
                                              v_file_contents,
-                                             NULL)) {
+                                             nullptr)) {
                   file_import_count += 1;
                } else {
                   printf("error: unable to store playlist '%s' in '%s'\n", object_name.c_str(), playlist_container.c_str());
@@ -1377,30 +1418,32 @@ void Jukebox::import_playlists() {
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::show_playlists() {
    vector<string> container_contents =
       storage_system.list_container_contents(playlist_container);
 
-   auto it = container_contents.begin();
-   const auto it_end = container_contents.end();
-   for (; it != it_end; it++) {
-      printf("%s\n", it->c_str());
+   for (const auto& object_name : container_contents) {
+      printf("%s\n", object_name.c_str());
    }
 }
+
+//*****************************************************************************
 
 bool Jukebox::get_playlist_songs(const string& playlist_name,
                                  vector<SongMetadata>& list_songs) {
    bool success = false;
 
    string playlist_file = JBUtils::encode_value(playlist_name);
-   if (!chaudiere::StrUtils::endsWith(playlist_file, JSON_FILE_EXT)) {
+   if (!StrUtils::endsWith(playlist_file, JSON_FILE_EXT)) {
       playlist_file += JSON_FILE_EXT;
    }
 
    // retrieve the playlist file from storage
    string local_file_path =
-      chaudiere::OSUtils::pathJoin(chaudiere::OSUtils::getCurrentDirectory(),
-                                   playlist_file);
+      OSUtils::pathJoin(OSUtils::getCurrentDirectory(),
+                        playlist_file);
    if (storage_system.get_object(playlist_container,
                                  playlist_file,
                                  local_file_path) > 0) {
@@ -1435,13 +1478,12 @@ bool Jukebox::get_playlist_songs(const string& playlist_name,
                                                           song_name);
                      encoded_song = JBUtils::remove_punctuation(encoded_song);
 
-                     auto itExt = file_extensions.begin();
-                     const auto itExtEnd = file_extensions.end();
                      bool song_found = false;
-                     for (; itExt != itExtEnd; itExt++) {
-                        string song_uid = encoded_song + *itExt;
+
+                     for (const auto& fileExtension : file_extensions) {
+                        string song_uid = encoded_song + fileExtension;
                         SongMetadata song;
-                        if (jukebox_db->retrieve_song(song_uid, song)) {
+                        if (m_jukebox_db->retrieve_song(song_uid, song)) {
                            list_songs.push_back(song);
                            songs_added++;
                            song_found = true;
@@ -1469,11 +1511,13 @@ bool Jukebox::get_playlist_songs(const string& playlist_name,
    return success;
 }
 
+//*****************************************************************************
+
 void Jukebox::show_album(const string& artist, const string& album) {
    string json_file_name = JBUtils::encode_artist_album(artist, album) +
                            JSON_FILE_EXT;
    string local_json_file =
-      chaudiere::OSUtils::pathJoin(song_play_dir, json_file_name);
+      OSUtils::pathJoin(song_play_dir, json_file_name);
    if (storage_system.get_object(album_container,
                                  json_file_name,
                                  local_json_file) > 0) {
@@ -1511,17 +1555,18 @@ void Jukebox::show_album(const string& artist, const string& album) {
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::show_playlist(const string& playlist_name) {
    vector<SongMetadata> list_songs;
    if (get_playlist_songs(playlist_name, list_songs)) {
-      auto it = list_songs.begin();
-      const auto it_end = list_songs.end();
-      for (; it != it_end; it++) {
-         const SongMetadata& song = *it;
+      for (const auto& song : list_songs) {
          printf("%s : %s\n", song.song_name.c_str(), song.artist_name.c_str());
       }
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::play_playlist(const string& playlist_name) {
    vector<SongMetadata> list_songs;
@@ -1533,10 +1578,12 @@ void Jukebox::play_playlist(const string& playlist_name) {
    }
 }
 
+//*****************************************************************************
+
 bool Jukebox::delete_song(const string& song_uid, bool upload_metadata) {
    bool is_deleted = false;
    if (song_uid.length() > 0) {
-      bool db_deleted = jukebox_db->delete_song(song_uid);
+      bool db_deleted = m_jukebox_db->delete_song(song_uid);
       string container = container_for_song(song_uid);
       bool ss_deleted = false;
       if (container.length() > 0) {
@@ -1551,19 +1598,18 @@ bool Jukebox::delete_song(const string& song_uid, bool upload_metadata) {
    return is_deleted;
 }
 
+//*****************************************************************************
+
 bool Jukebox::delete_artist(const string& artist) {
    bool is_deleted = false;
    if (artist.length() > 0) {
       vector<SongMetadata> artist_song_list =
-         jukebox_db->songs_for_artist(artist);
+         m_jukebox_db->songs_for_artist(artist);
       if (artist_song_list.size() == 0) {
          printf("no artist songs in jukebox\n");
          return false;
       } else {
-         auto it = artist_song_list.begin();
-         const auto it_end = artist_song_list.end();
-         for (; it != it_end; it++) {
-            const SongMetadata& song = *it;
+         for (const auto& song : artist_song_list) {
             if (!delete_song(song.fm.object_name, false)) {
                printf("error deleting song %s\n", song.fm.object_name.c_str());
                return false;
@@ -1577,6 +1623,8 @@ bool Jukebox::delete_artist(const string& artist) {
    return is_deleted;
 }
 
+//*****************************************************************************
+
 bool Jukebox::delete_album(const string& album) {
    size_t pos_double_dash = album.find("--");
    if (pos_double_dash != string::npos) {
@@ -1584,13 +1632,10 @@ bool Jukebox::delete_album(const string& album) {
       int num_chars = album.length() - pos_double_dash - 2;
       string album_name = album.substr(pos_double_dash+2, num_chars);
       vector<SongMetadata> list_album_songs =
-         jukebox_db->retrieve_album_songs(artist, album_name);
+         m_jukebox_db->retrieve_album_songs(artist, album_name);
       if (list_album_songs.size() > 0) {
          int num_songs_deleted = 0;
-         auto it = list_album_songs.begin();
-         const auto it_end = list_album_songs.end();
-         for (; it != it_end; it++) {
-            const SongMetadata& song = *it;
+         for (const auto& song : list_album_songs) {
             printf("%s %s\n",
                    song.fm.container_name.c_str(),
                    song.fm.object_name.c_str());
@@ -1599,7 +1644,7 @@ bool Jukebox::delete_album(const string& album) {
                                              song.fm.object_name)) {
                num_songs_deleted += 1;
                // delete song metadata
-               jukebox_db->delete_song(song.fm.object_name);
+               m_jukebox_db->delete_song(song.fm.object_name);
             } else {
                printf("error: unable to delete song %s\n",
                       song.fm.object_name.c_str());
@@ -1622,11 +1667,13 @@ bool Jukebox::delete_album(const string& album) {
    return false;
 }
 
+//*****************************************************************************
+
 bool Jukebox::delete_playlist(const string& playlist_name) {
    bool is_deleted = false;
 
    string object_file_name = playlist_name;
-   if (!chaudiere::StrUtils::endsWith(object_file_name, JSON_FILE_EXT)) {
+   if (!StrUtils::endsWith(object_file_name, JSON_FILE_EXT)) {
       object_file_name += JSON_FILE_EXT;
    }
 
@@ -1639,23 +1686,21 @@ bool Jukebox::delete_playlist(const string& playlist_name) {
    return is_deleted;
 }
 
+//*****************************************************************************
+
 void Jukebox::import_album_art() {
-   if (jukebox_db != NULL && jukebox_db->is_open()) {
+   if (m_jukebox_db && m_jukebox_db->is_open()) {
       int file_import_count = 0;
       vector<string> dir_listing =
-         chaudiere::OSUtils::listFilesInDirectory(album_art_import_dir);
+         OSUtils::listFilesInDirectory(album_art_import_dir);
       if (dir_listing.size() == 0) {
          printf("no album art found\n");
          return;
       }
 
-      auto it = dir_listing.begin();
-      const auto it_end = dir_listing.end();
-
-      for (; it != it_end; it++) {
-         const string& listing_entry = *it;
+      for (const auto& listing_entry : dir_listing) {
          string full_path =
-            chaudiere::OSUtils::pathJoin(album_art_import_dir, listing_entry);
+            OSUtils::pathJoin(album_art_import_dir, listing_entry);
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string object_name = listing_entry;
@@ -1679,6 +1724,8 @@ void Jukebox::import_album_art() {
    }
 }
 
+//*****************************************************************************
+
 void Jukebox::prepare_for_termination() {
    printf("Ctrl-C detected, shutting down\n");
 
@@ -1691,6 +1738,8 @@ void Jukebox::prepare_for_termination() {
       audio_player_process = -1;
    }
 }
+
+//*****************************************************************************
 
 void Jukebox::display_info() const {
    if (song_list.size() > 0) {
@@ -1707,6 +1756,8 @@ void Jukebox::display_info() const {
       }
    }
 }
+
+//*****************************************************************************
 
 bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
                                         string prefix) {
@@ -1733,11 +1784,7 @@ bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
    cnr_names.push_back("albums");
    cnr_names.push_back("playlists");
 
-   auto it = cnr_names.begin();
-   const auto it_end = cnr_names.end();
-
-   for (; it != it_end; it++) {
-      const string& container_name = *it;
+   for (const auto& container_name : cnr_names) {
       if (!storage_sys.create_container(container_name)) {
          printf("error: unable to create container '%s'\n",
                 container_name.c_str());
@@ -1751,11 +1798,13 @@ bool Jukebox::initialize_storage_system(StorageSystem& storage_sys,
       //if (debug_print) {
       //   printf("deleting existing metadata DB file\n");
       //}
-      chaudiere::OSUtils::deleteFile(metadata_db_file);
+      OSUtils::deleteFile(metadata_db_file);
    }
 
    return true;
 }
+
+//*****************************************************************************
 
 bool Jukebox::retrieve_album_track_object_list(const string& artist,
                                                const string& album,
@@ -1764,7 +1813,7 @@ bool Jukebox::retrieve_album_track_object_list(const string& artist,
    string json_file_name = JBUtils::encode_artist_album(artist, album) +
                            JSON_FILE_EXT;
    string local_json_file =
-      chaudiere::OSUtils::pathJoin(song_play_dir, json_file_name);
+      OSUtils::pathJoin(song_play_dir, json_file_name);
    if (storage_system.get_object(album_container,
                                  json_file_name,
                                  local_json_file) > 0) {
@@ -1797,4 +1846,6 @@ bool Jukebox::retrieve_album_track_object_list(const string& artist,
    }
    return success;
 }
+
+//*****************************************************************************
 

@@ -64,25 +64,25 @@ public:
 
       std::string key = prefix + "artist_uid";
       const PropertyValue* pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          artist_uid = pv->get_string_value();
       }
 
       key = prefix + "artist_name";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          artist_name = pv->get_string_value();
       }
 
       key = prefix + "album_uid";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          album_uid = pv->get_string_value();
       }
 
       key = prefix + "song_name";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          song_name = pv->get_string_value();
       }
    }

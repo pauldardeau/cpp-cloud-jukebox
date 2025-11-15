@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "mirror_storage_system.h"
 #include "utils.h"
 #include "OSUtils.h"
@@ -5,6 +7,7 @@
 #include "PthreadsThread.h"
 
 using namespace std;
+using namespace chaudiere;
 
 class CreateContainer;
 class DeleteContainer;
@@ -15,18 +18,22 @@ class DeleteObject;
 //******************************************************************************
 
 UpdateOperation::UpdateOperation(const string& op) :
-   storage_system(NULL),
+   storage_system(nullptr),
    op_name(op),
    op_did_run(false),
    op_did_succeed(false) {
 }
 
+//*****************************************************************************
+
 UpdateOperation::UpdateOperation(const UpdateOperation& copy) :
-   storage_system(NULL),
+   storage_system(nullptr),
    op_name(copy.op_name),
    op_did_run(false),
    op_did_succeed(false) {
 }
+
+//*****************************************************************************
 
 UpdateOperation& UpdateOperation::operator=(const UpdateOperation& copy) {
    if (this == &copy) {
@@ -40,17 +47,23 @@ UpdateOperation& UpdateOperation::operator=(const UpdateOperation& copy) {
    return *this;
 }
 
+//*****************************************************************************
+
 void UpdateOperation::setStorageSystem(StorageSystem* ss) {
    storage_system = ss;
 }
+
+//*****************************************************************************
 
 void UpdateOperation::reset() {
    op_did_run = false;
    op_did_succeed = false;
 }
 
+//*****************************************************************************
+
 void UpdateOperation::run() {
-   if (storage_system != NULL) {
+   if (storage_system != nullptr) {
       op_did_succeed = run_operation();
    } else {
       printf("error: cannot run UpdateOperation, no storage system set\n");
@@ -93,7 +106,7 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != NULL) {
+      if (storage_system != nullptr) {
          return storage_system->create_container(container_name);
       } else {
          return false;
@@ -136,7 +149,7 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != NULL) {
+      if (storage_system != nullptr) {
          return storage_system->delete_container(container_name);
       } else {
          return false;
@@ -199,8 +212,8 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != NULL) {
-         if (object_bytes != NULL) {
+      if (storage_system != nullptr) {
+         if (object_bytes != nullptr) {
             return storage_system->put_object(container_name,
                                               object_name,
                                               *object_bytes,
@@ -256,7 +269,7 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != NULL) {
+      if (storage_system != nullptr) {
          return storage_system->delete_object(container_name, object_name);
       } else {
          return false;
@@ -267,14 +280,10 @@ public:
 //******************************************************************************
 //******************************************************************************
 
-//*****************************************************************************
-
 MirrorStorageSystem::MirrorStorageSystem(const string& ini_file_path,
                                          bool debug_mode) :
    StorageSystem("Mirror", debug_mode),
    ini_file(ini_file_path),
-   primary_ss(NULL),
-   secondary_ss(NULL),
    update_in_parallel(false),
    min_updates(1) {
 }
@@ -295,21 +304,19 @@ bool MirrorStorageSystem::enter() {
 //*****************************************************************************
 
 void MirrorStorageSystem::exit() {
-   if (primary_ss != NULL) {
-      delete primary_ss;
-      primary_ss = NULL;
+   if (m_primary_ss) {
+      m_primary_ss.reset();
    }
 
-   if (secondary_ss != NULL) {
-      delete secondary_ss;
-      secondary_ss = NULL;
+   if (m_secondary_ss) {
+      m_secondary_ss.reset();
    }
 }
 
 //*****************************************************************************
 
 bool MirrorStorageSystem::have_both_ss() const {
-   return (primary_ss != NULL) && (secondary_ss != NULL);
+   return m_primary_ss && m_secondary_ss;
 }
 
 //*****************************************************************************
@@ -318,11 +325,11 @@ bool MirrorStorageSystem::update(UpdateOperation& update_op) {
    if (have_both_ss()) {
       int num_update_successes = 0;
       if (update_in_parallel) {
-         update_op.setStorageSystem(primary_ss);
-         UpdateOperation* secondary_op = update_op.clone();
-         secondary_op->setStorageSystem(secondary_ss);
-         chaudiere::PthreadsThread primary_thread(&update_op);
-         chaudiere::PthreadsThread secondary_thread(secondary_op);
+         update_op.setStorageSystem(m_primary_ss.get());
+         unique_ptr<UpdateOperation> secondary_op(update_op.clone());
+         secondary_op->setStorageSystem(m_secondary_ss.get());
+         PthreadsThread primary_thread(&update_op);
+         PthreadsThread secondary_thread(secondary_op.get());
          bool primary_thread_started = primary_thread.start();
          bool secondary_thread_started = secondary_thread.start();
          if (primary_thread_started) {
@@ -341,14 +348,13 @@ bool MirrorStorageSystem::update(UpdateOperation& update_op) {
                num_update_successes++;
             }
          }
-         delete secondary_op;
       } else {
-         update_op.setStorageSystem(primary_ss);
+         update_op.setStorageSystem(m_primary_ss.get());
          bool primary_success = update_op.run_operation();
          if (primary_success) {
             num_update_successes++;
          }
-         update_op.setStorageSystem(secondary_ss);
+         update_op.setStorageSystem(m_secondary_ss.get());
          update_op.reset();
          bool secondary_success = update_op.run_operation();
          if (secondary_success) {
@@ -366,11 +372,11 @@ vector<string> MirrorStorageSystem::list_account_containers() {
 
    if (have_both_ss()) {
       try {
-         list_containers = primary_ss->list_account_containers();
+         list_containers = m_primary_ss->list_account_containers();
       } catch (exception& e) {
          printf("MSS::list_account_containers on primary exception: %s\n", e.what());
          try {
-            list_containers = secondary_ss->list_account_containers();
+            list_containers = m_secondary_ss->list_account_containers();
          } catch (exception& e) {
             printf("MSS::list_account_containers on secondary exception: %s\n", e.what());
          }
@@ -410,11 +416,11 @@ vector<string> MirrorStorageSystem::list_container_contents(const string& contai
    vector<string> list_contents;
    if (have_both_ss()) {
       try {
-         list_contents = primary_ss->list_container_contents(container_name);
+         list_contents = m_primary_ss->list_container_contents(container_name);
       } catch (exception& e) {
          printf("MSS::list_container_contents exception on primary - %s\n", e.what());
          try {
-            list_contents = secondary_ss->list_container_contents(container_name);
+            list_contents = m_secondary_ss->list_container_contents(container_name);
          } catch (exception& e) {
             printf("MSS::list_container_contents exception on secondary - %s\n", e.what());
          }
@@ -428,12 +434,12 @@ vector<string> MirrorStorageSystem::list_container_contents(const string& contai
 bool MirrorStorageSystem::get_object_metadata(const std::string& container_name,
                                               const std::string& object_name,
                                               PropertySet& dict_props) {
-   if (container_name.length() > 0 && object_name.length() > 0) {
+   if (!container_name.empty() && !object_name.empty()) {
       if (have_both_ss()) {
          try {
-            if (primary_ss->get_object_metadata(container_name,
-                                                object_name,
-                                                dict_props)) {
+            if (m_primary_ss->get_object_metadata(container_name,
+                                                  object_name,
+                                                  dict_props)) {
                return true;
             }
          } catch (exception& e) {
@@ -441,9 +447,9 @@ bool MirrorStorageSystem::get_object_metadata(const std::string& container_name,
          }
 
          try {
-            if (secondary_ss->get_object_metadata(container_name,
-                                                  object_name,
-                                                  dict_props)) {
+            if (m_secondary_ss->get_object_metadata(container_name,
+                                                    object_name,
+                                                    dict_props)) {
                return true;
             }
          } catch (exception& e) {
@@ -453,10 +459,10 @@ bool MirrorStorageSystem::get_object_metadata(const std::string& container_name,
       }
    } else {
       if (debug_mode) {
-         if (container_name.length() == 0) {
+         if (container_name.empty()) {
             printf("container name is missing, can't get object metadata\n");
          }
-         if (object_name.length() == 0) {
+         if (object_name.empty()) {
             printf("object name is missing, can't get object metadata\n");
          }
       }
@@ -507,7 +513,7 @@ bool MirrorStorageSystem::put_object_from_file(const string& container_name,
        object_file_path.length() > 0) {
 
       if (have_both_ss()) {
-         PutObject op(container_name, object_name, NULL, object_file_path, headers);
+         PutObject op(container_name, object_name, nullptr, object_file_path, headers);
          object_added = update(op);
       }
    } else {
@@ -557,9 +563,9 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
 
       if (have_both_ss()) {
          try {
-            bytes_retrieved = primary_ss->get_object(container_name,
-                                                     object_name,
-                                                     local_file_path);
+            bytes_retrieved = m_primary_ss->get_object(container_name,
+                                                       object_name,
+                                                       local_file_path);
             if (bytes_retrieved > 0) {
                return bytes_retrieved;
             }
@@ -568,9 +574,9 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
          }
 
          try {
-            return secondary_ss->get_object(container_name,
-                                            object_name,
-                                            local_file_path);
+            return m_secondary_ss->get_object(container_name,
+                                              object_name,
+                                              local_file_path);
          } catch (exception& e) {
             printf("MSS::get_object exception on secondary - %s\n", e.what());
             return 0;

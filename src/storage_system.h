@@ -22,7 +22,7 @@ public:
    std::string metadata_prefix;
    std::string storage_system_type;
 
-   StorageSystem(const std::string& system_type, bool debug = false) :
+   StorageSystem(const std::string& system_type, bool debug=false) :
       debug_mode(debug),
       authenticated(false),
       compress_files(false),
@@ -50,10 +50,8 @@ public:
 
    bool has_container(const std::string& container_name) const {
       bool container_found = false;
-      auto it = list_containers.begin();
-      const auto it_end = list_containers.end();
-      for (; it != it_end; it++) {
-         if (*it == container_name) {
+      for (const auto& cName : list_containers) {
+         if (cName == container_name) {
             container_found = true;
             break;
          }
@@ -108,7 +106,7 @@ public:
          std::vector<unsigned char> file_contents;
          bool success = Utils::file_read_all_bytes(file_path, file_contents);
          if (success && file_contents.size() > 0) {
-            return put_object(container_name, object_name, file_contents, NULL);
+            return put_object(container_name, object_name, file_contents, nullptr);
          } else {
             printf("error: unable to read file %s\n", file_path.c_str());
             return false;
@@ -121,7 +119,7 @@ public:
    virtual bool put_object(const std::string& container_name,
                            const std::string& object_name,
                            const std::string& file_path,
-                           const PropertySet* headers=NULL) {
+                           const PropertySet* headers=nullptr) {
       bool file_read = false;
       bool put_success = false;
       std::vector<unsigned char> file_contents;
@@ -156,12 +154,12 @@ public:
    virtual bool put_object(const std::string& container_name,
                            const std::string& object_name,
                            const std::vector<unsigned char>& object_bytes,
-                           const PropertySet* headers=NULL) = 0;
+                           const PropertySet* headers=nullptr) = 0;
 
    virtual bool put_object_from_file(const std::string& container_name,
                                      const std::string& object_name,
                                      const std::string& object_file_path,
-                                     const PropertySet* headers=NULL) = 0;
+                                     const PropertySet* headers=nullptr) = 0;
 
    virtual bool delete_object(const std::string& container_name,
                               const std::string& object_name) = 0;

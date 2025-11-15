@@ -1,10 +1,10 @@
 #include <string.h>
 #include "property_set.h"
-#include "StringTokenizer.h"
 #include "StrUtils.h"
 #include "utils.h"
 
 using namespace std;
+using namespace chaudiere;
 
 static const string EMPTY = "";
 
@@ -32,105 +32,124 @@ const string PropertySet::PROP_CONTENT_MD5 = "Content-MD5";
 //const string PropertySet::ACL_AUTHENTICATED_READ = "authenticated-read";
 
 
+//*****************************************************************************
+
 PropertySet::PropertySet() {
 }
+
+//*****************************************************************************
 
 PropertySet::~PropertySet() {
    clear();
 }
 
+//*****************************************************************************
+
 void PropertySet::add(const std::string& prop_name, PropertyValue* prop_value) {
-   if (prop_value != NULL) {
-      map_props[prop_name] = prop_value;
+   if (prop_value != nullptr) {
+      m_map_props[prop_name] = prop_value;
    }
 }
+
+//*****************************************************************************
 
 void PropertySet::clear() {
-   auto it = map_props.begin();
-   const auto it_end = map_props.end();
-   for (; it != it_end; it++) {
-      delete it->second;
+   for (auto& pair : m_map_props) {
+      delete pair.second;
    }
-   map_props.erase(map_props.begin(), map_props.end());
+   m_map_props.erase(m_map_props.begin(), m_map_props.end());
 }
+
+//*****************************************************************************
 
 bool PropertySet::contains(const std::string& prop_name) const {
-   auto it = map_props.find(prop_name);
-   return it != map_props.end();
+   auto it = m_map_props.find(prop_name);
+   return it != m_map_props.end();
 }
+
+//*****************************************************************************
 
 void PropertySet::get_keys(std::vector<std::string>& keys) const {
-   auto it = map_props.begin();
-   const auto it_end = map_props.end();
-   for (; it != it_end; it++) {
-      keys.push_back(it->first);
+   for (const auto& pair : m_map_props) {
+      keys.push_back(pair.first);
    }
 }
 
+//*****************************************************************************
+
 const PropertyValue* PropertySet::get(const std::string& prop_name) const {
-   auto it = map_props.find(prop_name);
-   if (it != map_props.end()) {
+   auto it = m_map_props.find(prop_name);
+   if (it != m_map_props.end()) {
       return it->second;
    } else {
-      return NULL;
+      return nullptr;
    }
 }
+
+//*****************************************************************************
 
 int PropertySet::get_int_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv != NULL && pv->is_int()) {
+   if (pv != nullptr && pv->is_int()) {
       return pv->get_int_value();
    } else {
       return 0;
    }
 }
 
+//*****************************************************************************
+
 long PropertySet::get_long_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv != NULL && pv->is_long()) {
+   if (pv != nullptr && pv->is_long()) {
       return pv->get_long_value();
    } else {
       return 0L;
    }
 }
 
+//*****************************************************************************
+
 unsigned long PropertySet::get_ulong_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv != NULL && pv->is_ulong()) {
+   if (pv != nullptr && pv->is_ulong()) {
       return pv->get_ulong_value();
    } else {
       return 0L;
    }
 }
 
+//*****************************************************************************
+
 bool PropertySet::get_bool_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv != NULL && pv->is_bool()) {
+   if (pv != nullptr && pv->is_bool()) {
       return pv->get_bool_value();
    } else {
       return false;
    }
 }
 
+//*****************************************************************************
+
 const std::string& PropertySet::get_string_value(const std::string& prop_name) const {
    const PropertyValue* pv = get(prop_name);
-   if (pv != NULL && pv->is_string()) {
+   if (pv != nullptr && pv->is_string()) {
       return pv->get_string_value();
    } else {
       return EMPTY;
    }
 }
 
+//*****************************************************************************
+
 bool PropertySet::write_to_file(const std::string& file_path) const {
    bool success = false;
    FILE* f = fopen(file_path.c_str(), "w");
-   if (f != NULL) {
-      auto it = map_props.begin();
-      const auto it_end = map_props.end();
-
-      for (; it != it_end; it++) {
-         const string& key = it->first;
-         const PropertyValue* pv = it->second;
+   if (f != nullptr) {
+      for (const auto& pair : m_map_props) {
+         const string& key = pair.first;
+         const PropertyValue* pv = pair.second;
          if (pv->is_bool()) {
             string value;
             if (pv->get_bool_value()) {
@@ -155,19 +174,19 @@ bool PropertySet::write_to_file(const std::string& file_path) const {
    return success;
 }
 
+//*****************************************************************************
+
 bool PropertySet::read_from_file(const std::string& file_path) {
    bool success = false;
    string file_contents;
    if (Utils::file_read_all_text(file_path, file_contents)) {
       if (file_contents.length() > 0) {
-         vector<string> file_lines = chaudiere::StrUtils::split(file_contents, "\n");
-         auto it = file_lines.begin();
-         const auto it_end = file_lines.end();
-         for (; it != it_end; it++) {
-            const string& file_line = *it;
-            string stripped_line = chaudiere::StrUtils::strip(file_line);
+         vector<string> file_lines = StrUtils::split(file_contents, "\n");
+
+         for (const auto& file_line : file_lines) {
+            string stripped_line = StrUtils::strip(file_line);
             if (stripped_line.length() > 0) {
-               vector<string> fields = chaudiere::StrUtils::split(stripped_line, "|");
+               vector<string> fields = StrUtils::split(stripped_line, "|");
                if (fields.size() == 3) {
                   const string& data_type = fields[0];
                   const string& prop_name = fields[1];
@@ -188,13 +207,13 @@ bool PropertySet::read_from_file(const std::string& file_path) {
                      } else if (data_type == TYPE_STRING) {
                         add(prop_name, new StrPropertyValue(prop_value));
                      } else if (data_type == TYPE_INT) {
-                        int int_value = chaudiere::StrUtils::parseInt(prop_value);
+                        int int_value = StrUtils::parseInt(prop_value);
                         add(prop_name, new IntPropertyValue(int_value));
                      } else if (data_type == TYPE_LONG) {
-                        long long_value = chaudiere::StrUtils::parseLong(prop_value);
+                        long long_value = StrUtils::parseLong(prop_value);
                         add(prop_name, new LongPropertyValue(long_value));
                      } else if (data_type == TYPE_ULONG) {
-                        long long_value = chaudiere::StrUtils::parseLong(prop_value);
+                        long long_value = StrUtils::parseLong(prop_value);
                         unsigned long ul_value = (unsigned long) long_value;
                         add(prop_name, new ULongPropertyValue(ul_value));
                      } else {
@@ -210,23 +229,25 @@ bool PropertySet::read_from_file(const std::string& file_path) {
    return success;
 }
 
+//*****************************************************************************
+
 size_t PropertySet::count() const {
-   return map_props.size();
+   return m_map_props.size();
 }
 
+//*****************************************************************************
+
 std::string PropertySet::to_string() const {
-   auto it = map_props.begin();
-   const auto it_end = map_props.end();
    bool first_prop = true;
    string props_string;
    const string COMMA_SPACE = ", ";
 
-   for (; it != it_end; it++) {
+   for (const auto& pair : m_map_props) {
       if (!first_prop) {
          props_string += COMMA_SPACE;
       }
 
-      props_string += it->first;
+      props_string += pair.first;
 
       if (first_prop) {
          first_prop = false;
@@ -236,38 +257,55 @@ std::string PropertySet::to_string() const {
    return props_string;
 }
 
+//*****************************************************************************
+
 /*
 void PropertySet::set_acl_private() {
    add(PROP_CANNED_ACL, new StrPropertyValue(ACL_PRIVATE));
 }
 
+//*****************************************************************************
+
 void PropertySet::set_acl_public_read() {
    add(PROP_CANNED_ACL, new StrPropertyValue(ACL_PUBLIC_READ));
 }
 
+//*****************************************************************************
+
 void PropertySet::set_acl_public_read_write() {
    add(PROP_CANNED_ACL, new StrPropertyValue(ACL_PUBLIC_READ_WRITE));
 }
+
+//*****************************************************************************
 
 void PropertySet::set_acl_authenticated_read() {
    add(PROP_CANNED_ACL, new StrPropertyValue(ACL_AUTHENTICATED_READ));
 }
 */
 
+//*****************************************************************************
+
 void PropertySet::set_content_encoding(const std::string& content_encoding) {
    add(PROP_CONTENT_ENCODING, new StrPropertyValue(content_encoding));
 }
+
+//*****************************************************************************
 
 void PropertySet::set_content_length(unsigned long content_length) {
    add(PROP_CONTENT_LENGTH, new ULongPropertyValue(content_length));
 }
 
+//*****************************************************************************
+
 void PropertySet::set_content_type(const std::string& content_type) {
    add(PROP_CONTENT_TYPE, new StrPropertyValue(content_type));
 }
+
+//*****************************************************************************
 
 void PropertySet::set_content_md5(const std::string& md5_hash) {
    add(PROP_CONTENT_MD5, new StrPropertyValue(md5_hash));
 }
 
+//*****************************************************************************
 

@@ -7,11 +7,17 @@ const string ArgumentParser::TYPE_BOOL = "bool";
 const string ArgumentParser::TYPE_INT = "int";
 const string ArgumentParser::TYPE_STRING = "string";
 
+//*****************************************************************************
+
 ArgumentParser::ArgumentParser() {
 }
 
+//*****************************************************************************
+
 ArgumentParser::~ArgumentParser() {
 }
+
+//*****************************************************************************
 
 void ArgumentParser::addOption(const string& o,
                                const string& option_type,
@@ -27,22 +33,32 @@ void ArgumentParser::addOption(const string& o,
    }
 }
 
+//*****************************************************************************
+
 void ArgumentParser::addOptionalBoolFlag(const string& flag, const string& help) {
    addOption(flag, TYPE_BOOL, help);
 }
+
+//*****************************************************************************
 
 void ArgumentParser::addOptionalIntArgument(const string& arg, const string& help) {
    addOption(arg, TYPE_INT, help);
 }
 
+//*****************************************************************************
+
 void ArgumentParser::addOptionalStringArgument(const string& arg, const string& help) {
    addOption(arg, TYPE_STRING, help);
 }
+
+//*****************************************************************************
 
 void ArgumentParser::addRequiredArgument(const string& arg, const string& help) {
    dict_commands[arg] = help;
    list_commands.push_back(arg);
 }
+
+//*****************************************************************************
 
 PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
 
@@ -109,3 +125,6 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
 
    return pset;
 }
+
+//*****************************************************************************
+

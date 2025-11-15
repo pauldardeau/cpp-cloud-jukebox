@@ -1,6 +1,7 @@
 #ifndef MIRROR_STORAGE_SYSTEM_H
 #define MIRROR_STORAGE_SYSTEM_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -41,8 +42,8 @@ public:
 class MirrorStorageSystem : public StorageSystem {
 private:
    std::string ini_file;
-   StorageSystem* primary_ss;
-   StorageSystem* secondary_ss;
+   std::unique_ptr<StorageSystem> m_primary_ss;
+   std::unique_ptr<StorageSystem> m_secondary_ss;
    bool update_in_parallel;
    int min_updates;
 
@@ -76,12 +77,12 @@ public:
    bool put_object(const std::string& container_name,
                    const std::string& object_name,
                    const std::vector<unsigned char>& file_contents,
-                   const PropertySet* headers=NULL);
+                   const PropertySet* headers=nullptr);
 
    bool put_object_from_file(const std::string& container_name,
                              const std::string& object_name,
                              const std::string& object_file_path,
-                             const PropertySet* headers=NULL);
+                             const PropertySet* headers=nullptr);
 
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);

@@ -1,6 +1,7 @@
 #ifndef JUKEBOX_DB_H
 #define JUKEBOX_DB_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -12,7 +13,7 @@ class JukeboxDB {
 private:
    bool debug_print;
    bool db_is_open;
-   chapeau::Database* db_connection;
+   std::unique_ptr<chapeau::Database> m_db_connection;
    std::string metadata_db_file_path;
 
    JukeboxDB(const JukeboxDB&);

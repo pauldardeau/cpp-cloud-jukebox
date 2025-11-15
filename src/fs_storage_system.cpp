@@ -3,6 +3,7 @@
 #include "OSUtils.h"
 
 using namespace std;
+using namespace chaudiere;
 
 //*****************************************************************************
 
@@ -20,10 +21,10 @@ FSStorageSystem::~FSStorageSystem() {
 //*****************************************************************************
 
 bool FSStorageSystem::enter() {
-   if (!chaudiere::OSUtils::directoryExists(root_dir)) {
-      chaudiere::OSUtils::createDirectory(root_dir);
+   if (!OSUtils::directoryExists(root_dir)) {
+      OSUtils::createDirectory(root_dir);
    }
-   return chaudiere::OSUtils::directoryExists(root_dir);
+   return OSUtils::directoryExists(root_dir);
 }
 
 //*****************************************************************************
@@ -34,7 +35,7 @@ void FSStorageSystem::exit() {
 //*****************************************************************************
 
 vector<string> FSStorageSystem::list_account_containers() {
-   return chaudiere::OSUtils::listDirsInDirectory(root_dir);
+   return OSUtils::listDirsInDirectory(root_dir);
 }
 
 //*****************************************************************************
@@ -42,8 +43,8 @@ vector<string> FSStorageSystem::list_account_containers() {
 bool FSStorageSystem::create_container(const string& container_name) {
    bool container_created = false;
    if (!has_container(container_name)) {
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      container_created = chaudiere::OSUtils::createDirectory(container_dir);
+      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      container_created = OSUtils::createDirectory(container_dir);
       if (container_created) {
          if (debug_mode) {
             printf("container created: '%s'\n", container_name.c_str());
@@ -58,7 +59,7 @@ bool FSStorageSystem::create_container(const string& container_name) {
 
 bool FSStorageSystem::delete_container(const string& container_name) {
    bool container_deleted = false;
-   string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
+   string container_dir = OSUtils::pathJoin(root_dir, container_name);
    container_deleted = Utils::directory_delete_directory(container_dir);
    if (container_deleted) {
       if (debug_mode) {
@@ -73,9 +74,9 @@ bool FSStorageSystem::delete_container(const string& container_name) {
 
 vector<string> FSStorageSystem::list_container_contents(const string& container_name) {
    vector<string> list_contents;
-   string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-   if (chaudiere::OSUtils::directoryExists(container_dir)) {
-      return chaudiere::OSUtils::listFilesInDirectory(container_dir);
+   string container_dir = OSUtils::pathJoin(root_dir, container_name);
+   if (OSUtils::directoryExists(container_dir)) {
+      return OSUtils::listFilesInDirectory(container_dir);
    }
    return list_contents;
 }
@@ -86,9 +87,9 @@ bool FSStorageSystem::get_object_metadata(const std::string& container_name,
                                           const std::string& object_name,
                                           PropertySet& dict_props) {
    if (container_name.length() > 0 && object_name.length() > 0) {
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      if (chaudiere::OSUtils::directoryExists(container_dir)) {
-         string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      if (OSUtils::directoryExists(container_dir)) {
+         string object_path = OSUtils::pathJoin(container_dir, object_name);
          string meta_path = object_path + ".meta";
          if (Utils::file_exists(meta_path)) {
             return dict_props.read_from_file(meta_path);
@@ -109,15 +110,15 @@ bool FSStorageSystem::put_object(const string& container_name,
        object_name.length() > 0 &&
        file_contents.size() > 0) {
 
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      if (chaudiere::OSUtils::directoryExists(container_dir)) {
-         string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      if (OSUtils::directoryExists(container_dir)) {
+         string object_path = OSUtils::pathJoin(container_dir, object_name);
          object_added = Utils::file_write_all_bytes(object_path, file_contents);
          if (object_added) {
             if (debug_mode) {
                printf("object added: %s/%s\n", container_name.c_str(), object_name.c_str());
             }
-            if (headers != NULL) {
+            if (headers != nullptr) {
                if (headers->count() > 0) {
                   string meta_path = object_path + ".meta";
                   headers->write_to_file(meta_path);
@@ -158,15 +159,15 @@ bool FSStorageSystem::put_object_from_file(const string& container_name,
        object_name.length() > 0 &&
        object_file_path.length() > 0) {
 
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      if (chaudiere::OSUtils::directoryExists(container_dir)) {
-         string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      if (OSUtils::directoryExists(container_dir)) {
+         string object_path = OSUtils::pathJoin(container_dir, object_name);
          object_added = Utils::file_copy(object_file_path, object_path);
          if (object_added) {
             if (debug_mode) {
                printf("object added: %s/%s\n", container_name.c_str(), object_name.c_str());
             }
-            if (headers != NULL) {
+            if (headers != nullptr) {
                if (headers->count() > 0) {
                   string meta_path = object_path + ".meta";
                   headers->write_to_file(meta_path);
@@ -202,17 +203,17 @@ bool FSStorageSystem::delete_object(const string& container_name,
                                     const string& object_name) {
    bool object_deleted = false;
    if (container_name.length() > 0 && object_name.length() > 0) {
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      string object_path = OSUtils::pathJoin(container_dir, object_name);
       if (Utils::file_exists(object_path)) {
-         object_deleted = chaudiere::OSUtils::deleteFile(object_path);
+         object_deleted = OSUtils::deleteFile(object_path);
          if (object_deleted) {
             if (debug_mode) {
                printf("object deleted: %s/%s\n", container_name.c_str(), object_name.c_str());
             }
             string meta_path = object_path + ".meta";
             if (Utils::file_exists(meta_path)) {
-               chaudiere::OSUtils::deleteFile(meta_path);
+               OSUtils::deleteFile(meta_path);
             }
          } else {
             if (debug_mode) {
@@ -242,8 +243,8 @@ int64_t FSStorageSystem::get_object(const string& container_name,
        object_name.length() > 0 &&
        local_file_path.length() > 0) {
 
-      string container_dir = chaudiere::OSUtils::pathJoin(root_dir, container_name);
-      string object_path = chaudiere::OSUtils::pathJoin(container_dir, object_name);
+      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      string object_path = OSUtils::pathJoin(container_dir, object_name);
       if (Utils::file_exists(object_path)) {
          vector<unsigned char> obj_file_contents;
          if (Utils::file_read_all_bytes(object_path, obj_file_contents)) {

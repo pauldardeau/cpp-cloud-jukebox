@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <math.h>
+#include <memory>
 #include <time.h>
 #include <sys/select.h>
 #include <sys/stat.h>
@@ -20,6 +21,7 @@
 
 
 using namespace std;
+using namespace chaudiere;
 
 #define READ_PIPE 0
 #define WRITE_PIPE 1
@@ -29,12 +31,16 @@ using namespace std;
 static bool finished_reading_child_fds = false;
 static const string EMPTY = "";
 
+//*****************************************************************************
+
 void sig_child_handler(int signo) {
    if (signo == SIGCHLD) {
       finished_reading_child_fds = true;
-      wait(NULL);
+      wait(nullptr);
    }
 }
+
+//*****************************************************************************
 
 string Utils::datetime_datetime_fromtimestamp(double ts) {
    // python datetime.datetime.fromtimestamp
@@ -43,10 +49,14 @@ string Utils::datetime_datetime_fromtimestamp(double ts) {
    return EMPTY;
 }
 
+//*****************************************************************************
+
 void Utils::time_sleep(int seconds) {
    // python time.sleep
    sleep(seconds);
 }
+
+//*****************************************************************************
 
 void Utils::time_sleep_millis(int millis) {
    struct timespec req;
@@ -58,11 +68,15 @@ void Utils::time_sleep_millis(int millis) {
    nanosleep(&req, &rem);
 }
 
+//*****************************************************************************
+
 double Utils::time_time() {
    // python time.time
-   chaudiere::DateTime dt;
-   return chaudiere::DateTime::unixTimeValue(dt);
+   DateTime dt;
+   return DateTime::unixTimeValue(dt);
 }
+
+//*****************************************************************************
 
 void Utils::sys_stdout_write(const string& s) {
    // python sys.stdout.write
@@ -70,16 +84,22 @@ void Utils::sys_stdout_write(const string& s) {
    printf("%s", s.c_str());
 }
 
+//*****************************************************************************
+
 void Utils::sys_stdout_flush() {
    // python: sys.stdout.flush
 
    fflush(stdout);
 }
 
+//*****************************************************************************
+
 void Utils::sys_exit(int exit_code) {
    // python: sys.exit
    exit(exit_code);
 }
+
+//*****************************************************************************
 
 bool Utils::path_exists(const string& path) {
    // python: os.path.exists
@@ -93,6 +113,8 @@ bool Utils::path_exists(const string& path) {
    }
 }
 
+//*****************************************************************************
+
 bool Utils::file_exists(const string& path) {
    struct stat s;
    int rc = stat(path.c_str(), &s);
@@ -103,15 +125,19 @@ bool Utils::file_exists(const string& path) {
    }
 }
 
+//*****************************************************************************
+
 bool Utils::directory_delete_directory(const std::string& dir_path) {
    return 0 == rmdir(dir_path.c_str());
 }
+
+//*****************************************************************************
 
 bool Utils::file_read_all_text(const string& file_path,
                                string& file_text)
 {
    FILE* f = fopen(file_path.c_str(), "rt");
-   if (f == NULL) {
+   if (f == nullptr) {
       return false;
    }
 
@@ -122,7 +148,7 @@ bool Utils::file_read_all_text(const string& file_path,
    fseek(f, 0, SEEK_SET);
 
    if (num_file_bytes > 0L) {
-      char* buffer = new char[num_file_bytes+1];
+      char* buffer(new char[num_file_bytes+1]);
       int num_objects_read = fread(buffer, num_file_bytes, 1, f);
       if (num_objects_read == 1) {
          buffer[num_file_bytes] = '\0';
@@ -139,15 +165,19 @@ bool Utils::file_read_all_text(const string& file_path,
    return success;
 }
 
+//*****************************************************************************
+
 vector<string> Utils::file_read_lines(const string& file_path) {
    string file_text;
    if (file_read_all_text(file_path, file_text)) {
       if (file_text.length() > 0) {
-         return chaudiere::StrUtils::split(file_text, "\n");
+         return StrUtils::split(file_text, "\n");
       }
    }
    return vector<string>();
 }
+
+//*****************************************************************************
 
 bool Utils::path_isfile(const string& path) {
    // python: os.path.isfile
@@ -161,6 +191,8 @@ bool Utils::path_isfile(const string& path) {
    }
 }
 
+//*****************************************************************************
+
 int Utils::find_last_index(const string& str, char x) {
    int index = -1;
    for (unsigned int i = 0; i < str.length(); i++) {
@@ -170,6 +202,8 @@ int Utils::find_last_index(const string& str, char x) {
    }
    return index;
 }
+
+//*****************************************************************************
 
 vector<string> Utils::path_split(const string& path) {
    // python: os.path.split (returns tuple of head/tail)
@@ -202,6 +236,8 @@ vector<string> Utils::path_split(const string& path) {
    components.push_back(tail);
    return components;
 }
+
+//*****************************************************************************
 
 vector<string> Utils::path_splitext(const string& path) {
    // python: os.path.splitext
@@ -245,6 +281,8 @@ vector<string> Utils::path_splitext(const string& path) {
    return components;
 }
 
+//*****************************************************************************
+
 double Utils::path_getmtime(const string& path) {
    // python: os.path.getmtime
 
@@ -256,11 +294,15 @@ double Utils::path_getmtime(const string& path) {
    return 0.0;
 }
 
+//*****************************************************************************
+
 int Utils::get_pid() {
    // python: os.getpid
 
    return getpid();
 }
+
+//*****************************************************************************
 
 long Utils::get_file_size(const string& path_to_file) {
    // python: os.path.getsize
@@ -274,11 +316,15 @@ long Utils::get_file_size(const string& path_to_file) {
    }
 }
 
+//*****************************************************************************
+
 bool Utils::os_rename(const string& existing_file,
                       const string& new_file) {
    // python: os.rename
    return rename_file(existing_file, new_file);
 }
+
+//*****************************************************************************
 
 bool Utils::rename_file(const string& existing_file,
                         const string& new_file) {
@@ -286,10 +332,12 @@ bool Utils::rename_file(const string& existing_file,
    return 0 == rename(existing_file.c_str(), new_file.c_str());
 }
 
+//*****************************************************************************
+
 bool Utils::file_append_all_text(const string& file_path,
                                  const string& append_file_text) {
    FILE* f = fopen(file_path.c_str(), "a");
-   if (f == NULL) {
+   if (f == nullptr) {
       return false;
    }
 
@@ -302,10 +350,12 @@ bool Utils::file_append_all_text(const string& file_path,
    return (elems_written == 1);
 }
 
+//*****************************************************************************
+
 bool Utils::file_write_all_text(const string& file_path,
                                 const string& file_text) {
    FILE* f = fopen(file_path.c_str(), "w");
-   if (f == NULL) {
+   if (f == nullptr) {
       return false;
    }
 
@@ -318,10 +368,12 @@ bool Utils::file_write_all_text(const string& file_path,
    return (elems_written == 1);
 }
 
+//*****************************************************************************
+
 bool Utils::file_read_all_bytes(const string& file_path,
                                 vector<unsigned char>& file_bytes) {
    FILE* f = fopen(file_path.c_str(), "rb");
-   if (f == NULL) {
+   if (f == nullptr) {
       return false;
    }
 
@@ -345,10 +397,12 @@ bool Utils::file_read_all_bytes(const string& file_path,
    return success;
 }
 
+//*****************************************************************************
+
 bool Utils::file_write_all_bytes(const string& file_path,
                                  const vector<unsigned char>& file_bytes) {
    FILE* f = fopen(file_path.c_str(), "wb");
-   if (f == NULL) {
+   if (f == nullptr) {
       printf("error: file_write_all_bytes unable to open file '%s', errno=%d\n",
              file_path.c_str(), errno);
       return false;
@@ -394,6 +448,8 @@ bool Utils::file_write_all_bytes(const string& file_path,
    return write_success;
 }
 
+//*****************************************************************************
+
 string Utils::md5_for_file(const string& ini_file_name,
                            const string& path_to_file) {
    if (!file_exists(ini_file_name)) {
@@ -406,7 +462,7 @@ string Utils::md5_for_file(const string& ini_file_name,
       return EMPTY;
    }
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    if (get_platform_config_values(ini_file_name, kvp)) {
       string key_exe = "md5_exe_file_name";
       string key_field_number = "md5_hash_output_field";
@@ -435,7 +491,7 @@ string Utils::md5_for_file(const string& ini_file_name,
                      string field_number_text = kvp.getValue(key_field_number);
                      if (field_number_text.length() > 0) {
                         try {
-                           field_number = chaudiere::StrUtils::parseInt(field_number_text);
+                           field_number = StrUtils::parseInt(field_number_text);
                         } catch (const exception& e) {
                            printf("error: unable to convert value '%s' for '%s' to integer\n",
                                   field_number_text.c_str(),
@@ -444,10 +500,10 @@ string Utils::md5_for_file(const string& ini_file_name,
                         }
                      }
                   }
-                  vector<string> file_lines = chaudiere::StrUtils::split(std_out, "\n");
+                  vector<string> file_lines = StrUtils::split(std_out, "\n");
                   if (file_lines.size() > 0) {
                      string first_line = file_lines[0];
-                     vector<string> line_fields = chaudiere::StrUtils::split(first_line, " ");
+                     vector<string> line_fields = StrUtils::split(first_line, " ");
                      if (line_fields.size() > 0) {
                         return line_fields[field_number-1];
                      } else {
@@ -479,6 +535,8 @@ string Utils::md5_for_file(const string& ini_file_name,
    return EMPTY;
 }
 
+//*****************************************************************************
+
 bool Utils::file_get_mtime(const std::string& file_path, double& mtime) {
    struct stat s;
    int rc = stat(file_path.c_str(), &s);
@@ -491,9 +549,13 @@ bool Utils::file_get_mtime(const std::string& file_path, double& mtime) {
    }
 }
 
+//*****************************************************************************
+
 bool Utils::file_delete(const string& file_path) {
-   return chaudiere::OSUtils::deleteFile(file_path);
+   return OSUtils::deleteFile(file_path);
 }
+
+//*****************************************************************************
 
 bool Utils::file_copy(const string& from_file, const string& to_file) {
    if (!file_exists(from_file)) {
@@ -503,12 +565,12 @@ bool Utils::file_copy(const string& from_file, const string& to_file) {
    long file_size = get_file_size(from_file);
 
    FILE* f_source = fopen(from_file.c_str(), "r");
-   if (f_source == NULL) {
+   if (f_source == nullptr) {
       return false;
    }
 
    FILE* f_dest = fopen(to_file.c_str(), "w");
-   if (f_dest == NULL) {
+   if (f_dest == nullptr) {
       fclose(f_source);
       return false;
    }
@@ -552,6 +614,8 @@ bool Utils::file_copy(const string& from_file, const string& to_file) {
 
    return true;
 }
+
+//*****************************************************************************
 
 bool Utils::file_set_permissions(const string& file_path,
                                  int user_perms,
@@ -613,6 +677,8 @@ bool Utils::file_set_permissions(const string& file_path,
    return success;
 }
 
+//*****************************************************************************
+
 bool Utils::execute_program(const string& program_path,
                             const vector<string>& program_args,
                             int& exit_code,
@@ -670,7 +736,7 @@ bool Utils::execute_program(const string& program_path,
          argv[j+1] = program_args[j].c_str();
       }
 
-      argv[program_args.size()+1] = NULL;  // add sentinel
+      argv[program_args.size()+1] = nullptr;  // add sentinel
 
       int rc = execv(program_path.c_str(), (char **)argv);
       if (rc == -1) {
@@ -704,9 +770,9 @@ bool Utils::execute_program(const string& program_path,
          int cnt = select(std::max(fd_stdout[READ_PIPE],
                                    fd_stderr[READ_PIPE]) + 1,  // nfds
                           &read_fds,                           // readfds
-                          NULL,                                // writefds
-                          NULL,                                // exceptfds
-                          NULL);                               // timeout
+                          nullptr,                             // writefds
+                          nullptr,                             // exceptfds
+                          nullptr);                            // timeout
          if (cnt > 0) {
             if (FD_ISSET(fd_stdout[READ_PIPE], &read_fds)) {
                ssize_t bytes_read = read(fd_stdout[READ_PIPE],
@@ -768,6 +834,8 @@ bool Utils::execute_program(const string& program_path,
    return success;
 }
 
+//*****************************************************************************
+
 bool Utils::launch_program(const string& program_path,
                            const vector<string>& program_args,
                            int& child_process_pid) {
@@ -798,7 +866,7 @@ bool Utils::launch_program(const string& program_path,
          argv[j+1] = program_args[j].c_str();
       }
 
-      argv[program_args.size()+1] = NULL;  // add sentinel
+      argv[program_args.size()+1] = nullptr;  // add sentinel
 
       int rc = execv(program_path.c_str(), (char **)argv);
       if (rc == -1) {
@@ -812,6 +880,8 @@ bool Utils::launch_program(const string& program_path,
 
    return success;
 }
+
+//*****************************************************************************
 
 string Utils::get_platform_identifier() {
    string os_identifier;
@@ -833,6 +903,8 @@ string Utils::get_platform_identifier() {
    return os_identifier;
 }
 
+//*****************************************************************************
+
 bool Utils::get_platform_config_value(const string& ini_file_name,
                                       const string& key,
                                       string& config_value,
@@ -843,15 +915,15 @@ bool Utils::get_platform_config_value(const string& ini_file_name,
       return false;
    }
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    if (get_platform_config_values(ini_file_name, kvp)) {
       if (kvp.hasKey(key)) {
          config_value = kvp.getValue(key);
-         if (chaudiere::StrUtils::startsWith(config_value, "\"") &&
-             chaudiere::StrUtils::endsWith(config_value, "\"")) {
-            chaudiere::StrUtils::strip(config_value, '"');
+         if (StrUtils::startsWith(config_value, "\"") &&
+             StrUtils::endsWith(config_value, "\"")) {
+            StrUtils::strip(config_value, '"');
          }
-         chaudiere::StrUtils::strip(config_value);
+         StrUtils::strip(config_value);
 
          return true;
       } else {
@@ -867,8 +939,10 @@ bool Utils::get_platform_config_value(const string& ini_file_name,
    }
 }
 
+//*****************************************************************************
+
 bool Utils::get_platform_config_values(const string& ini_file_name,
-                                       chaudiere::KeyValuePairs& kvp) {
+                                       KeyValuePairs& kvp) {
    string os_identifier = Utils::get_platform_identifier();
    if (os_identifier == "unknown" || os_identifier.length() == 0) {
       printf("error: unknown platform\n");
@@ -876,7 +950,7 @@ bool Utils::get_platform_config_values(const string& ini_file_name,
    }
 
    try {
-      chaudiere::IniReader ini_reader(ini_file_name);
+      IniReader ini_reader(ini_file_name);
       if (!ini_reader.readSection(os_identifier, kvp)) {
          printf("error: no config section present for '%s'\n", os_identifier.c_str());
          return false;
@@ -888,4 +962,6 @@ bool Utils::get_platform_config_values(const string& ini_file_name,
       return false;
    }
 }
+
+//*****************************************************************************
 

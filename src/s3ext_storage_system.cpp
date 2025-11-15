@@ -7,6 +7,7 @@
 #include "StrUtils.h"
 
 using namespace std;
+using namespace chaudiere;
 
 // Helpful links:
 // https://docs.ceph.com/en/latest/radosgw/s3/csharp/
@@ -32,7 +33,7 @@ S3ExtStorageSystem::S3ExtStorageSystem(const string& access_key,
    string protocolInUse(protocol);
 
    if (protocol.length() > 0) {
-      chaudiere::StrUtils::toLowerCase(protocolInUse);
+      StrUtils::toLowerCase(protocolInUse);
       if (protocolInUse == "http") {
          //s3_protocol = S3ProtocolHTTP;
       } else if (protocolInUse == "https") {
@@ -95,7 +96,7 @@ vector<string> S3ExtStorageSystem::list_account_containers() {
    }
 
    vector<string> list_containers;
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
 
    string script_template = "s3-list-containers.sh";
@@ -124,7 +125,7 @@ bool S3ExtStorageSystem::create_container(const string& container_name) {
 
    bool container_created = false;
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
 
@@ -155,7 +156,7 @@ bool S3ExtStorageSystem::delete_container(const string& container_name) {
 
    bool container_deleted = false;
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
 
@@ -182,7 +183,7 @@ vector<string> S3ExtStorageSystem::list_container_contents(const string& contain
 
    vector<string> list_objects;
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
 
@@ -215,7 +216,7 @@ bool S3ExtStorageSystem::get_object_metadata(const string& container_name,
 
    bool success = false;
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
    populate_object(kvp, object_name);
@@ -309,12 +310,12 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
 
    // each metadata property (aside from predefined ones) gets "x-amz-meta-" prefix
 
-   if (headers != NULL) {
+   if (headers != nullptr) {
       if (headers->contains(PropertySet::PROP_CONTENT_LENGTH)) {
          unsigned long content_length =
             headers->get_ulong_value(PropertySet::PROP_CONTENT_LENGTH);
          metadata_props += "contentLength=";
-         metadata_props += chaudiere::StrUtils::toString(content_length);
+         metadata_props += StrUtils::toString(content_length);
          metadata_props += " ";
       }
 
@@ -352,14 +353,14 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
       }
    }
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
    populate_object(kvp, object_name);
 
    string script_template;
 
-   chaudiere::StrUtils::strip(metadata_props);
+   StrUtils::strip(metadata_props);
 
    if (metadata_props.length() > 0) {
       script_template = "s3-put-object-props.sh";
@@ -392,7 +393,7 @@ bool S3ExtStorageSystem::delete_object(const string& container_name,
 
    bool object_deleted = false;
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
    populate_object(kvp, object_name);
@@ -429,7 +430,7 @@ int64_t S3ExtStorageSystem::get_object(const string& container_name,
 
    bool success = false;
 
-   chaudiere::KeyValuePairs kvp;
+   KeyValuePairs kvp;
    populate_common_variables(kvp);
    populate_bucket(kvp, container_name);
    populate_object(kvp, object_name);
@@ -455,7 +456,7 @@ int64_t S3ExtStorageSystem::get_object(const string& container_name,
 
 //*****************************************************************************
 
-void S3ExtStorageSystem::populate_common_variables(chaudiere::KeyValuePairs& kvp) {
+void S3ExtStorageSystem::populate_common_variables(KeyValuePairs& kvp) {
    kvp.addPair("%%S3_ACCESS_KEY%%", aws_access_key);
    kvp.addPair("%%S3_SECRET_KEY%%", aws_secret_key);
    kvp.addPair("%%S3_HOST%%", s3_host);
@@ -463,14 +464,14 @@ void S3ExtStorageSystem::populate_common_variables(chaudiere::KeyValuePairs& kvp
 
 //*****************************************************************************
 
-void S3ExtStorageSystem::populate_bucket(chaudiere::KeyValuePairs& kvp,
+void S3ExtStorageSystem::populate_bucket(KeyValuePairs& kvp,
                                          const string& bucket_name) {
    kvp.addPair("%%BUCKET_NAME%%", bucket_name);
 }
 
 //*****************************************************************************
 
-void S3ExtStorageSystem::populate_object(chaudiere::KeyValuePairs& kvp,
+void S3ExtStorageSystem::populate_object(KeyValuePairs& kvp,
                                          const string& object_name) {
    kvp.addPair("%%OBJECT_NAME%%", object_name);
 }
@@ -489,14 +490,14 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
    bool is_shell_script = false;
    string executable_path = program_path;
 
-   if (chaudiere::StrUtils::endsWith(program_path, ".sh")) {
+   if (StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
       if (file_lines.size() == 0) {
          printf("run_program: unable to read file '%s'\n", program_path.c_str());
          return false;
       }
       const string& first_line = file_lines[0];
-      if (chaudiere::StrUtils::startsWith(first_line, "#!")) {
+      if (StrUtils::startsWith(first_line, "#!")) {
          size_t line_length = first_line.length();
          executable_path = first_line.substr(2, line_length-2);
       } else {
@@ -526,11 +527,8 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
 
       if (exit_code == 0) {
          if (std_out.length() > 0) {
-            vector<string> output_lines = chaudiere::StrUtils::split(std_out, "\n");
-            auto it = output_lines.begin();
-            const auto it_end = output_lines.end();
-            for (; it != it_end; it++) {
-               const string& line = *it;
+            vector<string> output_lines = StrUtils::split(std_out, "\n");
+            for (const auto& line : output_lines) {
                if (line.length() > 0) {
                   list_output_lines.push_back(line);
                }
@@ -557,14 +555,14 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
    bool is_shell_script = false;
    string executable_path = program_path;
 
-   if (chaudiere::StrUtils::endsWith(program_path, ".sh")) {
+   if (StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
       if (file_lines.size() == 0) {
          printf("run_program: unable to read file '%s'\n", program_path.c_str());
          return false;
       }
       const string& first_line = file_lines[0];
-      if (chaudiere::StrUtils::startsWith(first_line, "#!")) {
+      if (StrUtils::startsWith(first_line, "#!")) {
          size_t line_length = first_line.length();
          executable_path = first_line.substr(2, line_length-2);
       } else {
@@ -611,14 +609,14 @@ bool S3ExtStorageSystem::run_program(const string& program_path) {
    bool is_shell_script = false;
    string executable_path = program_path;
 
-   if (chaudiere::StrUtils::endsWith(program_path, ".sh")) {
+   if (StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
       if (file_lines.size() == 0) {
          printf("run_program: unable to read file '%s'\n", program_path.c_str());
          return false;
       }
       const string& first_line = file_lines[0];
-      if (chaudiere::StrUtils::startsWith(first_line, "#!")) {
+      if (StrUtils::startsWith(first_line, "#!")) {
          size_t line_length = first_line.length();
          executable_path = first_line.substr(2, line_length-2);
       } else {
@@ -652,7 +650,7 @@ bool S3ExtStorageSystem::run_program(const string& program_path) {
 //*****************************************************************************
 
 bool S3ExtStorageSystem::prepare_run_script(const string& script_template,
-                                            const chaudiere::KeyValuePairs& kvp) {
+                                            const KeyValuePairs& kvp) {
    string run_script = run_script_name_for_template(script_template);
 
    if (!Utils::file_copy(script_template, run_script)) {
@@ -670,12 +668,9 @@ bool S3ExtStorageSystem::prepare_run_script(const string& script_template,
 
    vector<string> kvp_keys;
    kvp.getKeys(kvp_keys);
-   auto it = kvp_keys.begin();
-   const auto it_end = kvp_keys.end();
 
-   for (; it != it_end; it++) {
-      const string& key = *it;
-      chaudiere::StrUtils::replaceAll(file_text, key, kvp.getValue(key));
+   for (const auto& key : kvp_keys) {
+      StrUtils::replaceAll(file_text, key, kvp.getValue(key));
    }
 
    if (!Utils::file_write_all_text(run_script, file_text)) {

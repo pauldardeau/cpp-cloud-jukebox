@@ -92,67 +92,67 @@ public:
                         std::string prefix="") {
       std::string key = prefix + "file_uid";
       const PropertyValue* pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          file_uid = pv->get_string_value();
       }
 
       key = prefix + "file_name";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          file_name = pv->get_string_value();
       }
 
       key = prefix + "origin_file_size";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_ulong()) {
+      if (pv != nullptr && pv->is_ulong()) {
          origin_file_size = pv->get_ulong_value();
       }
 
       key = prefix + "stored_file_size";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_ulong()) {
+      if (pv != nullptr && pv->is_ulong()) {
          stored_file_size = pv->get_ulong_value();
       }
 
       key = prefix + "pad_char_count";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_ulong()) {
+      if (pv != nullptr && pv->is_ulong()) {
          pad_char_count = pv->get_ulong_value();
       }
 
       key = prefix + "file_time";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          file_time = pv->get_string_value();
       }
 
       key = prefix + "md5_hash";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          md5_hash = pv->get_string_value();
       }
 
       key = prefix + "compressed";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_int()) {
+      if (pv != nullptr && pv->is_int()) {
          compressed = pv->get_int_value();
       }
 
       key = prefix + "encrypted";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_int()) {
+      if (pv != nullptr && pv->is_int()) {
          encrypted = pv->get_int_value();
       }
 
       key = prefix + "container_name";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          container_name = pv->get_string_value();
       }
 
       key = prefix + "object_name";
       pv = dictionary.get(key);
-      if (pv != NULL && pv->is_string()) {
+      if (pv != nullptr && pv->is_string()) {
          object_name = pv->get_string_value();
       }
    }

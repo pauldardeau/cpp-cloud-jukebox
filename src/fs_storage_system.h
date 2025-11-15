@@ -38,12 +38,12 @@ public:
    bool put_object(const std::string& container_name,
                    const std::string& object_name,
                    const std::vector<unsigned char>& file_contents,
-                   const PropertySet* headers=NULL);
+                   const PropertySet* headers=nullptr);
 
    bool put_object_from_file(const std::string& container_name,
                              const std::string& object_name,
                              const std::string& object_file_path,
-                             const PropertySet* headers=NULL);
+                             const PropertySet* headers=nullptr);
 
    bool delete_object(const std::string& container_name,
                       const std::string& object_name);

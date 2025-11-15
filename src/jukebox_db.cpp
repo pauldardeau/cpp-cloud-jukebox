@@ -10,10 +10,11 @@
 using namespace std;
 using namespace chapeau;
 
+//*****************************************************************************
+
 JukeboxDB::JukeboxDB(const string& db_file_path, bool debug) :
    debug_print(debug),
-   db_is_open(false),
-   db_connection(NULL) {
+   db_is_open(false) {
 
    if (db_file_path.length() > 0) {
       metadata_db_file_path = db_file_path;
@@ -22,23 +23,31 @@ JukeboxDB::JukeboxDB(const string& db_file_path, bool debug) :
    }
 }
 
+//*****************************************************************************
+
 JukeboxDB::~JukeboxDB() {
    close();
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::is_open() const {
    return db_is_open;
 }
 
+//*****************************************************************************
+
 bool JukeboxDB::open_db() {
    bool was_opened = false;
-   db_connection = new SQLiteDatabase(metadata_db_file_path);
-   if (db_connection->open()) {
+   m_db_connection.reset(new SQLiteDatabase(metadata_db_file_path));
+   if (m_db_connection->open()) {
       db_is_open = true;
       was_opened = true;
    }
    return was_opened;
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::open() {
    close();
@@ -50,8 +59,8 @@ bool JukeboxDB::open() {
             if (debug_print) {
                printf("error: unable to create all tables\n");
             }
-            db_connection->close();
-            db_connection = NULL;
+            m_db_connection->close();
+            m_db_connection.reset();
             db_is_open = false;
          }
       } else {
@@ -65,27 +74,30 @@ bool JukeboxDB::open() {
    return open_success;
 }
 
+//*****************************************************************************
+
 bool JukeboxDB::close() {
    bool did_close = false;
-   if (db_connection != NULL) {
-      db_connection->close();
-      delete db_connection;
-      db_connection = NULL;
+   if (m_db_connection) {
+      m_db_connection->close();
+      m_db_connection.reset();
       db_is_open = false;
       did_close = true;
    }
    return did_close;
 }
 
+//*****************************************************************************
+
 bool JukeboxDB::create_table(const string& sql) {
-   if (db_connection == NULL) {
+   if (!m_db_connection) {
       if (debug_print) {
          printf("cannot create table, DB is not open\n");
       }
       return false;
    }
    unsigned long rowsAffectedCount = 0L;
-   bool table_created = db_connection->executeUpdate(sql, rowsAffectedCount);
+   bool table_created = m_db_connection->executeUpdate(sql, rowsAffectedCount);
    if (!table_created) {
       if (debug_print) {
          printf("table create failed: %s\n", sql.c_str());
@@ -93,6 +105,8 @@ bool JukeboxDB::create_table(const string& sql) {
    }
    return table_created;
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::create_tables() {
    if (db_is_open) {
@@ -143,92 +157,98 @@ bool JukeboxDB::create_tables() {
    }
 }
 
+//*****************************************************************************
+
 bool JukeboxDB::have_tables() {
    bool have_tables_in_db = false;
-   if (db_is_open && db_connection != NULL) {
+   if (db_is_open && m_db_connection) {
       string sql = "SELECT name "
                    "FROM sqlite_master "
                    "WHERE type='table' AND name='song'";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
+      if (rs) {
          if (rs->next()) {
-            string* name = rs->stringForColumnIndex(0);
-            if (name != NULL) {
-               if (name->length() > 0) {
-                  have_tables_in_db = true;
-               }
-               delete name;
+            string name;
+            rs->stringForColumnIndex(0, name);
+            if (!name.empty()) {
+               have_tables_in_db = true;
             }
          }
-         delete rs;
       }
    }
 
    return have_tables_in_db;
 }
 
+//*****************************************************************************
+
 bool JukeboxDB::songs_for_query(DBResultSet* rs,
                                 vector<SongMetadata>& vec_songs) {
    int num_songs = 0;
    while (rs->next()) {
       SongMetadata song;
-      string* file_uid = rs->stringForColumnIndex(0);
-      if (file_uid != NULL) {
-         song.fm.file_uid = *file_uid;
-         delete file_uid;
+
+      string file_uid;
+      if (rs->stringForColumnIndex(0, file_uid)) {
+         song.fm.file_uid = file_uid;
       }
-      string* file_time = rs->stringForColumnIndex(1);
-      if (file_time != NULL) {
-         song.fm.file_time = *file_time;
-         delete file_time;
+
+      string file_time;
+      if (rs->stringForColumnIndex(1, file_time)) {
+         song.fm.file_time = file_time;
       }
+
       song.fm.origin_file_size = rs->longForColumnIndex(2);
       song.fm.stored_file_size = rs->longForColumnIndex(3);
       song.fm.pad_char_count = rs->longForColumnIndex(4);
-      string* artist_name = rs->stringForColumnIndex(5);
-      if (artist_name != NULL) {
-         song.artist_name = *artist_name;
-         delete artist_name;
+
+      string artist_name;
+      if (rs->stringForColumnIndex(5, artist_name)) {
+         song.artist_name = artist_name;
       }
-      string* artist_uid = rs->stringForColumnIndex(6);
-      if (artist_uid != NULL) {
-         song.artist_uid = *artist_uid;
-         delete artist_uid;
+
+      string artist_uid;
+      if (rs->stringForColumnIndex(6, artist_uid)) {
+         song.artist_uid = artist_uid;
       }
-      string* song_name = rs->stringForColumnIndex(7);
-      if (song_name != NULL) {
-         song.song_name = *song_name;
-         delete song_name;
+
+      string song_name;
+      if (rs->stringForColumnIndex(7, song_name)) {
+         song.song_name = song_name;
       }
-      string* md5_hash = rs->stringForColumnIndex(8);
-      if (md5_hash != NULL) {
-         song.fm.md5_hash = *md5_hash;
-         delete md5_hash;
+
+      string md5_hash;
+      if (rs->stringForColumnIndex(8, md5_hash)) {
+         song.fm.md5_hash = md5_hash;
       }
+
       song.fm.compressed = rs->intForColumnIndex(9);
       song.fm.encrypted = rs->intForColumnIndex(10);
-      string* container_name = rs->stringForColumnIndex(11);
-      if (container_name != NULL) {
-         song.fm.container_name = *container_name;
-         delete container_name;
+
+      string container_name;
+      if (rs->stringForColumnIndex(11, container_name)) {
+         song.fm.container_name = container_name;
       }
-      string* object_name = rs->stringForColumnIndex(12);
-      if (object_name != NULL) {
-         song.fm.object_name = *object_name;
-         delete object_name;
+
+      string object_name;
+      if (rs->stringForColumnIndex(12, object_name)) {
+         song.fm.object_name = object_name;
       }
-      string* album_uid = rs->stringForColumnIndex(13);
-      if (album_uid != NULL) {
-         song.album_uid = *album_uid;
-         delete album_uid;
+
+      string album_uid;
+      if (rs->stringForColumnIndex(13, album_uid)) {
+         song.album_uid = album_uid;
       } else {
          song.album_uid = "";
       }
+
       vec_songs.push_back(song);
       num_songs++;
    }
    return (num_songs > 0);
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
    bool success = false;
@@ -251,24 +271,22 @@ bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
                    "WHERE song_uid = ?";
       DBStatementArgs args;
       args.add(new DBString(file_name));
-      DBResultSet* rs = db_connection->executeQuery(sql, args);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql, args));
+      if (rs) {
          vector<SongMetadata> song_results;
-         if (songs_for_query(rs, song_results)) {
-            delete rs;
-            rs = NULL;
+         if (songs_for_query(rs.get(), song_results)) {
             if (song_results.size() > 0) {
                song = song_results[0];
                success = true;
             }
          }
-         if (rs != NULL) {
-            delete rs;
-         }
       }
    }
+
    return success;
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::insert_song(const SongMetadata& song) {
    bool insert_success = false;
@@ -307,7 +325,7 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
       args.add(new DBString(song.album_uid));
 
       unsigned long rowsAffectedCount = 0L;
-      bool success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
+      bool success = m_db_connection->executeUpdate(sql, args, rowsAffectedCount);
       if (success) {
          if (rowsAffectedCount == 1L) {
             insert_success = true;
@@ -319,6 +337,8 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
 
    return insert_success;
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::update_song(const SongMetadata& song) {
    bool update_success = false;
@@ -356,7 +376,7 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
       args.add(new DBString(song.fm.file_uid));
 
       unsigned long rowsAffectedCount = 0L;
-      bool success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
+      bool success = m_db_connection->executeUpdate(sql, args, rowsAffectedCount);
       if (success) {
          if (rowsAffectedCount == 1L) {
             update_success = true;
@@ -368,6 +388,8 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
 
    return update_success;
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
    SongMetadata db_song;
@@ -383,6 +405,8 @@ bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
       return insert_song(song);
    }
 }
+
+//*****************************************************************************
 
 string JukeboxDB::sql_where_clause(bool using_encryption,
                                    bool using_compression) {
@@ -409,6 +433,8 @@ string JukeboxDB::sql_where_clause(bool using_encryption,
    where_clause += compression;
    return where_clause;
 }
+
+//*****************************************************************************
 
 vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
                                                      const string& album) {
@@ -444,14 +470,17 @@ vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
           }
           sql += string(like_clause);
       }
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
-         songs_for_query(rs, songs);
-         delete rs;
+      
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
+      if (rs) {
+         songs_for_query(rs.get(), songs);
       }
    }
+
    return songs;
 }
+
+//*****************************************************************************
 
 vector<SongMetadata> JukeboxDB::songs_for_artist(const string& artist_name) {
    vector<SongMetadata> songs;
@@ -475,73 +504,78 @@ vector<SongMetadata> JukeboxDB::songs_for_artist(const string& artist_name) {
       sql += " AND artist = ?";
       DBStatementArgs args;
       args.add(new DBString(artist_name));
-      DBResultSet* rs = db_connection->executeQuery(sql, args);
-      if (rs != NULL) {
-         songs_for_query(rs, songs);
-         delete rs;
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql, args));
+      if (rs) {
+         songs_for_query(rs.get(), songs);
       }
    }
+
    return songs;
 }
+
+//*****************************************************************************
 
 void JukeboxDB::show_listings() {
    if (db_is_open) {
       string sql = "SELECT artist_name, song_name "
                    "FROM song "
                    "ORDER BY artist_name, song_name";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
+      if (rs) {
          while (rs->next()) {
-            string* artist_name = rs->stringForColumnIndex(0);
-            string* song_name = rs->stringForColumnIndex(1);
-            if (artist_name != NULL && song_name != NULL) {
-               printf("%s, %s\n", artist_name->c_str(), song_name->c_str());
+            string artist_name;
+            string song_name;
+            rs->stringForColumnIndex(0, artist_name);
+            rs->stringForColumnIndex(1, song_name);
+            if (!artist_name.empty() && !song_name.empty()) {
+               printf("%s, %s\n", artist_name.c_str(), song_name.c_str());
             }
-            delete artist_name;
-            delete song_name;
          }
-         delete rs;
       }
    }
 }
+
+//*****************************************************************************
 
 void JukeboxDB::show_artists() {
    if (db_is_open) {
       string sql = "SELECT DISTINCT artist_name "
                    "FROM song "
                    "ORDER BY artist_name";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
+      if (rs) {
          while (rs->next()) {
-            string* artist_name = rs->stringForColumnIndex(0);
-            if (artist_name != NULL) {
-               printf("%s\n", artist_name->c_str());
-               delete artist_name;
+            string artist_name;
+            rs->stringForColumnIndex(0, artist_name);
+            if (!artist_name.empty()) {
+               printf("%s\n", artist_name.c_str());
             }
          }
-         delete rs;
       }
    }
 }
+
+//*****************************************************************************
 
 void JukeboxDB::show_genres() {
    if (db_is_open) {
       string sql = "SELECT genre_name "
                    "FROM genre "
                    "ORDER BY genre_name";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
+      if (rs) {
          while (rs->next()) {
-            string* genre_name = rs->stringForColumnIndex(0);
-            if (genre_name != NULL) {
-               printf("%s\n", genre_name->c_str());
-               delete genre_name;
+            string genre_name;
+            rs->stringForColumnIndex(0, genre_name);
+            if (!genre_name.empty()) {
+               printf("%s\n", genre_name.c_str());
             }
          }
-         delete rs;
       }
    }
 }
+
+//*****************************************************************************
 
 void JukeboxDB::show_artist_albums(const string& artist_name) {
    if (db_is_open) {
@@ -551,21 +585,22 @@ void JukeboxDB::show_artist_albums(const string& artist_name) {
                    "AND a.artist_name = ?";
       DBStatementArgs args;
       args.add(new DBString(artist_name));
-      DBResultSet* rs = db_connection->executeQuery(sql, args);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql, args));
+      if (rs) {
          while (rs->next()) {
-            string* album_name = rs->stringForColumnIndex(0);
-            if (album_name != NULL) {
-               printf("%s\n", album_name->c_str());
-               delete album_name;
+            string album_name;
+            rs->stringForColumnIndex(0, album_name);
+            if (!album_name.empty()) {
+               printf("%s\n", album_name.c_str());
             }
          }
-         delete rs;
       }
    } else {
       printf("error: DB is not open\n");
    }
 }
+
+//*****************************************************************************
 
 void JukeboxDB::show_albums() {
    if (db_is_open) {
@@ -573,21 +608,22 @@ void JukeboxDB::show_albums() {
                    "FROM album, artist "
                    "WHERE album.artist_uid = artist.artist_uid "
                    "ORDER BY album.album_name";
-      DBResultSet* rs = db_connection->executeQuery(sql);
-      if (rs != NULL) {
+      unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
+      if (rs) {
          while (rs->next()) {
-            string* album_name = rs->stringForColumnIndex(0);
-            string* artist_name = rs->stringForColumnIndex(1);
-            if (album_name != NULL && artist_name != NULL) {
-               printf("%s (%s)\n", album_name->c_str(), artist_name->c_str());
+            string album_name;
+            string artist_name;
+            rs->stringForColumnIndex(0, album_name);
+            rs->stringForColumnIndex(1, artist_name);
+            if (!album_name.empty() && !artist_name.empty()) {
+               printf("%s (%s)\n", album_name.c_str(), artist_name.c_str());
             }
-            delete album_name;
-            delete artist_name;
          }
-         delete rs;
       }
    }
 }
+
+//*****************************************************************************
 
 bool JukeboxDB::delete_song(const string& song_uid) {
    bool was_deleted = false;
@@ -597,7 +633,7 @@ bool JukeboxDB::delete_song(const string& song_uid) {
          DBStatementArgs args;
          args.add(new DBString(song_uid));
          unsigned long rowsAffectedCount = 0L;
-         bool sql_success = db_connection->executeUpdate(sql, args, rowsAffectedCount);
+         bool sql_success = m_db_connection->executeUpdate(sql, args, rowsAffectedCount);
          if (sql_success) {
             if (rowsAffectedCount == 1L) {
                was_deleted = true;
@@ -610,4 +646,6 @@ bool JukeboxDB::delete_song(const string& song_uid) {
 
    return was_deleted;
 }
+
+//*****************************************************************************
 

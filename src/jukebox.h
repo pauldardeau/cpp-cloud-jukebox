@@ -1,6 +1,7 @@
 #ifndef JUKEBOX_H
 #define JUKEBOX_H
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <sys/types.h>
@@ -64,14 +65,18 @@ public:
 
 class Jukebox : public chaudiere::RunCompletionObserver {
 private:
+   std::unique_ptr<JukeboxDB> m_jukebox_db;
+   std::unique_ptr<SongDownloader> m_downloader;
+   std::unique_ptr<chaudiere::PthreadsThread> m_download_thread;
+
    Jukebox(const Jukebox&);
    Jukebox& operator=(const Jukebox&);
+
 
 public:
    JukeboxOptions jukebox_options;
    StorageSystem& storage_system;
    bool debug_print;
-   JukeboxDB* jukebox_db;
    std::string current_dir;
    std::string song_import_dir;
    std::string playlist_import_dir;
@@ -96,8 +101,6 @@ public:
    bool is_paused;
    double song_start_time;
    int song_seconds_offset;
-   SongDownloader* downloader;
-   chaudiere::PthreadsThread* download_thread;
    bool player_active;
    bool downloader_ready_to_delete;
    int num_successive_play_failures;

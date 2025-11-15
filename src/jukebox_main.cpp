@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <memory>
 
 #include "jukebox_main.h"
 #include "data_types.h"
@@ -16,18 +17,21 @@
 using namespace std;
 using namespace chaudiere;
 
+//*****************************************************************************
 
 JukeboxMain::JukeboxMain() :
    update_mode(false),
    debug_mode(false) {
 }
 
+//*****************************************************************************
+
 StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
                                                  string prefix)
 {
       //if (!swift.is_available()) {
       //   printf("error: swift is not supported on this system. please install swiftclient first.");
-      //   return NULL;
+      //   return nullptr;
       //}
 
       string swift_auth_host = "";
@@ -73,7 +77,7 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
 
          printf("error: no swift credentials given. please specify swift_account, "
                 "swift_user, and swift_password in credentials\n");
-         return NULL;
+         return nullptr;
       }
 
       string user = "";
@@ -87,7 +91,7 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
          password = swift_password;
       }
 
-      return NULL;
+      return nullptr;
       //FUTURE: hookup SwiftStorageSystem (connect_swift_system)
       //return new SwiftStorageSystem(swift_auth_host,
       //                              swift_account,
@@ -95,6 +99,8 @@ StorageSystem* JukeboxMain::connect_swift_system(const PropertySet& credentials,
       //                              password,
       //                              in_debug_mode);
 }
+
+//*****************************************************************************
 
 StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                               string prefix,
@@ -140,11 +146,11 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
    if (aws_access_key.length() == 0 || aws_secret_key.length() == 0) {
       printf("error: no s3 credentials given. please specify aws_access_key "
              "and aws_secret_key in credentials file\n");
-      return NULL;
+      return nullptr;
    } else {
       if (host.length() == 0) {
          printf("error: no s3 host given. please specify host in credentials file\n");
-         return NULL;
+         return nullptr;
       }
 
       string access_key = "";
@@ -165,15 +171,17 @@ StorageSystem* JukeboxMain::connect_s3_system(const PropertySet& credentials,
                                     prefix,
                                     debug_mode);
    }
-   return NULL;
+   return nullptr;
 }
+
+//*****************************************************************************
 
 StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
                                                  string prefix)
 {
       //if (!azure.is_available()) {
       //   printf("error: azure is not supported on this system. please install azure client first.");
-      //   return NULL;
+      //   return nullptr;
       //}
 
       string azure_account_name = "";
@@ -207,7 +215,7 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
       if (azure_account_name.length() == 0 || azure_account_key.length() == 0) {
          printf("error: no azure credentials given. please specify azure_account_name "
                 "and azure_account_key in credentials file\n");
-         return NULL;
+         return nullptr;
       } else {
          string account_name = "";
          string account_key = "";
@@ -227,8 +235,10 @@ StorageSystem* JukeboxMain::connect_azure_system(const PropertySet& credentials,
          //                              debug_mode);
       }
 
-      return NULL;
+      return nullptr;
 }
+
+//*****************************************************************************
 
 StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
                                               string prefix) {
@@ -240,9 +250,11 @@ StorageSystem* JukeboxMain::connect_fs_system(const PropertySet& credentials,
       return new FSStorageSystem(root_dir, debug_mode);
    } else {
       printf("error: 'root_dir' must be specified in fs_creds.txt\n");
-      return NULL;
+      return nullptr;
    }
 }
+
+//*****************************************************************************
 
 StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
                                                    const PropertySet& credentials,
@@ -259,9 +271,11 @@ StorageSystem* JukeboxMain::connect_storage_system(const string& system_name,
       return connect_fs_system(credentials, prefix);
    } else {
       printf("error: unrecognized storage system %s\n", system_name.c_str());
-      return NULL;
+      return nullptr;
    }
 }
+
+//*****************************************************************************
 
 bool JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
    bool success;
@@ -274,6 +288,8 @@ bool JukeboxMain::init_storage_system(StorageSystem* storage_sys) {
    }
    return success;
 }
+
+//*****************************************************************************
 
 void JukeboxMain::show_usage() const {
    printf("Supported Commands:\n");
@@ -305,6 +321,8 @@ void JukeboxMain::show_usage() const {
    printf("\tusage              - show this help message\n");
    printf("\n");
 }
+
+//*****************************************************************************
 
 int JukeboxMain::run_jukebox_command(Jukebox& jukebox, const string& command) {
    int exit_code = 0;
@@ -430,6 +448,8 @@ int JukeboxMain::run_jukebox_command(Jukebox& jukebox, const string& command) {
    return exit_code;
 }
 
+//*****************************************************************************
+
 int JukeboxMain::run(const vector<string>& console_args) {
    int exit_code = 0;
    string storage_type = "swift";
@@ -449,8 +469,8 @@ int JukeboxMain::run(const vector<string>& console_args) {
    opt_parser.addOptionalStringArgument("--album", "limit operations to specified album");
    opt_parser.addRequiredArgument("command", "command for jukebox");
 
-   PropertySet* args = opt_parser.parse_args(console_args);
-   if (args == NULL) {
+   unique_ptr<PropertySet> args(opt_parser.parse_args(console_args));
+   if (!args) {
       printf("error: unable to obtain command-line arguments\n");
       return 1;
    }
@@ -566,7 +586,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
       string creds_file = storage_type + "_creds.txt";
       PropertySet creds;
       string cwd = OSUtils::getCurrentDirectory();
-      string creds_file_path = chaudiere::OSUtils::pathJoin(cwd, creds_file);
+      string creds_file_path = OSUtils::pathJoin(cwd, creds_file);
 
       if (Utils::path_exists(creds_file_path)) {
          if (debug_mode) {
@@ -578,14 +598,14 @@ int JukeboxMain::run(const vector<string>& console_args) {
          bool file_read = Utils::file_read_all_text(creds_file_path,
                                                     file_contents);
          if (file_read && file_contents.length() > 0) {
-            chaudiere::StringTokenizer st(file_contents, "\n");
+            StringTokenizer st(file_contents, "\n");
 
             while (st.hasMoreTokens()) {
                const string& file_line = st.nextToken();
                vector<string> line_tokens = StrUtils::split(file_line, "=");
                if (line_tokens.size() == 2) {
-                  string key = chaudiere::StrUtils::strip(line_tokens[0]);
-                  string value = chaudiere::StrUtils::strip(line_tokens[1]);
+                  string key = StrUtils::strip(line_tokens[0]);
+                  string value = StrUtils::strip(line_tokens[1]);
                   if (key.length() > 0 && value.length() > 0) {
                      creds.add(key, new StrPropertyValue(value));
                   }
@@ -603,8 +623,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
       options.encryption_iv = "sw4mpb1ts.juk3b0x";
 
       string command = args->get_string_value("command");
-      delete args;
-      args = NULL;
+      args.reset();
 
       StringSet help_cmds;
       help_cmds.add("help");
@@ -660,7 +679,7 @@ int JukeboxMain::run(const vector<string>& console_args) {
                return 1;
             }
 
-            StorageSystem* storage_system = NULL;
+            unique_ptr<StorageSystem> storage_system;
 
             try
             {
@@ -674,13 +693,13 @@ int JukeboxMain::run(const vector<string>& console_args) {
                   update_mode = true;
                }
 
-               storage_system = connect_storage_system(storage_type,
-                                                       creds,
-                                                       container_prefix);
-               if (storage_system != NULL) {
+               storage_system.reset(connect_storage_system(storage_type,
+                                                           creds,
+                                                           container_prefix));
+               if (storage_system != nullptr) {
                   if (storage_system->enter()) {
                      if (command == "init-storage") {
-                        if (init_storage_system(storage_system)) {
+                        if (init_storage_system(storage_system.get())) {
                            exit_code = 0;
                         } else {
                            exit_code = 1;
@@ -709,21 +728,15 @@ int JukeboxMain::run(const vector<string>& console_args) {
                printf("exception caught: %s\n", e.what());
                exit_code = 1;
             }
-
-            if (storage_system != NULL) {
-               delete storage_system;
-               storage_system = NULL;
-            }
          }
       }
    } else {
       printf("Error: no command given\n");
       show_usage();
    }
-   if (args != NULL) {
-      delete args;
-      args = NULL;
-   }
+
    return exit_code;
 }
+
+//*****************************************************************************
 

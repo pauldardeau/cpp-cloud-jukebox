@@ -324,26 +324,22 @@ public:
    }
 
    void append(const StringSet& other) {
-      auto it = other.set_of_strings.begin();
-      const auto it_end = other.set_of_strings.end();
-      for (; it != it_end; it++) {
-         add(*it);
+      for (const auto& s : other.set_of_strings) {
+         add(s);
       }
    }
 
    std::string to_string() const {
       const std::string COMMA_SPACE = ", ";
       bool first_entry = true;
-      auto it = set_of_strings.begin();
-      const auto it_end = set_of_strings.end();
       std::string combined;
 
-      for (; it != it_end; it++) {
+      for (const auto& s : set_of_strings) {
          if (!first_entry) {
             combined += COMMA_SPACE;
          }
 
-         const std::string& current = *it;
+         const std::string& current = s;
          combined += current;
 
          if (first_entry) {

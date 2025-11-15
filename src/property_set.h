@@ -10,7 +10,7 @@
 
 class PropertySet {
 private:
-   std::map<std::string, PropertyValue*> map_props;
+   std::map<std::string, PropertyValue*> m_map_props;
 
    PropertySet(const PropertySet&);
    PropertySet& operator=(const PropertySet&);

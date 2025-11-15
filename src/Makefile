@@ -1,7 +1,7 @@
 # Copyright Paul Dardeau, SwampBits LLC 2022
 
 CC = c++
-CC_OPTS = -c -Wall -fPIC -O2 -pthread -I../include -I../../chaudiere/src -I../../chapeau/src
+CC_OPTS = -c -Wall -std=c++20 -fPIC -g -pthread -I../include -I../chapeau/chaudiere/src -I../chapeau/src
 LINK_CMD = c++
 # remove -ldl for non-linux
 # libapps.a    libcrypto.a  libcurlpp.a   libinih.a    libminiocpp.a  libssl.a
@@ -31,7 +31,7 @@ clean :
 	rm -f $(EXE_NAME)
 
 $(EXE_NAME) : $(OBJS)
-	$(LINK_CMD) $(OBJS) -o $(EXE_NAME) ../../chaudiere/src/libchaudiere.so ../../chapeau/src/libchapeau.so -L/usr/local/lib -L../lib $(LINK_LIBS)
+	$(LINK_CMD) $(OBJS) -o $(EXE_NAME) -L../lib -lchaudiere -L../lib -lchapeau -L/usr/local/lib -L../lib $(LINK_LIBS)
 
 %.o : %.cpp
 	$(CC) $(CC_OPTS) $< -o $@
