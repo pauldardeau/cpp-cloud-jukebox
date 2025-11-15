@@ -326,7 +326,7 @@ void Jukebox::vector_to_string(const vector<unsigned char>& v, string& s) {
 
 bool Jukebox::store_song_metadata(const SongMetadata& fs_song) {
    SongMetadata db_song;
-   if (m_jukebox_db->retrieve_song(fs_song.fm.file_uid, db_song)) {
+   if (m_jukebox_db->retrieve_song(fs_song.get_file_uid(), db_song)) {
       if (fs_song != db_song) {
          return m_jukebox_db->update_song(fs_song);
       } else {
@@ -457,20 +457,20 @@ void Jukebox::import_songs() {
 
                   string object_name = file_name + object_file_suffix();
                   SongMetadata fs_song;
-                  fs_song.fm.file_uid = object_name;
-                  fs_song.album_uid = "";
-                  fs_song.fm.origin_file_size = (int) file_size;
-                  fs_song.fm.file_time =
-                     Utils::datetime_datetime_fromtimestamp(Utils::path_getmtime(full_path));
-                  fs_song.artist_name = artist;
-                  fs_song.song_name = song;
-                  fs_song.fm.md5_hash = Utils::md5_for_file(ini_file_name, full_path);
-                  fs_song.fm.compressed = m_jukebox_options.use_compression ? 1 : 0;
-                  fs_song.fm.encrypted = m_jukebox_options.use_encryption ? 1 : 0;
-                  fs_song.fm.object_name = object_name;
-                  fs_song.fm.pad_char_count = 0;
+                  fs_song.set_file_uid(object_name);
+                  fs_song.set_album_uid("");
+                  fs_song.set_origin_file_size((int) file_size);
+                  fs_song.set_file_time(
+                     Utils::datetime_datetime_fromtimestamp(Utils::path_getmtime(full_path)));
+                  fs_song.set_artist_name(artist);
+                  fs_song.set_song_name(song);
+                  fs_song.set_md5_hash(Utils::md5_for_file(ini_file_name, full_path));
+                  fs_song.set_compressed(m_jukebox_options.use_compression ? 1 : 0);
+                  fs_song.set_encrypted(m_jukebox_options.use_encryption ? 1 : 0);
+                  fs_song.set_object_name(object_name);
+                  fs_song.set_pad_char_count(0);
 
-                  fs_song.fm.container_name = container_for_song(file_name);
+                  fs_song.set_container_name(container_for_song(file_name));
 
                   // read file contents
                   bool file_read = false;
@@ -520,12 +520,12 @@ void Jukebox::import_songs() {
 
                      // now that we have the data that will be stored, set the file size for
                      // what's being stored
-                     fs_song.fm.stored_file_size = file_contents.size();
+                     fs_song.set_stored_file_size(file_contents.size());
                      double start_upload_time = Utils::time_time();
 
                      // store song file to storage system
-                     if (m_storage_system.put_object(fs_song.fm.container_name,
-                                                     fs_song.fm.object_name,
+                     if (m_storage_system.put_object(fs_song.get_container_name(),
+                                                     fs_song.get_object_name(),
                                                      file_contents,
                                                      nullptr)) {
                         double end_upload_time = Utils::time_time();
@@ -540,17 +540,17 @@ void Jukebox::import_songs() {
                            // from the storage system since we won't have any way to access it
                            // since we can't store the song metadata locally.
                            printf("unable to store metadata, deleting obj %s\n",
-                                  fs_song.fm.object_name.c_str());
+                                  fs_song.get_object_name().c_str());
 
-                           m_storage_system.delete_object(fs_song.fm.container_name,
-                                                          fs_song.fm.object_name);
+                           m_storage_system.delete_object(fs_song.get_container_name(),
+                                                          fs_song.get_object_name());
                         } else {
                            file_import_count += 1;
                         }
                      } else {
                         printf("error: unable to upload %s to %s\n",
-                               fs_song.fm.object_name.c_str(),
-                               fs_song.fm.container_name.c_str());
+                               fs_song.get_object_name().c_str(),
+                               fs_song.get_container_name().c_str());
                      }
                   }
                }
@@ -604,7 +604,7 @@ void Jukebox::import_songs() {
 //*****************************************************************************
 
 string Jukebox::song_path_in_playlist(const SongMetadata& song) {
-   return OSUtils::pathJoin(m_song_play_dir, song.fm.file_uid);
+   return OSUtils::pathJoin(m_song_play_dir, song.get_file_uid());
 }
 
 //*****************************************************************************
@@ -616,18 +616,18 @@ bool Jukebox::check_file_integrity(const SongMetadata& song) {
       string file_path = song_path_in_playlist(song);
       if (Utils::file_exists(file_path)) {
          if (m_debug_print) {
-            printf("checking integrity for %s\n", song.fm.file_uid.c_str());
+            printf("checking integrity for %s\n", song.get_file_uid().c_str());
          }
 
          string playlist_md5 = Utils::md5_for_file(ini_file_name, file_path);
-         if (playlist_md5 == song.fm.md5_hash) {
+         if (playlist_md5 == song.get_md5_hash()) {
             if (m_debug_print) {
                printf("integrity check SUCCESS\n");
             }
             file_integrity_passed = true;
          } else {
             printf("file integrity check failed: %s\n",
-                   song.fm.file_uid.c_str());
+                   song.get_file_uid().c_str());
             file_integrity_passed = false;
          }
       } else {
@@ -678,7 +678,7 @@ void Jukebox::notifyRunComplete(Runnable* runnable) {
 
 bool Jukebox::download_song(const SongMetadata& song) {
    if (m_debug_print) {
-      printf("download_song called for '%s'\n", song.fm.file_uid.c_str());
+      printf("download_song called for '%s'\n", song.get_file_uid().c_str());
    }
 
    if (m_exit_requested) {
@@ -691,7 +691,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
    string file_path = song_path_in_playlist(song);
    double download_start_time = Utils::time_time();
    unsigned long song_bytes_retrieved =
-      m_storage_system.retrieve_file(song.fm, m_song_play_dir);
+      m_storage_system.retrieve_file(song.get_file_metadata(), m_song_play_dir);
    if (m_debug_print) {
       printf("song_bytes_retrieved = %ld\n", song_bytes_retrieved);
    }
@@ -720,7 +720,7 @@ bool Jukebox::download_song(const SongMetadata& song) {
             printf("verifying data integrity\n");
          }
 
-         if (song_bytes_retrieved != song.fm.stored_file_size) {
+         if (song_bytes_retrieved != song.get_stored_file_size()) {
             printf("error: data integrity check failed for %s\n",
                    file_path.c_str());
             return false;
@@ -785,7 +785,7 @@ void Jukebox::play_song(const SongMetadata& song) {
    string song_file_path = song_path_in_playlist(song);
 
    if (Utils::path_exists(song_file_path)) {
-      printf("playing %s\n", song.fm.file_uid.c_str());
+      printf("playing %s\n", song.get_file_uid().c_str());
 
       if (!m_audio_player_exe_file_name.empty()) {
          bool did_resume = false;
@@ -900,8 +900,8 @@ void Jukebox::play_song(const SongMetadata& song) {
          OSUtils::deleteFile(song_file_path);
       }
    } else {
-      printf("file not found: %s\n", song.fm.file_uid.c_str());
-      Utils::file_append_all_text("404.txt", song.fm.file_uid);
+      printf("file not found: %s\n", song.get_file_uid().c_str());
+      Utils::file_append_all_text("404.txt", song.get_file_uid());
    }
 }
 
@@ -1563,7 +1563,8 @@ void Jukebox::show_playlist(const string& playlist_name) {
    vector<SongMetadata> list_songs;
    if (get_playlist_songs(playlist_name, list_songs)) {
       for (const auto& song : list_songs) {
-         printf("%s : %s\n", song.song_name.c_str(), song.artist_name.c_str());
+         printf("%s : %s\n", song.get_song_name().c_str(),
+                             song.get_artist_name().c_str());
       }
    }
 }
@@ -1612,8 +1613,8 @@ bool Jukebox::delete_artist(const string& artist) {
          return false;
       } else {
          for (const auto& song : artist_song_list) {
-            if (!delete_song(song.fm.object_name, false)) {
-               printf("error deleting song %s\n", song.fm.object_name.c_str());
+            if (!delete_song(song.get_object_name(), false)) {
+               printf("error deleting song %s\n", song.get_object_name().c_str());
                return false;
             }
          }
@@ -1639,17 +1640,17 @@ bool Jukebox::delete_album(const string& album) {
          int num_songs_deleted = 0;
          for (const auto& song : list_album_songs) {
             printf("%s %s\n",
-                   song.fm.container_name.c_str(),
-                   song.fm.object_name.c_str());
+                   song.get_container_name().c_str(),
+                   song.get_object_name().c_str());
             // delete each song audio file
-            if (m_storage_system.delete_object(song.fm.container_name,
-                                               song.fm.object_name)) {
+            if (m_storage_system.delete_object(song.get_container_name(),
+                                               song.get_object_name())) {
                num_songs_deleted += 1;
                // delete song metadata
-               m_jukebox_db->delete_song(song.fm.object_name);
+               m_jukebox_db->delete_song(song.get_object_name());
             } else {
                printf("error: unable to delete song %s\n",
-                      song.fm.object_name.c_str());
+                      song.get_object_name().c_str());
                //FUTURE: delete song metadata if we got 404? (delete_album)
             }
          }
@@ -1749,11 +1750,11 @@ void Jukebox::display_info() const {
       if (m_song_index + 3 <= max_index) {
          printf("----- songs on deck -----\n");
          const SongMetadata& first_song = m_song_list[m_song_index+1];
-         printf("%s\n", first_song.fm.file_uid.c_str());
+         printf("%s\n", first_song.get_file_uid().c_str());
          const SongMetadata& second_song = m_song_list[m_song_index+2];
-         printf("%s\n", second_song.fm.file_uid.c_str());
+         printf("%s\n", second_song.get_file_uid().c_str());
          const SongMetadata& third_song = m_song_list[m_song_index+3];
-         printf("%s\n", third_song.fm.file_uid.c_str());
+         printf("%s\n", third_song.get_file_uid().c_str());
          printf("-------------------------\n");
       }
    }

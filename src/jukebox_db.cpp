@@ -190,56 +190,56 @@ bool JukeboxDB::songs_for_query(DBResultSet* rs,
 
       string file_uid;
       if (rs->stringForColumnIndex(0, file_uid)) {
-         song.fm.file_uid = file_uid;
+         song.set_file_uid(file_uid);
       }
 
       string file_time;
       if (rs->stringForColumnIndex(1, file_time)) {
-         song.fm.file_time = file_time;
+         song.set_file_time(file_time);
       }
 
-      song.fm.origin_file_size = rs->longForColumnIndex(2);
-      song.fm.stored_file_size = rs->longForColumnIndex(3);
-      song.fm.pad_char_count = rs->longForColumnIndex(4);
+      song.set_origin_file_size(rs->longForColumnIndex(2));
+      song.set_stored_file_size(rs->longForColumnIndex(3));
+      song.set_pad_char_count(rs->longForColumnIndex(4));
 
       string artist_name;
       if (rs->stringForColumnIndex(5, artist_name)) {
-         song.artist_name = artist_name;
+         song.set_artist_name(artist_name);
       }
 
       string artist_uid;
       if (rs->stringForColumnIndex(6, artist_uid)) {
-         song.artist_uid = artist_uid;
+         song.set_artist_uid(artist_uid);
       }
 
       string song_name;
       if (rs->stringForColumnIndex(7, song_name)) {
-         song.song_name = song_name;
+         song.set_song_name(song_name);
       }
 
       string md5_hash;
       if (rs->stringForColumnIndex(8, md5_hash)) {
-         song.fm.md5_hash = md5_hash;
+         song.set_md5_hash(md5_hash);
       }
 
-      song.fm.compressed = rs->intForColumnIndex(9);
-      song.fm.encrypted = rs->intForColumnIndex(10);
+      song.set_compressed(rs->intForColumnIndex(9));
+      song.set_encrypted(rs->intForColumnIndex(10));
 
       string container_name;
       if (rs->stringForColumnIndex(11, container_name)) {
-         song.fm.container_name = container_name;
+         song.set_container_name(container_name);
       }
 
       string object_name;
       if (rs->stringForColumnIndex(12, object_name)) {
-         song.fm.object_name = object_name;
+         song.set_object_name(object_name);
       }
 
       string album_uid;
       if (rs->stringForColumnIndex(13, album_uid)) {
-         song.album_uid = album_uid;
+         song.set_album_uid(album_uid);
       } else {
-         song.album_uid = "";
+         song.set_album_uid("");
       }
 
       vec_songs.push_back(song);
@@ -309,20 +309,20 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
                            "?)";
 
       DBStatementArgs args;
-      args.add(new DBString(song.fm.file_uid));
-      args.add(new DBString(song.fm.file_time));
-      args.add(new DBLong(song.fm.origin_file_size));
-      args.add(new DBLong(song.fm.stored_file_size));
-      args.add(new DBLong(song.fm.pad_char_count));
-      args.add(new DBString(song.artist_name));
-      args.add(new DBString(song.artist_uid));
-      args.add(new DBString(song.song_name));
-      args.add(new DBString(song.fm.md5_hash));
-      args.add(new DBInt(song.fm.compressed));
-      args.add(new DBInt(song.fm.encrypted));
-      args.add(new DBString(song.fm.container_name));
-      args.add(new DBString(song.fm.object_name));
-      args.add(new DBString(song.album_uid));
+      args.add(new DBString(song.get_file_uid()));
+      args.add(new DBString(song.get_file_time()));
+      args.add(new DBLong(song.get_origin_file_size()));
+      args.add(new DBLong(song.get_stored_file_size()));
+      args.add(new DBLong(song.get_pad_char_count()));
+      args.add(new DBString(song.get_artist_name()));
+      args.add(new DBString(song.get_artist_uid()));
+      args.add(new DBString(song.get_song_name()));
+      args.add(new DBString(song.get_md5_hash()));
+      args.add(new DBInt(song.get_compressed()));
+      args.add(new DBInt(song.get_encrypted()));
+      args.add(new DBString(song.get_container_name()));
+      args.add(new DBString(song.get_object_name()));
+      args.add(new DBString(song.get_album_uid()));
 
       unsigned long rowsAffectedCount = 0L;
       bool success = m_db_connection->executeUpdate(sql, args, rowsAffectedCount);
@@ -343,7 +343,7 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
 bool JukeboxDB::update_song(const SongMetadata& song) {
    bool update_success = false;
 
-   if (m_db_is_open && !song.fm.file_uid.empty()) {
+   if (m_db_is_open && !song.get_file_uid().empty()) {
       string sql = "UPDATE song "
                    "SET file_time = ?,"
                        "origin_file_size = ?,"
@@ -360,20 +360,20 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
                        "album_uid = ? "
                    "WHERE song_uid = ?";
       DBStatementArgs args;
-      args.add(new DBString(song.fm.file_time));
-      args.add(new DBLong(song.fm.origin_file_size));
-      args.add(new DBLong(song.fm.stored_file_size));
-      args.add(new DBLong(song.fm.pad_char_count));
-      args.add(new DBString(song.artist_name));
+      args.add(new DBString(song.get_file_time()));
+      args.add(new DBLong(song.get_origin_file_size()));
+      args.add(new DBLong(song.get_stored_file_size()));
+      args.add(new DBLong(song.get_pad_char_count()));
+      args.add(new DBString(song.get_artist_name()));
       args.add(new DBString(""));
-      args.add(new DBString(song.song_name));
-      args.add(new DBString(song.fm.md5_hash));
-      args.add(new DBInt(song.fm.compressed));
-      args.add(new DBInt(song.fm.encrypted));
-      args.add(new DBString(song.fm.container_name));
-      args.add(new DBString(song.fm.object_name));
-      args.add(new DBString(song.album_uid));
-      args.add(new DBString(song.fm.file_uid));
+      args.add(new DBString(song.get_song_name()));
+      args.add(new DBString(song.get_md5_hash()));
+      args.add(new DBInt(song.get_compressed()));
+      args.add(new DBInt(song.get_encrypted()));
+      args.add(new DBString(song.get_container_name()));
+      args.add(new DBString(song.get_object_name()));
+      args.add(new DBString(song.get_album_uid()));
+      args.add(new DBString(song.get_file_uid()));
 
       unsigned long rowsAffectedCount = 0L;
       bool success = m_db_connection->executeUpdate(sql, args, rowsAffectedCount);
@@ -393,7 +393,7 @@ bool JukeboxDB::update_song(const SongMetadata& song) {
 
 bool JukeboxDB::store_song_metadata(const SongMetadata& song) {
    SongMetadata db_song;
-   if (retrieve_song(song.fm.file_uid, db_song)) {
+   if (retrieve_song(song.get_file_uid(), db_song)) {
       bool is_same_song = (song == db_song);
       if (!is_same_song) {
          return update_song(song);

@@ -76,10 +76,11 @@ public:
 
    int retrieve_file(const FileMetadata& fm, const std::string& local_directory) {
       if (local_directory.length() > 0) {
-         std::string file_path = chaudiere::OSUtils::pathJoin(local_directory, fm.file_uid);
+         std::string file_path = chaudiere::OSUtils::pathJoin(local_directory,
+                                                              fm.get_file_uid());
          // print("retrieving container=%s" % fm.container_name);
          // print("retrieving object=%s" % fm.object_name);
-         return get_object(fm.container_name, fm.object_name, file_path);
+         return get_object(fm.get_container_name(), fm.get_object_name(), file_path);
       }
       return 0;
    }
@@ -88,8 +89,8 @@ public:
       if (file_contents.size() > 0) {
          PropertySet dict_props;
          fm.to_dictionary(dict_props, metadata_prefix);
-         return put_object(fm.container_name,
-                           fm.object_name,
+         return put_object(fm.get_container_name(),
+                           fm.get_object_name(),
                            file_contents,
                            &dict_props);
       }
