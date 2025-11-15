@@ -16,12 +16,12 @@ private:
    static const std::string TYPE_INT;
    static const std::string TYPE_STRING;
 
-   std::map<std::string, std::string> dict_all_reserved_words;
-   std::map<std::string, std::string> dict_bool_options;
-   std::map<std::string, std::string> dict_int_options;
-   std::map<std::string, std::string> dict_string_options;
-   std::map<std::string, std::string> dict_commands;
-   std::vector<std::string> list_commands;
+   std::map<std::string, std::string> m_dict_all_reserved_words;
+   std::map<std::string, std::string> m_dict_bool_options;
+   std::map<std::string, std::string> m_dict_int_options;
+   std::map<std::string, std::string> m_dict_string_options;
+   std::map<std::string, std::string> m_dict_commands;
+   std::vector<std::string> m_list_commands;
 
    ArgumentParser(const ArgumentParser&);
    ArgumentParser& operator=(const ArgumentParser&);

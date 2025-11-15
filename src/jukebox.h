@@ -68,45 +68,44 @@ private:
    std::unique_ptr<JukeboxDB> m_jukebox_db;
    std::unique_ptr<SongDownloader> m_downloader;
    std::unique_ptr<chaudiere::PthreadsThread> m_download_thread;
+   JukeboxOptions m_jukebox_options;
+   StorageSystem& m_storage_system;
+   bool m_debug_print;
+   std::string m_current_dir;
+   std::string m_song_import_dir;
+   std::string m_playlist_import_dir;
+   std::string m_song_play_dir;
+   std::string m_album_art_import_dir;
+   std::string m_download_extension;
+   std::string m_metadata_db_file;
+   std::string m_metadata_container;
+   std::string m_playlist_container;
+   std::string m_album_container;
+   std::string m_album_art_container;
+   std::vector<SongMetadata> m_song_list;
+   int m_number_songs;
+   int m_song_index;
+   std::string m_audio_player_exe_file_name;
+   std::string m_audio_player_command_args;
+   std::string m_audio_player_resume_args;
+   pid_t m_audio_player_process;
+   int m_cumulative_download_bytes;
+   double m_cumulative_download_time;
+   bool m_exit_requested;
+   bool m_is_paused;
+   double m_song_start_time;
+   int m_song_seconds_offset;
+   bool m_player_active;
+   bool m_downloader_ready_to_delete;
+   int m_num_successive_play_failures;
+   bool m_song_play_is_resume;
+   bool m_is_repeat_mode;
 
    Jukebox(const Jukebox&);
    Jukebox& operator=(const Jukebox&);
 
 
 public:
-   JukeboxOptions jukebox_options;
-   StorageSystem& storage_system;
-   bool debug_print;
-   std::string current_dir;
-   std::string song_import_dir;
-   std::string playlist_import_dir;
-   std::string song_play_dir;
-   std::string album_art_import_dir;
-   std::string download_extension;
-   std::string metadata_db_file;
-   std::string metadata_container;
-   std::string playlist_container;
-   std::string album_container;
-   std::string album_art_container;
-   std::vector<SongMetadata> song_list;
-   int number_songs;
-   int song_index;
-   std::string audio_player_exe_file_name;
-   std::string audio_player_command_args;
-   std::string audio_player_resume_args;
-   pid_t audio_player_process;
-   int cumulative_download_bytes;
-   double cumulative_download_time;
-   bool exit_requested;
-   bool is_paused;
-   double song_start_time;
-   int song_seconds_offset;
-   bool player_active;
-   bool downloader_ready_to_delete;
-   int num_successive_play_failures;
-   bool song_play_is_resume;
-   bool is_repeat_mode;
-
    Jukebox(const JukeboxOptions& jb_options,
            StorageSystem& storage_sys,
            bool debug_print = false);
@@ -186,6 +185,7 @@ public:
    bool retrieve_album_track_object_list(const std::string& artist,
                                          const std::string& album,
                                          std::vector<std::string>& list_track_objects);
+   bool is_exit_requested() const;
 };
 
 #endif

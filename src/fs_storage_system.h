@@ -11,7 +11,7 @@
 
 class FSStorageSystem : public StorageSystem {
 private:
-   std::string root_dir;
+   std::string m_root_dir;
 
    FSStorageSystem(const FSStorageSystem&);
    FSStorageSystem& operator=(const FSStorageSystem&);

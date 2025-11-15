@@ -14,11 +14,11 @@
 
 class S3ExtStorageSystem : public StorageSystem {
 private:
-   bool debug_mode;
-   std::string aws_access_key;
-   std::string aws_secret_key;
-   std::string s3_host;
-   bool connected;
+   bool m_debug_mode;
+   std::string m_aws_access_key;
+   std::string m_aws_secret_key;
+   std::string m_s3_host;
+   bool m_connected;
 
    S3ExtStorageSystem(const S3ExtStorageSystem&);
    S3ExtStorageSystem& operator=(const S3ExtStorageSystem&);

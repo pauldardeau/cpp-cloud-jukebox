@@ -11,12 +11,12 @@ class Jukebox;
 
 class JukeboxMain {
 private:
-   std::string artist;
-   std::string album;
-   std::string song;
-   std::string playlist;
-   bool update_mode;
-   bool debug_mode;
+   std::string m_artist;
+   std::string m_album;
+   std::string m_song;
+   std::string m_playlist;
+   bool m_update_mode;
+   bool m_debug_mode;
 
    JukeboxMain(const JukeboxMain&);
    JukeboxMain& operator=(const JukeboxMain&);

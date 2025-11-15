@@ -10,8 +10,8 @@
 
 class SongDownloader : public chaudiere::Runnable {
 private:
-   Jukebox& jukebox;
-   std::vector<SongMetadata> list_songs;
+   Jukebox& m_jukebox;
+   std::vector<SongMetadata> m_list_songs;
 
    SongDownloader();
    SongDownloader(const SongDownloader&);

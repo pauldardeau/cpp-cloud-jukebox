@@ -11,10 +11,10 @@
 
 class JukeboxDB {
 private:
-   bool debug_print;
-   bool db_is_open;
+   bool m_debug_print;
+   bool m_db_is_open;
    std::unique_ptr<chapeau::Database> m_db_connection;
-   std::string metadata_db_file_path;
+   std::string m_metadata_db_file_path;
 
    JukeboxDB(const JukeboxDB&);
    JukeboxDB& operator=(const JukeboxDB&);

@@ -180,21 +180,21 @@ bool PropertySet::read_from_file(const std::string& file_path) {
    bool success = false;
    string file_contents;
    if (Utils::file_read_all_text(file_path, file_contents)) {
-      if (file_contents.length() > 0) {
+      if (!file_contents.empty()) {
          vector<string> file_lines = StrUtils::split(file_contents, "\n");
 
          for (const auto& file_line : file_lines) {
             string stripped_line = StrUtils::strip(file_line);
-            if (stripped_line.length() > 0) {
+            if (!stripped_line.empty()) {
                vector<string> fields = StrUtils::split(stripped_line, "|");
                if (fields.size() == 3) {
                   const string& data_type = fields[0];
                   const string& prop_name = fields[1];
                   const string& prop_value = fields[2];
 
-                  if (data_type.length() > 0 &&
-                      prop_name.length() > 0 &&
-                      prop_value.length() > 0) {
+                  if (!data_type.empty() &&
+                      !prop_name.empty() &&
+                      !prop_value.empty()) {
 
                      if (data_type == TYPE_BOOL) {
                         if (prop_value == VALUE_TRUE || prop_value == VALUE_FALSE) {

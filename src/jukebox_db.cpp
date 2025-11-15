@@ -13,13 +13,13 @@ using namespace chapeau;
 //*****************************************************************************
 
 JukeboxDB::JukeboxDB(const string& db_file_path, bool debug) :
-   debug_print(debug),
-   db_is_open(false) {
+   m_debug_print(debug),
+   m_db_is_open(false) {
 
-   if (db_file_path.length() > 0) {
-      metadata_db_file_path = db_file_path;
+   if (!db_file_path.empty()) {
+      m_metadata_db_file_path = db_file_path;
    } else {
-      metadata_db_file_path = "jukebox_db.sqlite3";
+      m_metadata_db_file_path = "jukebox_db.sqlite3";
    }
 }
 
@@ -32,16 +32,16 @@ JukeboxDB::~JukeboxDB() {
 //*****************************************************************************
 
 bool JukeboxDB::is_open() const {
-   return db_is_open;
+   return m_db_is_open;
 }
 
 //*****************************************************************************
 
 bool JukeboxDB::open_db() {
    bool was_opened = false;
-   m_db_connection.reset(new SQLiteDatabase(metadata_db_file_path));
+   m_db_connection.reset(new SQLiteDatabase(m_metadata_db_file_path));
    if (m_db_connection->open()) {
-      db_is_open = true;
+      m_db_is_open = true;
       was_opened = true;
    }
    return was_opened;
@@ -56,18 +56,18 @@ bool JukeboxDB::open() {
       if (!have_tables()) {
          open_success = create_tables();
          if (!open_success) {
-            if (debug_print) {
+            if (m_debug_print) {
                printf("error: unable to create all tables\n");
             }
             m_db_connection->close();
             m_db_connection.reset();
-            db_is_open = false;
+            m_db_is_open = false;
          }
       } else {
          open_success = true;
       }
    } else {
-      if (debug_print) {
+      if (m_debug_print) {
          printf("error: unable to open database\n");
       }
    }
@@ -81,7 +81,7 @@ bool JukeboxDB::close() {
    if (m_db_connection) {
       m_db_connection->close();
       m_db_connection.reset();
-      db_is_open = false;
+      m_db_is_open = false;
       did_close = true;
    }
    return did_close;
@@ -91,7 +91,7 @@ bool JukeboxDB::close() {
 
 bool JukeboxDB::create_table(const string& sql) {
    if (!m_db_connection) {
-      if (debug_print) {
+      if (m_debug_print) {
          printf("cannot create table, DB is not open\n");
       }
       return false;
@@ -99,7 +99,7 @@ bool JukeboxDB::create_table(const string& sql) {
    unsigned long rowsAffectedCount = 0L;
    bool table_created = m_db_connection->executeUpdate(sql, rowsAffectedCount);
    if (!table_created) {
-      if (debug_print) {
+      if (m_debug_print) {
          printf("table create failed: %s\n", sql.c_str());
       }
    }
@@ -109,8 +109,8 @@ bool JukeboxDB::create_table(const string& sql) {
 //*****************************************************************************
 
 bool JukeboxDB::create_tables() {
-   if (db_is_open) {
-      if (debug_print) {
+   if (m_db_is_open) {
+      if (m_debug_print) {
          printf("creating tables\n");
       }
 
@@ -161,7 +161,7 @@ bool JukeboxDB::create_tables() {
 
 bool JukeboxDB::have_tables() {
    bool have_tables_in_db = false;
-   if (db_is_open && m_db_connection) {
+   if (m_db_is_open && m_db_connection) {
       string sql = "SELECT name "
                    "FROM sqlite_master "
                    "WHERE type='table' AND name='song'";
@@ -252,7 +252,7 @@ bool JukeboxDB::songs_for_query(DBResultSet* rs,
 
 bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
    bool success = false;
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT song_uid,"
                    "     file_time,"
                    "     origin_file_size,"
@@ -291,7 +291,7 @@ bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
 bool JukeboxDB::insert_song(const SongMetadata& song) {
    bool insert_success = false;
 
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "INSERT INTO song "
                    "VALUES (?,"
                            "?,"
@@ -343,7 +343,7 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
 bool JukeboxDB::update_song(const SongMetadata& song) {
    bool update_success = false;
 
-   if (db_is_open && song.fm.file_uid.length() > 0) {
+   if (m_db_is_open && !song.fm.file_uid.empty()) {
       string sql = "UPDATE song "
                    "SET file_time = ?,"
                        "origin_file_size = ?,"
@@ -439,7 +439,7 @@ string JukeboxDB::sql_where_clause(bool using_encryption,
 vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
                                                      const string& album) {
    vector<SongMetadata> songs;
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT song_uid,"
                           "file_time,"
                           "origin_file_size,"
@@ -458,11 +458,11 @@ vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
       sql += sql_where_clause();
       //if len(artist) > 0:
       //    sql += " AND artist_name='%s'" % artist
-      if (artist.length() > 0) {
+      if (!artist.empty()) {
           string encoded_artist = JBUtils::encode_value(artist);
           char like_clause[4096];
           memset(like_clause, 0, sizeof(like_clause));
-          if (album.length() > 0) {
+          if (!album.empty()) {
               string encoded_album = JBUtils::encode_value(album);
               snprintf(like_clause, 4096, " AND object_name LIKE '%s--%s%%'", encoded_artist.c_str(), encoded_album.c_str());
           } else {
@@ -484,7 +484,7 @@ vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
 
 vector<SongMetadata> JukeboxDB::songs_for_artist(const string& artist_name) {
    vector<SongMetadata> songs;
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT song_uid,"
                           "file_time,"
                           "origin_file_size,"
@@ -516,7 +516,7 @@ vector<SongMetadata> JukeboxDB::songs_for_artist(const string& artist_name) {
 //*****************************************************************************
 
 void JukeboxDB::show_listings() {
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT artist_name, song_name "
                    "FROM song "
                    "ORDER BY artist_name, song_name";
@@ -538,7 +538,7 @@ void JukeboxDB::show_listings() {
 //*****************************************************************************
 
 void JukeboxDB::show_artists() {
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT DISTINCT artist_name "
                    "FROM song "
                    "ORDER BY artist_name";
@@ -558,7 +558,7 @@ void JukeboxDB::show_artists() {
 //*****************************************************************************
 
 void JukeboxDB::show_genres() {
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT genre_name "
                    "FROM genre "
                    "ORDER BY genre_name";
@@ -578,7 +578,7 @@ void JukeboxDB::show_genres() {
 //*****************************************************************************
 
 void JukeboxDB::show_artist_albums(const string& artist_name) {
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT b.album_name "
                    "FROM artist a, album b "
                    "WHERE a.artist_uid = b.artist_uid "
@@ -603,7 +603,7 @@ void JukeboxDB::show_artist_albums(const string& artist_name) {
 //*****************************************************************************
 
 void JukeboxDB::show_albums() {
-   if (db_is_open) {
+   if (m_db_is_open) {
       string sql = "SELECT album.album_name, artist.artist_name "
                    "FROM album, artist "
                    "WHERE album.artist_uid = artist.artist_uid "
@@ -627,8 +627,8 @@ void JukeboxDB::show_albums() {
 
 bool JukeboxDB::delete_song(const string& song_uid) {
    bool was_deleted = false;
-   if (db_is_open) {
-      if (song_uid.length() > 0) {
+   if (m_db_is_open) {
+      if (!song_uid.empty()) {
          string sql = "DELETE FROM song WHERE song_uid = ?";
          DBStatementArgs args;
          args.add(new DBString(song_uid));

@@ -22,14 +22,14 @@ ArgumentParser::~ArgumentParser() {
 void ArgumentParser::addOption(const string& o,
                                const string& option_type,
                                const string& help) {
-   dict_all_reserved_words[o] = option_type;
+   m_dict_all_reserved_words[o] = option_type;
 
    if (option_type == TYPE_BOOL) {
-      dict_bool_options[o] = help;
+      m_dict_bool_options[o] = help;
    } else if (option_type == TYPE_INT) {
-      dict_int_options[o] = help;
+      m_dict_int_options[o] = help;
    } else if (option_type == TYPE_STRING) {
-      dict_string_options[o] = help;
+      m_dict_string_options[o] = help;
    }
 }
 
@@ -54,8 +54,8 @@ void ArgumentParser::addOptionalStringArgument(const string& arg, const string& 
 //*****************************************************************************
 
 void ArgumentParser::addRequiredArgument(const string& arg, const string& help) {
-   dict_commands[arg] = help;
-   list_commands.push_back(arg);
+   m_dict_commands[arg] = help;
+   m_list_commands.push_back(arg);
 }
 
 //*****************************************************************************
@@ -76,8 +76,8 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
    while (working) {
       const string& arg = args[i];
 
-      auto it = dict_all_reserved_words.find(arg);
-      if (it != dict_all_reserved_words.end()) {
+      auto it = m_dict_all_reserved_words.find(arg);
+      if (it != m_dict_all_reserved_words.end()) {
          const string& arg_type = it->second;
          string the_arg = arg.substr(2, arg.length()-2);
          if (arg_type == TYPE_BOOL) {
@@ -107,8 +107,8 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
          if (arg.rfind("--", 0) == 0) {
             // unrecognized option
          } else {
-            if (commands_found < list_commands.size()) {
-               const string& command_name = list_commands[commands_found];
+            if (commands_found < m_list_commands.size()) {
+               const string& command_name = m_list_commands[commands_found];
                pset->add(command_name, new StrPropertyValue(arg));
                commands_found++;
             } else {

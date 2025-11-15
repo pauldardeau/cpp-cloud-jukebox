@@ -13,12 +13,12 @@
 
 class UpdateOperation : public chaudiere::Runnable {
 protected:
-   StorageSystem* storage_system;
+   StorageSystem* m_storage_system;
 
 private:
-   std::string op_name;
-   bool op_did_run;
-   bool op_did_succeed;
+   std::string m_op_name;
+   bool m_op_did_run;
+   bool m_op_did_succeed;
 
 public:
    UpdateOperation(const std::string& op);
@@ -31,8 +31,8 @@ public:
 
    void setStorageSystem(StorageSystem* ss);
    void reset();
-   bool did_run() const { return this->op_did_run; }
-   bool did_succeed() const { return this->op_did_succeed; }
+   bool did_run() const { return this->m_op_did_run; }
+   bool did_succeed() const { return this->m_op_did_succeed; }
 
    virtual void run();
    virtual bool run_operation() = 0;
@@ -41,11 +41,11 @@ public:
 
 class MirrorStorageSystem : public StorageSystem {
 private:
-   std::string ini_file;
+   std::string m_ini_file;
    std::unique_ptr<StorageSystem> m_primary_ss;
    std::unique_ptr<StorageSystem> m_secondary_ss;
-   bool update_in_parallel;
-   int min_updates;
+   bool m_update_in_parallel;
+   int m_min_updates;
 
    MirrorStorageSystem(const MirrorStorageSystem&);
    MirrorStorageSystem& operator=(const MirrorStorageSystem&);

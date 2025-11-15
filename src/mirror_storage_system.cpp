@@ -18,19 +18,19 @@ class DeleteObject;
 //******************************************************************************
 
 UpdateOperation::UpdateOperation(const string& op) :
-   storage_system(nullptr),
-   op_name(op),
-   op_did_run(false),
-   op_did_succeed(false) {
+   m_storage_system(nullptr),
+   m_op_name(op),
+   m_op_did_run(false),
+   m_op_did_succeed(false) {
 }
 
 //*****************************************************************************
 
 UpdateOperation::UpdateOperation(const UpdateOperation& copy) :
-   storage_system(nullptr),
-   op_name(copy.op_name),
-   op_did_run(false),
-   op_did_succeed(false) {
+   m_storage_system(nullptr),
+   m_op_name(copy.m_op_name),
+   m_op_did_run(false),
+   m_op_did_succeed(false) {
 }
 
 //*****************************************************************************
@@ -40,9 +40,9 @@ UpdateOperation& UpdateOperation::operator=(const UpdateOperation& copy) {
       return *this;
    }
 
-   op_name = copy.op_name;
-   op_did_run = copy.op_did_run;
-   op_did_succeed = copy.op_did_succeed;
+   m_op_name = copy.m_op_name;
+   m_op_did_run = copy.m_op_did_run;
+   m_op_did_succeed = copy.m_op_did_succeed;
 
    return *this;
 }
@@ -50,25 +50,25 @@ UpdateOperation& UpdateOperation::operator=(const UpdateOperation& copy) {
 //*****************************************************************************
 
 void UpdateOperation::setStorageSystem(StorageSystem* ss) {
-   storage_system = ss;
+   m_storage_system = ss;
 }
 
 //*****************************************************************************
 
 void UpdateOperation::reset() {
-   op_did_run = false;
-   op_did_succeed = false;
+   m_op_did_run = false;
+   m_op_did_succeed = false;
 }
 
 //*****************************************************************************
 
 void UpdateOperation::run() {
-   if (storage_system != nullptr) {
-      op_did_succeed = run_operation();
+   if (m_storage_system != nullptr) {
+      m_op_did_succeed = run_operation();
    } else {
       printf("error: cannot run UpdateOperation, no storage system set\n");
    }
-   op_did_run = true;
+   m_op_did_run = true;
 }
 
 //******************************************************************************
@@ -76,17 +76,17 @@ void UpdateOperation::run() {
 
 class CreateContainer : public UpdateOperation {
 private:
-   string container_name;
+   string m_container_name;
 
 public:
    CreateContainer(const string& container) :
       UpdateOperation("CreateContainer"),
-      container_name(container) {
+      m_container_name(container) {
    }
 
    CreateContainer(const CreateContainer& copy) :
       UpdateOperation(copy),
-      container_name(copy.container_name) {
+      m_container_name(copy.m_container_name) {
    }
 
    CreateContainer& operator=(const CreateContainer& copy) {
@@ -96,7 +96,7 @@ public:
 
       UpdateOperation::operator=(copy);
 
-      container_name = copy.container_name;
+      m_container_name = copy.m_container_name;
 
       return *this;
    }
@@ -106,8 +106,8 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != nullptr) {
-         return storage_system->create_container(container_name);
+      if (m_storage_system != nullptr) {
+         return m_storage_system->create_container(m_container_name);
       } else {
          return false;
       }
@@ -119,17 +119,17 @@ public:
 
 class DeleteContainer : public UpdateOperation {
 private:
-   string container_name;
+   string m_container_name;
 
 public:
    DeleteContainer(const string& container) :
       UpdateOperation("DeleteContainer"),
-      container_name(container) {
+      m_container_name(container) {
    }
 
    DeleteContainer(const DeleteContainer& copy) :
       UpdateOperation(copy),
-      container_name(copy.container_name) {
+      m_container_name(copy.m_container_name) {
    }
 
    DeleteContainer& operator=(const DeleteContainer& copy) {
@@ -139,7 +139,7 @@ public:
 
       UpdateOperation::operator=(copy);
 
-      container_name = copy.container_name;
+      m_container_name = copy.m_container_name;
 
       return *this;
    }
@@ -149,8 +149,8 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != nullptr) {
-         return storage_system->delete_container(container_name);
+      if (m_storage_system != nullptr) {
+         return m_storage_system->delete_container(m_container_name);
       } else {
          return false;
       }
@@ -162,11 +162,11 @@ public:
 
 class PutObject : public UpdateOperation {
 private:
-   string container_name;
-   string object_name;
-   const vector<unsigned char>* object_bytes;
-   string file_path;
-   const PropertySet* headers;
+   string m_container_name;
+   string m_object_name;
+   const vector<unsigned char>* m_object_bytes;
+   string m_file_path;
+   const PropertySet* m_headers;
 
 public:
    PutObject(const string& container,
@@ -175,20 +175,20 @@ public:
              const string& object_file_path,
              const PropertySet* object_headers) :
       UpdateOperation("PutObject"),
-      container_name(container),
-      object_name(object),
-      object_bytes(object_contents),
-      file_path(object_file_path),
-      headers(object_headers) {
+      m_container_name(container),
+      m_object_name(object),
+      m_object_bytes(object_contents),
+      m_file_path(object_file_path),
+      m_headers(object_headers) {
    }
 
    PutObject(const PutObject& copy) :
       UpdateOperation(copy),
-      container_name(copy.container_name),
-      object_name(copy.object_name),
-      object_bytes(copy.object_bytes),
-      file_path(copy.file_path),
-      headers(copy.headers) {
+      m_container_name(copy.m_container_name),
+      m_object_name(copy.m_object_name),
+      m_object_bytes(copy.m_object_bytes),
+      m_file_path(copy.m_file_path),
+      m_headers(copy.m_headers) {
    }
 
    PutObject& operator=(const PutObject& copy) {
@@ -198,11 +198,11 @@ public:
 
       UpdateOperation::operator=(copy);
 
-      container_name = copy.container_name;
-      object_name = copy.object_name;
-      object_bytes = copy.object_bytes;
-      file_path = copy.file_path;
-      headers = copy.headers;
+      m_container_name = copy.m_container_name;
+      m_object_name = copy.m_object_name;
+      m_object_bytes = copy.m_object_bytes;
+      m_file_path = copy.m_file_path;
+      m_headers = copy.m_headers;
 
       return *this;
    }
@@ -212,17 +212,17 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != nullptr) {
-         if (object_bytes != nullptr) {
-            return storage_system->put_object(container_name,
-                                              object_name,
-                                              *object_bytes,
-                                              headers);
-         } else if (file_path.length() > 0) {
-            return storage_system->put_object_from_file(container_name,
-                                                        object_name,
-                                                        file_path,
-                                                        headers);
+      if (m_storage_system != nullptr) {
+         if (m_object_bytes != nullptr) {
+            return m_storage_system->put_object(m_container_name,
+                                                m_object_name,
+                                                *m_object_bytes,
+                                                m_headers);
+         } else if (!m_file_path.empty()) {
+            return m_storage_system->put_object_from_file(m_container_name,
+                                                          m_object_name,
+                                                          m_file_path,
+                                                          m_headers);
          }
       }
       return false;
@@ -234,21 +234,21 @@ public:
 
 class DeleteObject : public UpdateOperation {
 private:
-   string container_name;
-   string object_name;
+   string m_container_name;
+   string m_object_name;
 
 public:
    DeleteObject(const string& container,
                 const string& object) :
       UpdateOperation("DeleteObject"),
-      container_name(container),
-      object_name(object) {
+      m_container_name(container),
+      m_object_name(object) {
    }
 
    DeleteObject(const DeleteObject& copy) :
       UpdateOperation(copy),
-      container_name(copy.container_name),
-      object_name(copy.object_name) {
+      m_container_name(copy.m_container_name),
+      m_object_name(copy.m_object_name) {
    }
 
    DeleteObject& operator=(const DeleteObject& copy) {
@@ -258,8 +258,8 @@ public:
 
       UpdateOperation::operator=(copy);
 
-      container_name = copy.container_name;
-      object_name = copy.object_name;
+      m_container_name = copy.m_container_name;
+      m_object_name = copy.m_object_name;
 
       return *this;
    }
@@ -269,8 +269,8 @@ public:
    }
 
    bool run_operation() {
-      if (storage_system != nullptr) {
-         return storage_system->delete_object(container_name, object_name);
+      if (m_storage_system != nullptr) {
+         return m_storage_system->delete_object(m_container_name, m_object_name);
       } else {
          return false;
       }
@@ -283,9 +283,9 @@ public:
 MirrorStorageSystem::MirrorStorageSystem(const string& ini_file_path,
                                          bool debug_mode) :
    StorageSystem("Mirror", debug_mode),
-   ini_file(ini_file_path),
-   update_in_parallel(false),
-   min_updates(1) {
+   m_ini_file(ini_file_path),
+   m_update_in_parallel(false),
+   m_min_updates(1) {
 }
 
 //*****************************************************************************
@@ -324,7 +324,7 @@ bool MirrorStorageSystem::have_both_ss() const {
 bool MirrorStorageSystem::update(UpdateOperation& update_op) {
    if (have_both_ss()) {
       int num_update_successes = 0;
-      if (update_in_parallel) {
+      if (m_update_in_parallel) {
          update_op.setStorageSystem(m_primary_ss.get());
          unique_ptr<UpdateOperation> secondary_op(update_op.clone());
          secondary_op->setStorageSystem(m_secondary_ss.get());
@@ -477,9 +477,9 @@ bool MirrorStorageSystem::put_object(const string& container_name,
                                      const vector<unsigned char>& file_contents,
                                      const PropertySet* headers) {
    bool object_added = false;
-   if (container_name.length() > 0 &&
-       object_name.length() > 0 &&
-       file_contents.size() > 0) {
+   if (!container_name.empty() &&
+       !object_name.empty() &&
+       !file_contents.empty()) {
 
       if (have_both_ss()) {
          PutObject op(container_name, object_name, &file_contents, "", headers);
@@ -508,9 +508,9 @@ bool MirrorStorageSystem::put_object_from_file(const string& container_name,
                                                const string& object_file_path,
                                                const PropertySet* headers) {
    bool object_added = false;
-   if (container_name.length() > 0 &&
-       object_name.length() > 0 &&
-       object_file_path.length() > 0) {
+   if (!container_name.empty() &&
+       !object_name.empty() &&
+       !object_file_path.empty()) {
 
       if (have_both_ss()) {
          PutObject op(container_name, object_name, nullptr, object_file_path, headers);
@@ -537,7 +537,7 @@ bool MirrorStorageSystem::put_object_from_file(const string& container_name,
 bool MirrorStorageSystem::delete_object(const string& container_name,
                                         const string& object_name) {
    bool object_deleted = false;
-   if (container_name.length() > 0 && object_name.length() > 0) {
+   if (!container_name.empty() && !object_name.empty()) {
       if (have_both_ss()) {
          DeleteObject op(container_name, object_name);
          object_deleted = update(op);
@@ -557,9 +557,9 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
                                         const string& local_file_path) {
    int64_t bytes_retrieved = 0;
 
-   if (container_name.length() > 0 &&
-       object_name.length() > 0 &&
-       local_file_path.length() > 0) {
+   if (!container_name.empty() &&
+       !object_name.empty() &&
+       !local_file_path.empty()) {
 
       if (have_both_ss()) {
          try {

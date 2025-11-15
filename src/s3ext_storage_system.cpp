@@ -24,15 +24,15 @@ S3ExtStorageSystem::S3ExtStorageSystem(const string& access_key,
                                        const string& container_prefix,
                                        bool debug) :
    StorageSystem("S3Ext", debug),
-   debug_mode(debug),
-   aws_access_key(access_key),
-   aws_secret_key(secret_key),
-   s3_host(host),
-   connected(false)
+   m_debug_mode(debug),
+   m_aws_access_key(access_key),
+   m_aws_secret_key(secret_key),
+   m_s3_host(host),
+   m_connected(false)
 {
    string protocolInUse(protocol);
 
-   if (protocol.length() > 0) {
+   if (!protocol.empty()) {
       StrUtils::toLowerCase(protocolInUse);
       if (protocolInUse == "http") {
          //s3_protocol = S3ProtocolHTTP;
@@ -52,10 +52,10 @@ S3ExtStorageSystem::S3ExtStorageSystem(const string& access_key,
 
    if (debug_mode) {
       printf("S3ExtStorageSystem parameters:\n");
-      printf("access_key=%s\n", aws_access_key.c_str());
-      printf("secret_key=%s\n", aws_secret_key.c_str());
+      printf("access_key=%s\n", m_aws_access_key.c_str());
+      printf("secret_key=%s\n", m_aws_secret_key.c_str());
       printf("protocol=%s\n", protocolInUse.c_str());
-      printf("host=%s\n", s3_host.c_str());
+      printf("host=%s\n", m_s3_host.c_str());
       printf("container_prefix=%s\n", container_prefix.c_str());
    }
 }
@@ -84,7 +84,7 @@ void S3ExtStorageSystem::exit() {
       printf("S3ExtStorageSystem.exit\n");
    }
 
-   connected = false;
+   m_connected = false;
    authenticated = false;
 }
 
@@ -323,7 +323,7 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
          string content_type =
             headers->get_string_value(PropertySet::PROP_CONTENT_TYPE);
          // contentType
-         if (content_type.length() > 0) {
+         if (!content_type.empty()) {
             metadata_props += "contentType=";
             metadata_props += content_type;
             metadata_props += " ";
@@ -334,7 +334,7 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
          string content_md5 =
             headers->get_string_value(PropertySet::PROP_CONTENT_MD5);
          // md5
-         if (content_md5.length() > 0) {
+         if (!content_md5.empty()) {
             metadata_props += "md5=";
             metadata_props += content_md5;
             metadata_props += " ";
@@ -345,7 +345,7 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
          string content_encoding =
             headers->get_string_value(PropertySet::PROP_CONTENT_ENCODING);
          // contentEncoding
-         if (content_encoding.length() > 0) {
+         if (!content_encoding.empty()) {
             metadata_props += "contentEncoding=";
             metadata_props += content_encoding;
             metadata_props += " ";
@@ -362,7 +362,7 @@ bool S3ExtStorageSystem::put_object_from_file(const string& container_name,
 
    StrUtils::strip(metadata_props);
 
-   if (metadata_props.length() > 0) {
+   if (!metadata_props.empty()) {
       script_template = "s3-put-object-props.sh";
       kvp.addPair("%%METADATA_PROPERTIES%%", metadata_props);
    } else {
@@ -457,9 +457,9 @@ int64_t S3ExtStorageSystem::get_object(const string& container_name,
 //*****************************************************************************
 
 void S3ExtStorageSystem::populate_common_variables(KeyValuePairs& kvp) {
-   kvp.addPair("%%S3_ACCESS_KEY%%", aws_access_key);
-   kvp.addPair("%%S3_SECRET_KEY%%", aws_secret_key);
-   kvp.addPair("%%S3_HOST%%", s3_host);
+   kvp.addPair("%%S3_ACCESS_KEY%%", m_aws_access_key);
+   kvp.addPair("%%S3_SECRET_KEY%%", m_aws_secret_key);
+   kvp.addPair("%%S3_HOST%%", m_s3_host);
 }
 
 //*****************************************************************************
@@ -526,10 +526,10 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
       //printf("*********** END STDOUT **************\n");
 
       if (exit_code == 0) {
-         if (std_out.length() > 0) {
+         if (!std_out.empty()) {
             vector<string> output_lines = StrUtils::split(std_out, "\n");
             for (const auto& line : output_lines) {
-               if (line.length() > 0) {
+               if (!line.empty()) {
                   list_output_lines.push_back(line);
                }
             }
@@ -586,7 +586,7 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
                               std_out,
                               std_err)) {
       if (exit_code == 0) {
-         if (std_out.length() > 0) {
+         if (!std_out.empty()) {
             std_out_text = std_out;
          }
          success = true;

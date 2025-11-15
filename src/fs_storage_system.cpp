@@ -9,7 +9,7 @@ using namespace chaudiere;
 
 FSStorageSystem::FSStorageSystem(const string& the_root_dir, bool debug_mode) :
    StorageSystem("FS", debug_mode),
-   root_dir(the_root_dir) {
+   m_root_dir(the_root_dir) {
 }
 
 //*****************************************************************************
@@ -21,10 +21,10 @@ FSStorageSystem::~FSStorageSystem() {
 //*****************************************************************************
 
 bool FSStorageSystem::enter() {
-   if (!OSUtils::directoryExists(root_dir)) {
-      OSUtils::createDirectory(root_dir);
+   if (!OSUtils::directoryExists(m_root_dir)) {
+      OSUtils::createDirectory(m_root_dir);
    }
-   return OSUtils::directoryExists(root_dir);
+   return OSUtils::directoryExists(m_root_dir);
 }
 
 //*****************************************************************************
@@ -35,7 +35,7 @@ void FSStorageSystem::exit() {
 //*****************************************************************************
 
 vector<string> FSStorageSystem::list_account_containers() {
-   return OSUtils::listDirsInDirectory(root_dir);
+   return OSUtils::listDirsInDirectory(m_root_dir);
 }
 
 //*****************************************************************************
@@ -43,7 +43,7 @@ vector<string> FSStorageSystem::list_account_containers() {
 bool FSStorageSystem::create_container(const string& container_name) {
    bool container_created = false;
    if (!has_container(container_name)) {
-      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
       container_created = OSUtils::createDirectory(container_dir);
       if (container_created) {
          if (debug_mode) {
@@ -59,7 +59,7 @@ bool FSStorageSystem::create_container(const string& container_name) {
 
 bool FSStorageSystem::delete_container(const string& container_name) {
    bool container_deleted = false;
-   string container_dir = OSUtils::pathJoin(root_dir, container_name);
+   string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
    container_deleted = Utils::directory_delete_directory(container_dir);
    if (container_deleted) {
       if (debug_mode) {
@@ -74,7 +74,7 @@ bool FSStorageSystem::delete_container(const string& container_name) {
 
 vector<string> FSStorageSystem::list_container_contents(const string& container_name) {
    vector<string> list_contents;
-   string container_dir = OSUtils::pathJoin(root_dir, container_name);
+   string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
    if (OSUtils::directoryExists(container_dir)) {
       return OSUtils::listFilesInDirectory(container_dir);
    }
@@ -86,8 +86,8 @@ vector<string> FSStorageSystem::list_container_contents(const string& container_
 bool FSStorageSystem::get_object_metadata(const std::string& container_name,
                                           const std::string& object_name,
                                           PropertySet& dict_props) {
-   if (container_name.length() > 0 && object_name.length() > 0) {
-      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+   if (!container_name.empty() && !object_name.empty()) {
+      string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
       if (OSUtils::directoryExists(container_dir)) {
          string object_path = OSUtils::pathJoin(container_dir, object_name);
          string meta_path = object_path + ".meta";
@@ -106,11 +106,9 @@ bool FSStorageSystem::put_object(const string& container_name,
                                  const vector<unsigned char>& file_contents,
                                  const PropertySet* headers) {
    bool object_added = false;
-   if (container_name.length() > 0 &&
-       object_name.length() > 0 &&
-       file_contents.size() > 0) {
+   if (!container_name.empty() && !object_name.empty() && !file_contents.empty()) {
 
-      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
       if (OSUtils::directoryExists(container_dir)) {
          string object_path = OSUtils::pathJoin(container_dir, object_name);
          object_added = Utils::file_write_all_bytes(object_path, file_contents);
@@ -155,11 +153,9 @@ bool FSStorageSystem::put_object_from_file(const string& container_name,
                                            const string& object_file_path,
                                            const PropertySet* headers) {
    bool object_added = false;
-   if (container_name.length() > 0 &&
-       object_name.length() > 0 &&
-       object_file_path.length() > 0) {
+   if (!container_name.empty() && !object_name.empty() && !object_file_path.empty()) {
 
-      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
       if (OSUtils::directoryExists(container_dir)) {
          string object_path = OSUtils::pathJoin(container_dir, object_name);
          object_added = Utils::file_copy(object_file_path, object_path);
@@ -202,8 +198,8 @@ bool FSStorageSystem::put_object_from_file(const string& container_name,
 bool FSStorageSystem::delete_object(const string& container_name,
                                     const string& object_name) {
    bool object_deleted = false;
-   if (container_name.length() > 0 && object_name.length() > 0) {
-      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+   if (!container_name.empty() && !object_name.empty()) {
+      string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
       string object_path = OSUtils::pathJoin(container_dir, object_name);
       if (Utils::file_exists(object_path)) {
          object_deleted = OSUtils::deleteFile(object_path);
@@ -239,11 +235,9 @@ int64_t FSStorageSystem::get_object(const string& container_name,
                                     const string& object_name,
                                     const string& local_file_path) {
    int64_t bytes_retrieved = 0;
-   if (container_name.length() > 0 &&
-       object_name.length() > 0 &&
-       local_file_path.length() > 0) {
+   if (!container_name.empty() && !object_name.empty() && !local_file_path.empty()) {
 
-      string container_dir = OSUtils::pathJoin(root_dir, container_name);
+      string container_dir = OSUtils::pathJoin(m_root_dir, container_name);
       string object_path = OSUtils::pathJoin(container_dir, object_name);
       if (Utils::file_exists(object_path)) {
          vector<unsigned char> obj_file_contents;

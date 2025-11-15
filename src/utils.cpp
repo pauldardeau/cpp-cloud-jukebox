@@ -170,7 +170,7 @@ bool Utils::file_read_all_text(const string& file_path,
 vector<string> Utils::file_read_lines(const string& file_path) {
    string file_text;
    if (file_read_all_text(file_path, file_text)) {
-      if (file_text.length() > 0) {
+      if (!file_text.empty()) {
          return StrUtils::split(file_text, "\n");
       }
    }
@@ -215,7 +215,7 @@ vector<string> Utils::path_split(const string& path) {
    string head = EMPTY;
    string tail = EMPTY;
 
-   if (path.length() > 0) {
+   if (!path.empty()) {
       int pos_last_slash = find_last_index(path, '/');
       if (pos_last_slash == -1) {
          // no '/' exists in path (i.e., "file.txt")
@@ -251,7 +251,7 @@ vector<string> Utils::path_splitext(const string& path) {
    string root = EMPTY;
    string ext = EMPTY;
 
-   if (path.length() > 0) {
+   if (!path.empty()) {
       int pos_last_dot = find_last_index(path, '.');
       if (pos_last_dot == -1) {
          // no '.' exists in path (i.e., "bar")
@@ -485,11 +485,11 @@ string Utils::md5_for_file(const string& ini_file_name,
                              std_out,
                              std_err)) {
             if (exit_code == 0) {
-               if (std_out.length() > 0) {
+               if (!std_out.empty()) {
                   int field_number = 1;
                   if (kvp.hasKey(key_field_number)) {
                      string field_number_text = kvp.getValue(key_field_number);
-                     if (field_number_text.length() > 0) {
+                     if (!field_number_text.empty()) {
                         try {
                            field_number = StrUtils::parseInt(field_number_text);
                         } catch (const exception& e) {
@@ -507,7 +507,7 @@ string Utils::md5_for_file(const string& ini_file_name,
                      if (line_fields.size() > 0) {
                         return line_fields[field_number-1];
                      } else {
-                        if (first_line.length() > 0) {
+                        if (!first_line.empty()) {
                            return first_line;
                         } else {
                            printf("error: md5_for_file - first stdout line is empty\n");
