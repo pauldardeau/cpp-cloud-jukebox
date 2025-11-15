@@ -424,7 +424,7 @@ int64_t S3ExtStorageSystem::get_object(const string& container_name,
              local_file_path.c_str());
    }
 
-   if (local_file_path.length() == 0) {
+   if (local_file_path.empty()) {
       printf("error: local file path is empty\n");
       return 0;
    }
@@ -493,7 +493,7 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
 
    if (StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
-      if (file_lines.size() == 0) {
+      if (file_lines.empty()) {
          printf("run_program: unable to read file '%s'\n", program_path.c_str());
          return false;
       }
@@ -558,7 +558,7 @@ bool S3ExtStorageSystem::run_program(const string& program_path,
 
    if (StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
-      if (file_lines.size() == 0) {
+      if (file_lines.empty()) {
          printf("run_program: unable to read file '%s'\n", program_path.c_str());
          return false;
       }
@@ -612,7 +612,7 @@ bool S3ExtStorageSystem::run_program(const string& program_path) {
 
    if (StrUtils::endsWith(program_path, ".sh")) {
       vector<string> file_lines = Utils::file_read_lines(program_path);
-      if (file_lines.size() == 0) {
+      if (file_lines.empty()) {
          printf("run_program: unable to read file '%s'\n", program_path.c_str());
          return false;
       }

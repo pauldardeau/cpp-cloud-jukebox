@@ -501,10 +501,10 @@ string Utils::md5_for_file(const string& ini_file_name,
                      }
                   }
                   vector<string> file_lines = StrUtils::split(std_out, "\n");
-                  if (file_lines.size() > 0) {
+                  if (!file_lines.empty()) {
                      string first_line = file_lines[0];
                      vector<string> line_fields = StrUtils::split(first_line, " ");
-                     if (line_fields.size() > 0) {
+                     if (!line_fields.empty()) {
                         return line_fields[field_number-1];
                      } else {
                         if (!first_line.empty()) {
@@ -686,7 +686,7 @@ bool Utils::execute_program(const string& program_path,
                             string& std_err) {
    bool success = false;
 
-   if (program_path.length() == 0) {
+   if (program_path.empty()) {
       printf("error: a non-empty program_path must be specified\n");
       return false;
    }
@@ -841,7 +841,7 @@ bool Utils::launch_program(const string& program_path,
                            int& child_process_pid) {
    bool success = false;
 
-   if (program_path.length() == 0) {
+   if (program_path.empty()) {
       printf("error: a non-empty program_path must be specified\n");
       return false;
    }
@@ -910,7 +910,7 @@ bool Utils::get_platform_config_value(const string& ini_file_name,
                                       string& config_value,
                                       bool strip_quotes) {
    string os_identifier = Utils::get_platform_identifier();
-   if (os_identifier == "unknown" || os_identifier.length() == 0) {
+   if (os_identifier == "unknown" || os_identifier.empty()) {
       printf("error: unknown platform\n");
       return false;
    }
@@ -944,7 +944,7 @@ bool Utils::get_platform_config_value(const string& ini_file_name,
 bool Utils::get_platform_config_values(const string& ini_file_name,
                                        KeyValuePairs& kvp) {
    string os_identifier = Utils::get_platform_identifier();
-   if (os_identifier == "unknown" || os_identifier.length() == 0) {
+   if (os_identifier == "unknown" || os_identifier.empty()) {
       printf("error: unknown platform\n");
       return false;
    }

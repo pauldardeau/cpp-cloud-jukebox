@@ -179,13 +179,13 @@ bool FSStorageSystem::put_object_from_file(const string& container_name,
       }
    } else {
       if (debug_mode()) {
-         if (container_name.length() == 0) {
+         if (container_name.empty()) {
             printf("container name is missing, can't put object\n");
          }
-         if (object_name.length() == 0) {
+         if (object_name.empty()) {
             printf("object name is missing, can't put object\n");
          }
-         if (object_file_path.length() == 0) {
+         if (object_file_path.empty()) {
             printf("object file path is empty, can't put object\n");
          }
       }

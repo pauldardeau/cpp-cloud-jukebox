@@ -487,13 +487,13 @@ bool MirrorStorageSystem::put_object(const string& container_name,
       }
    } else {
       if (debug_mode()) {
-         if (container_name.length() == 0) {
+         if (container_name.empty()) {
             printf("container name is missing, can't put object\n");
          }
-         if (object_name.length() == 0) {
+         if (object_name.empty()) {
             printf("object name is missing, can't put object\n");
          }
-         if (file_contents.size() == 0) {
+         if (file_contents.empty()) {
             printf("object content is empty, can't put object\n");
          }
       }
@@ -518,13 +518,13 @@ bool MirrorStorageSystem::put_object_from_file(const string& container_name,
       }
    } else {
       if (debug_mode()) {
-         if (container_name.length() == 0) {
+         if (container_name.empty()) {
             printf("container name is missing, can't put object\n");
          }
-         if (object_name.length() == 0) {
+         if (object_name.empty()) {
             printf("object name is missing, can't put object\n");
          }
-         if (object_file_path.length() == 0) {
+         if (object_file_path.empty()) {
             printf("object file path is empty, can't put object\n");
          }
       }
@@ -584,13 +584,13 @@ int64_t MirrorStorageSystem::get_object(const string& container_name,
       }
    } else {
       if (debug_mode()) {
-         if (container_name.length() == 0) {
+         if (container_name.empty()) {
             printf("container name is missing, can't get object\n");
          }
-         if (object_name.length() == 0) {
+         if (object_name.empty()) {
             printf("object name is missing, can't get object\n");
          }
-         if (local_file_path.size() == 0) {
+         if (local_file_path.empty()) {
             printf("local file path is empty, can't get object\n");
          }
       }

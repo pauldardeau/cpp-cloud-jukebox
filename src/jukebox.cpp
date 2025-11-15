@@ -242,7 +242,7 @@ string Jukebox::get_metadata_db_file_path() {
 //*****************************************************************************
 
 vector<string> Jukebox::components_from_file_name(const string& file_name) {
-   if (file_name.length() == 0) {
+   if (file_name.empty()) {
       return vector<string>();
    }
 
@@ -385,7 +385,7 @@ string Jukebox::object_file_suffix() {
 //*****************************************************************************
 
 string Jukebox::container_for_song(const string& song_uid) {
-   if (song_uid.length() == 0) {
+   if (song_uid.empty()) {
       return string("");
    }
    string container_suffix = "-artist-songs" + get_container_suffix();
@@ -486,8 +486,8 @@ void Jukebox::import_songs() {
                      printf("error: unable to read file %s\n", full_path.c_str());
                   }
 
-                  if (file_read && file_contents.size() > 0) {
-                     if (file_contents.size() > 0) {
+                  if (file_read && !file_contents.empty()) {
+                     if (!file_contents.empty()) {
                         // for general purposes, it might be useful or helpful to have
                         // a minimum size for compressing
                         if (m_jukebox_options.get_use_compression()) {
@@ -953,7 +953,7 @@ void Jukebox::download_songs() {
          check_index++;
       }
 
-      if (dl_songs.size() > 0) {
+      if (!dl_songs.empty()) {
          if (!m_downloader && !m_download_thread) {
             if (m_debug_print) {
                printf("creating SongDownloader and download thread\n");
@@ -997,7 +997,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
          if (retrieve_album_track_object_list(artist,
                                               album,
                                               list_track_objects)) {
-            if (list_track_objects.size() > 0) {
+            if (!list_track_objects.empty()) {
                for (const auto& track_object_name : list_track_objects) {
                   SongMetadata song;
                   if (m_jukebox_db->retrieve_song(track_object_name, song)) {
@@ -1298,8 +1298,8 @@ ReadFileResults Jukebox::read_file_contents(const string& file_path,
       printf("error: unable to read file %s\n", file_path.c_str());
    }
 
-   if (file_read && file_contents.size() > 0) {
-      if (file_contents.size() > 0) {
+   if (file_read && !file_contents.empty()) {
+      if (!file_contents.empty()) {
          // for general purposes, it might be useful or helpful to have
          // a minimum size for compressing
          if (m_jukebox_options.get_use_compression()) {
@@ -1383,7 +1383,7 @@ void Jukebox::import_playlists() {
       int file_import_count = 0;
       vector<string> dir_listing =
          OSUtils::listFilesInDirectory(m_playlist_import_dir);
-      if (dir_listing.size() == 0) {
+      if (dir_listing.empty()) {
          printf("no playlists found\n");
          return;
       }
@@ -1612,7 +1612,7 @@ bool Jukebox::delete_artist(const string& artist) {
    if (!artist.empty()) {
       vector<SongMetadata> artist_song_list =
          m_jukebox_db->songs_for_artist(artist);
-      if (artist_song_list.size() == 0) {
+      if (artist_song_list.empty()) {
          printf("no artist songs in jukebox\n");
          return false;
       } else {
@@ -1640,7 +1640,7 @@ bool Jukebox::delete_album(const string& album) {
       string album_name = album.substr(pos_double_dash+2, num_chars);
       vector<SongMetadata> list_album_songs =
          m_jukebox_db->retrieve_album_songs(artist, album_name);
-      if (list_album_songs.size() > 0) {
+      if (!list_album_songs.empty()) {
          int num_songs_deleted = 0;
          for (const auto& song : list_album_songs) {
             printf("%s %s\n",
@@ -1700,7 +1700,7 @@ void Jukebox::import_album_art() {
       int file_import_count = 0;
       vector<string> dir_listing =
          OSUtils::listFilesInDirectory(m_album_art_import_dir);
-      if (dir_listing.size() == 0) {
+      if (dir_listing.empty()) {
          printf("no album art found\n");
          return;
       }
@@ -1749,7 +1749,7 @@ void Jukebox::prepare_for_termination() {
 //*****************************************************************************
 
 void Jukebox::display_info() const {
-   if (m_song_list.size() > 0) {
+   if (!m_song_list.empty()) {
       long max_index = m_song_list.size() - 1;
       if (m_song_index + 3 <= max_index) {
          printf("----- songs on deck -----\n");
@@ -1834,7 +1834,7 @@ bool Jukebox::retrieve_album_track_object_list(const string& artist,
                for (auto& track : track_list) {
                   list_track_objects.push_back(track["object"].get<std::string>());
                }
-               if (list_track_objects.size() > 0) {
+               if (!list_track_objects.empty()) {
                   success = true;
                }
             }

@@ -275,7 +275,7 @@ bool JukeboxDB::retrieve_song(const string& file_name, SongMetadata& song) {
       if (rs) {
          vector<SongMetadata> song_results;
          if (songs_for_query(rs.get(), song_results)) {
-            if (song_results.size() > 0) {
+            if (!song_results.empty()) {
                song = song_results[0];
                success = true;
             }
