@@ -1,0 +1,3 @@
+[submodule "chapeau"]
+	path = chapeau
+	url = https://github.com/pauldardeau/chapeau.git
