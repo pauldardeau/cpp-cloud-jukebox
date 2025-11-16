@@ -190,23 +190,25 @@ void TestUtils::test_find_last_index() {
 
 void TestUtils::test_path_splitext() {
    TEST_CASE("test_path_splitext");
-   vector<string> tuple = Utils::path_splitext("bar"); // -> ("bar", "")
+
+   vector<string> tuple;
+   Utils::path_splitext("bar", tuple); // -> ("bar", "")
    requireStringEquals(tuple[0], "bar");
    requireStringEquals(tuple[1], "");
 
-   tuple = Utils::path_splitext("foo.bar.exe"); // -> ("foo.bar", ".exe")
+   Utils::path_splitext("foo.bar.exe", tuple); // -> ("foo.bar", ".exe")
    requireStringEquals(tuple[0], "foo.bar");
    requireStringEquals(tuple[1], ".exe");
 
-   tuple = Utils::path_splitext("/foo/bar.exe"); // -> ("/foo/bar", ".exe")
+   Utils::path_splitext("/foo/bar.exe", tuple); // -> ("/foo/bar", ".exe")
    requireStringEquals(tuple[0], "/foo/bar");
    requireStringEquals(tuple[1], ".exe");
 
-   tuple = Utils::path_splitext(".cshrc"); // -> (".cshrc", "")
+   Utils::path_splitext(".cshrc", tuple); // -> (".cshrc", "")
    requireStringEquals(tuple[0], ".cshrc");
    requireStringEquals(tuple[1], "");
 
-   tuple = Utils::path_splitext("/foo/....jpg"); // -> ("/foo/....jpg", "")
+   Utils::path_splitext("/foo/....jpg", tuple); // -> ("/foo/....jpg", "")
    requireStringEquals(tuple[0], "/foo/....jpg");
    requireStringEquals(tuple[1], "");
 }

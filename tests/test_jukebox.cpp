@@ -144,7 +144,8 @@ void TestJukebox::test_get_metadata_db_file_path() {
 void TestJukebox::test_components_from_file_name() {
    TEST_CASE("test_components_from_file_name");
    string file_name = "The-Who--Whos-Next--My-Wife.flac";
-   vector<string> components = Jukebox::components_from_file_name(file_name);
+   vector<string> components;
+   Jukebox::components_from_file_name(file_name, components);
    require(components.size() == 3, "file name has 3 components");
    if (components.size() == 3) {
       requireStringEquals("The Who", components[0]);

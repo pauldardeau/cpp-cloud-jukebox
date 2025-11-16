@@ -239,7 +239,8 @@ vector<string> Utils::path_split(const string& path) {
 
 //*****************************************************************************
 
-vector<string> Utils::path_splitext(const string& path) {
+void Utils::path_splitext(const string& path,
+                          std::vector<std::string>& tuple) {
    // python: os.path.splitext
 
    // splitext("bar") -> ("bar", "")
@@ -270,15 +271,15 @@ vector<string> Utils::path_splitext(const string& path) {
                // splitext("/foo/bar.exe") -> ("/foo/bar", ".exe")
                root = path.substr(0, pos_last_dot);
                ext = path.substr(pos_last_dot);
+
             }
          }
       }
    }
 
-   vector<string> components(2);
-   components.push_back(root);
-   components.push_back(ext);
-   return components;
+   tuple.clear();
+   tuple.push_back(root);
+   tuple.push_back(ext);
 }
 
 //*****************************************************************************
@@ -725,7 +726,8 @@ bool Utils::execute_program(const string& program_path,
       close(fd_stderr[READ_PIPE]);
       close(fd_stderr[WRITE_PIPE]);
 
-      vector<string> program_path_components = path_splitext(program_path);
+      vector<string> program_path_components;
+      path_splitext(program_path, program_path_components);
       const string& program_file = program_path_components[1];
       const char* program_name = program_file.c_str();
 
@@ -855,7 +857,8 @@ bool Utils::launch_program(const string& program_path,
 
    if (pid == 0) {
       // child
-      vector<string> program_path_components = path_splitext(program_path);
+      vector<string> program_path_components;
+      path_splitext(program_path, program_path_components);
       const string& program_file = program_path_components[1];
       const char* program_name = program_file.c_str();
 

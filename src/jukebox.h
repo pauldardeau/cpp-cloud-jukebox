@@ -140,7 +140,8 @@ public:
 
    std::string get_metadata_db_file_path();
 
-   static std::vector<std::string> components_from_file_name(const std::string& file_name);
+   static void components_from_file_name(const std::string& file_name,
+                                         std::vector<std::string>& components);
    static std::string artist_from_file_name(const std::string& file_name);
    static std::string album_from_file_name(const std::string& file_name);
    static std::string song_from_file_name(const std::string& file_name);

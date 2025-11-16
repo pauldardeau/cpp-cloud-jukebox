@@ -241,9 +241,12 @@ string Jukebox::get_metadata_db_file_path() {
 
 //*****************************************************************************
 
-vector<string> Jukebox::components_from_file_name(const string& file_name) {
+void Jukebox::components_from_file_name(const string& file_name,
+                                        vector<string>& components) {
+   components.clear();
+
    if (file_name.empty()) {
-      return vector<string>();
+      return;
    }
 
    size_t pos_extension = file_name.find('.');
@@ -257,12 +260,10 @@ vector<string> Jukebox::components_from_file_name(const string& file_name) {
    vector<string> tokens = StrUtils::split(base_file_name, "--");
    if (tokens.size() == 3) {
       vector<string> ret_vet(3);
-      ret_vet.push_back(JBUtils::unencode_value(tokens[0]));
-      ret_vet.push_back(JBUtils::unencode_value(tokens[1]));
-      ret_vet.push_back(JBUtils::unencode_value(tokens[2]));
-      return ret_vet;
-   } else {
-      return vector<string>();
+      components.reserve(3);
+      components.push_back(JBUtils::unencode_value(tokens[0]));
+      components.push_back(JBUtils::unencode_value(tokens[1]));
+      components.push_back(JBUtils::unencode_value(tokens[2]));
    }
 }
 
@@ -270,7 +271,8 @@ vector<string> Jukebox::components_from_file_name(const string& file_name) {
 
 string Jukebox::artist_from_file_name(const string& file_name) {
    if (!file_name.empty()) {
-      vector<string> components = components_from_file_name(file_name);
+      vector<string> components;
+      components_from_file_name(file_name, components);
       if (components.size() == 3) {
          return components[0];
       }
@@ -282,7 +284,8 @@ string Jukebox::artist_from_file_name(const string& file_name) {
 
 string Jukebox::album_from_file_name(const string& file_name) {
    if (!file_name.empty()) {
-      vector<string> components = components_from_file_name(file_name);
+      vector<string> components;
+      components_from_file_name(file_name, components);
       if (components.size() == 3) {
          return components[1];
       }
@@ -294,7 +297,8 @@ string Jukebox::album_from_file_name(const string& file_name) {
 
 string Jukebox::song_from_file_name(const string& file_name) {
    if (!file_name.empty()) {
-      vector<string> components = components_from_file_name(file_name);
+      vector<string> components;
+      components_from_file_name(file_name, components);
       if (components.size() == 3) {
          return components[2];
       }
@@ -388,6 +392,7 @@ string Jukebox::container_for_song(const string& song_uid) {
    if (song_uid.empty()) {
       return string("");
    }
+
    string container_suffix = "-artist-songs" + get_container_suffix();
 
    string artist = artist_from_file_name(song_uid);
@@ -447,7 +452,8 @@ void Jukebox::import_songs() {
          // ignore it if it's not a file
          if (Utils::path_isfile(full_path)) {
             string file_name = listing_entry;
-            vector<string> path_elems = Utils::path_splitext(full_path);
+            vector<string> path_elems;
+            Utils::path_splitext(full_path, path_elems);
             const string& extension = path_elems[1];
             if (!extension.empty()) {
                long file_size = Utils::get_file_size(full_path);
@@ -921,7 +927,8 @@ void Jukebox::download_songs() {
       string full_path =
          OSUtils::pathJoin(m_song_play_dir, listing_entry);
       if (Utils::path_isfile(full_path)) {
-         vector<string> path_elems = Utils::path_splitext(full_path);
+         vector<string> path_elems;
+         Utils::path_splitext(full_path, path_elems);
          const string& extension = path_elems[1];
          if (!extension.empty() && extension != m_download_extension) {
             song_file_count += 1;

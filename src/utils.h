@@ -21,7 +21,8 @@ public:
    static bool path_isfile(const std::string& path);
    static int find_last_index(const std::string& str, char x);
    static std::vector<std::string> path_split(const std::string& path);
-   static std::vector<std::string> path_splitext(const std::string& path);
+   static void path_splitext(const std::string& path,
+                             std::vector<std::string>& tuple);
    static double path_getmtime(const std::string& path);
    static int get_pid();
    static long get_file_size(const std::string& path_to_file);
