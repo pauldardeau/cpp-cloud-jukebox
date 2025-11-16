@@ -4,9 +4,15 @@
 #include <string>
 #include "TestSuite.h"
 
+class JukeboxDB;
 
 class TestJukeboxDB : public chaudiere::TestSuite {
 protected:
+   virtual void setup();
+   virtual void tearDown();
+
+   bool insert_album(JukeboxDB& jbdb);
+
    void runTests();
 
    void test_is_open();

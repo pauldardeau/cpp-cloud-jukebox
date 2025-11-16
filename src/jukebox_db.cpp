@@ -43,6 +43,9 @@ bool JukeboxDB::open_db() {
    if (m_db_connection->open()) {
       m_db_is_open = true;
       was_opened = true;
+   } else {
+      m_db_connection.reset();
+      m_db_is_open = false;
    }
    return was_opened;
 }
@@ -53,23 +56,23 @@ bool JukeboxDB::open() {
    close();
    bool open_success = false;
    if (open_db()) {
+      //printf("*** DB opened\n");
+
       if (!have_tables()) {
          open_success = create_tables();
          if (!open_success) {
-            if (m_debug_print) {
+            //if (m_debug_print) {
                printf("error: unable to create all tables\n");
-            }
-            m_db_connection->close();
-            m_db_connection.reset();
-            m_db_is_open = false;
+            //}
+            close();
          }
       } else {
          open_success = true;
       }
    } else {
-      if (m_debug_print) {
+      //if (m_debug_print) {
          printf("error: unable to open database\n");
-      }
+      //}
    }
    return open_success;
 }
@@ -79,6 +82,7 @@ bool JukeboxDB::open() {
 bool JukeboxDB::close() {
    bool did_close = false;
    if (m_db_connection) {
+      //printf("*** DB closed\n");
       m_db_connection->close();
       m_db_connection.reset();
       m_db_is_open = false;
@@ -90,18 +94,23 @@ bool JukeboxDB::close() {
 //*****************************************************************************
 
 bool JukeboxDB::create_table(const string& sql) {
+   //printf("inside create_table\n");
    if (!m_db_connection) {
-      if (m_debug_print) {
-         printf("cannot create table, DB is not open\n");
-      }
+      //if (m_debug_print) {
+         //printf("cannot create table, DB is not open\n");
+      //}
       return false;
    }
    unsigned long rowsAffectedCount = 0L;
+   //printf("calling executeUpdate\n");
    bool table_created = m_db_connection->executeUpdate(sql, rowsAffectedCount);
+   //printf("back from executeUpdate\n");
    if (!table_created) {
-      if (m_debug_print) {
-         printf("table create failed: %s\n", sql.c_str());
-      }
+      //if (m_debug_print) {
+         //printf("create_table failed: %s\n", sql.c_str());
+      //}
+   } else {
+      //printf("create_table succeeded\n");
    }
    return table_created;
 }
@@ -331,7 +340,7 @@ bool JukeboxDB::insert_song(const SongMetadata& song) {
             insert_success = true;
          }
       } else {
-         printf("error inserting song\n");
+         //printf("error inserting song\n");
       }
    }
 
@@ -436,9 +445,12 @@ string JukeboxDB::sql_where_clause(bool using_encryption,
 
 //*****************************************************************************
 
-vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
-                                                     const string& album) {
-   vector<SongMetadata> songs;
+bool JukeboxDB::retrieve_album_songs(const string& artist,
+                                     const string& album,
+                                     vector<SongMetadata>& songs) {
+   songs.clear();
+   bool success = false;
+
    if (m_db_is_open) {
       string sql = "SELECT song_uid,"
                           "file_time,"
@@ -456,34 +468,54 @@ vector<SongMetadata> JukeboxDB::retrieve_album_songs(const string& artist,
                           "album_uid "
                    "FROM song";
       sql += sql_where_clause();
-      //if len(artist) > 0:
-      //    sql += " AND artist_name='%s'" % artist
-      if (!artist.empty()) {
-          string encoded_artist = JBUtils::encode_value(artist);
-          char like_clause[4096];
-          memset(like_clause, 0, sizeof(like_clause));
-          if (!album.empty()) {
-              string encoded_album = JBUtils::encode_value(album);
-              snprintf(like_clause, 4096, " AND object_name LIKE '%s--%s%%'", encoded_artist.c_str(), encoded_album.c_str());
-          } else {
-              snprintf(like_clause, 4096, " AND object_name LIKE '%s--%%'", encoded_artist.c_str());
-          }
-          sql += string(like_clause);
+
+      const bool haveArtist = !artist.empty();
+      const bool haveAlbum = !album.empty();
+      string encoded_artist;
+      string encoded_album;
+
+      if (haveArtist) {
+         encoded_artist = JBUtils::encode_value(artist);
       }
-      
+
+      if (haveAlbum) {
+         encoded_album = JBUtils::encode_value(album);
+      }
+
+      char like_clause[4096];
+      memset(like_clause, 0, sizeof(like_clause));
+
+      if (haveArtist && haveAlbum) {
+         snprintf(like_clause, 4096, " AND song_uid LIKE '%s--%s%%'",
+                  encoded_artist.c_str(),
+                  encoded_album.c_str());
+      } else if (haveArtist) {
+         snprintf(like_clause, 4096, " AND song_uid LIKE '%s--%%'",
+                  encoded_artist.c_str());
+      } else if (haveAlbum) {
+         snprintf(like_clause, 4096, " AND song_uid LIKE '%%--%s'",
+                  encoded_album.c_str());
+      }
+
+      if (strlen(like_clause) > 0) {
+         sql += string(like_clause);
+      }
+
       unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql));
       if (rs) {
          songs_for_query(rs.get(), songs);
+         success = true;
       }
    }
 
-   return songs;
+   return success;
 }
 
 //*****************************************************************************
 
-vector<SongMetadata> JukeboxDB::songs_for_artist(const string& artist_name) {
-   vector<SongMetadata> songs;
+bool JukeboxDB::songs_for_artist(const string& artist_name,
+                                 vector<SongMetadata>& songs) {
+   bool success = false;
    if (m_db_is_open) {
       string sql = "SELECT song_uid,"
                           "file_time,"
@@ -507,10 +539,11 @@ vector<SongMetadata> JukeboxDB::songs_for_artist(const string& artist_name) {
       unique_ptr<DBResultSet> rs(m_db_connection->executeQuery(sql, args));
       if (rs) {
          songs_for_query(rs.get(), songs);
+         success = true;
       }
    }
 
-   return songs;
+   return success;
 }
 
 //*****************************************************************************

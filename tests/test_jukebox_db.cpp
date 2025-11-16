@@ -3,11 +3,213 @@
 #include "test_jukebox_db.h"
 #include "jukebox_db.h"
 #include "fs_test_case.h"
+#include "OSUtils.h"
 
 using namespace std;
+using namespace chaudiere;
 
 TestJukeboxDB::TestJukeboxDB() :
    TestSuite("TestJukeboxDB") {
+}
+
+void TestJukeboxDB::setup() {
+   string fileName = "jukebox_db.sqlite3";
+   if (OSUtils::pathExists(fileName)) {
+      OSUtils::deleteFile(fileName);
+   }
+}
+
+void TestJukeboxDB::tearDown() {
+   string fileName = "jukebox_db.sqlite3";
+   if (OSUtils::pathExists(fileName)) {
+      OSUtils::deleteFile(fileName);
+   }
+}
+
+bool TestJukeboxDB::insert_album(JukeboxDB& jbdb) {
+   std::vector<SongMetadata> songs;
+
+   std::string artist = "Steely-Dan";
+   std::string album = "Aja";
+   std::string prefix = artist + string("--") + album;
+   std::string container = "s-artist-songs";
+
+   {
+      std::string song_name = "Black Cow";
+      std::string song_file = prefix + "Black-Cow";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   {
+      std::string song_name = "Aja";
+      std::string song_file = prefix + "Aja";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   {
+      std::string song_name = "Deacon Blues";
+      std::string song_file = prefix + "Deacon-Blues";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   {
+      std::string song_name = "Peg";
+      std::string song_file = prefix + "Peg";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   {
+      std::string song_name = "Home at Last";
+      std::string song_file = prefix + "Home-at-Last";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   {
+      std::string song_name = "I Got the News";
+      std::string song_file = prefix + "I-Got-the-News";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   {
+      std::string song_name = "Josie";
+      std::string song_file = prefix + "Josie";
+
+      SongMetadata song;
+      song.set_file_uid(song_file);
+      song.set_file_name(song_file);
+      song.set_origin_file_size(23827669L);
+      song.set_stored_file_size(23827669L);
+      song.set_pad_char_count(0L);
+      song.set_file_time("2022-09-17 08:56:0.000");
+      song.set_md5_hash("asdf");
+      song.set_compressed(0);
+      song.set_encrypted(0);
+      song.set_container_name(container);
+      song.set_object_name(song_file);
+      song.set_artist_uid(artist);
+      song.set_artist_name(artist);
+      song.set_album_uid(album);
+      song.set_song_name(song_name);
+
+      songs.push_back(song);
+   }
+
+   int songs_added = 0;
+   for (const auto& song : songs) {
+      if (jbdb.insert_song(song)) {
+         songs_added++;
+      }
+   }
+
+   return songs_added == songs.size();
 }
 
 void TestJukeboxDB::runTests() {
@@ -93,6 +295,7 @@ void TestJukeboxDB::test_create_table() {
                    "cust_uid TEXT UNIQUE NOT NULL,"
                    "cust_name TEXT NOT NULL,"
                    "cust_description TEXT)";
+   //printf("expecting failure below\n");
    requireFalse(jbdb.create_table(sql), "create table must return false for DB not opened");
 
    // DB open, valid sql
@@ -104,8 +307,8 @@ void TestJukeboxDB::test_create_table() {
                            "uid TEXTS UNIQUE NOT NULL,"
                            "name FOO NOT NULL"
                            "description TEXT)";
+   //printf("expecting failure below\n");
    requireFalse(jbdb.create_table(invalid_sql), "create table with invalid sql must return false");
-   jbdb.close();
 }
 
 void TestJukeboxDB::test_create_tables() {
@@ -119,6 +322,7 @@ void TestJukeboxDB::test_create_tables() {
    require(jbdb.create_tables(), "normal create_tables must return true");
 
    // 2nd attempt
+   printf("=== expecting SQL error below\n");
    requireFalse(jbdb.create_tables(), "2nd call to create_tables must return false");
 }
 
@@ -249,6 +453,7 @@ void TestJukeboxDB::test_insert_song() {
 
    require(jbdb.insert_song(song), "insert_song must return true");
 
+   printf("=== expecting SQL error below\n");
    requireFalse(jbdb.insert_song(song), "insert_song must return false on 2nd insert");
    jbdb.close();
 }
@@ -276,29 +481,33 @@ void TestJukeboxDB::test_retrieve_album_songs() {
    JukeboxDB jbdb(db_file);
    require(jbdb.open(), "open must return true");
 
-   vector<SongMetadata> songs;
-   SongMetadata song;
+   insert_album(jbdb);
 
-   //TODO: add some songs
+   vector<SongMetadata> songs;
 
    // empty string for artist
-   songs = jbdb.retrieve_album_songs("", "1984");
-   require(songs.size() == 0, "retrieve_album_songs must return empty list when artist name is missing");
+   songs.clear();
+   jbdb.retrieve_album_songs("", "1984", songs);
+   require(songs.empty(), "retrieve_album_songs must return empty list when artist name is missing");
 
    // empty string for both artist and album
-   songs = jbdb.retrieve_album_songs("", "");
-   require(songs.size() == 0, "retrieve_album_songs must return empty list when artist name and album name are missing");
+   songs.clear();
+   jbdb.retrieve_album_songs("", "", songs);
+   require(!songs.empty(), "retrieve_album_songs must return non-empty list when artist name and album name are missing");
 
    // empty string for album
-   songs = jbdb.retrieve_album_songs("Van Halen", "");
-   require(songs.size() == 0, "retrieve_album_songs must return empty list when album name is missing");
+   songs.clear();
+   jbdb.retrieve_album_songs("Van Halen", "", songs);
+   require(songs.empty(), "retrieve_album_songs must return empty list when album name is missing");
 
    // non-matching artist and album
-   songs = jbdb.retrieve_album_songs("Led Zeppelin", "Houses of the Holy");
-   require(songs.size() == 0, "retrieve_album_songs must return empty list when no matching artist and album songs");
+   songs.clear();
+   jbdb.retrieve_album_songs("Led Zeppelin", "Houses of the Holy", songs);
+   require(songs.empty(), "retrieve_album_songs must return empty list when no matching artist and album songs");
 
    // matching artist and album
-   songs = jbdb.retrieve_album_songs("Steely Dan", "Aja");
+   songs.clear();
+   jbdb.retrieve_album_songs("Steely Dan", "Aja", songs);
    require(songs.size() == 7, "retrieve_album_songs must return 7 songs");
 }
 
@@ -313,12 +522,12 @@ void TestJukeboxDB::test_songs_for_artist() {
    vector<SongMetadata> songs;
 
    // empty string for artist
-   songs = jbdb.songs_for_artist("");
-   require(songs.size() == 0, "songs_for_artist must return empty list when artist name is missing");
+   jbdb.songs_for_artist("", songs);
+   require(songs.empty(), "songs_for_artist must return empty list when artist name is missing");
 
    // no songs in DB
-   songs = jbdb.songs_for_artist("Van Halen");
-   require(songs.size() == 0, "songs_for_artist must return empty list when there are none");
+   jbdb.songs_for_artist("Van Halen", songs);
+   require(songs.empty(), "songs_for_artist must return empty list when there are none");
 
    // no matching artist songs in DB
    SongMetadata song;
@@ -339,8 +548,8 @@ void TestJukeboxDB::test_songs_for_artist() {
    song.set_song_name("My Wife");
    require(jbdb.insert_song(song), "insert_song must return true");
 
-   songs = jbdb.songs_for_artist("Van Halen");
-   require(songs.size() == 0, "songs_for_artist must return empty list when no matching artist songs");
+   jbdb.songs_for_artist("Van Halen", songs);
+   require(songs.empty(), "songs_for_artist must return empty list when no matching artist songs");
 
    // add a matching artist song
    SongMetadata song2;
@@ -361,8 +570,8 @@ void TestJukeboxDB::test_songs_for_artist() {
    song2.set_song_name("I'll Wait");
    require(jbdb.insert_song(song2), "insert_song must return true");
 
-   songs = jbdb.songs_for_artist("Van Halen");
-   require(songs.size() == 0, "songs_for_artist must return 1 song");
+   jbdb.songs_for_artist("Van Halen", songs);
+   require(songs.empty(), "songs_for_artist must return 1 song");
 
    //TODO: multiple matching and non-matching artist songs
 }

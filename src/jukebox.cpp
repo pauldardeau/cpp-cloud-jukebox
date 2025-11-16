@@ -1021,7 +1021,7 @@ void Jukebox::play_songs(bool shuffle, string artist, string album) {
       }
 
       if (!have_songs) {
-         m_song_list = m_jukebox_db->retrieve_album_songs(artist, album);
+         m_jukebox_db->retrieve_album_songs(artist, album, m_song_list);
       }
 
       play_retrieved_songs(shuffle);
@@ -1617,8 +1617,8 @@ bool Jukebox::delete_song(const string& song_uid, bool upload_metadata) {
 bool Jukebox::delete_artist(const string& artist) {
    bool is_deleted = false;
    if (!artist.empty()) {
-      vector<SongMetadata> artist_song_list =
-         m_jukebox_db->songs_for_artist(artist);
+      vector<SongMetadata> artist_song_list;
+      m_jukebox_db->songs_for_artist(artist, artist_song_list);
       if (artist_song_list.empty()) {
          printf("no artist songs in jukebox\n");
          return false;
@@ -1645,8 +1645,8 @@ bool Jukebox::delete_album(const string& album) {
       string artist = album.substr(0, pos_double_dash);
       int num_chars = album.length() - pos_double_dash - 2;
       string album_name = album.substr(pos_double_dash+2, num_chars);
-      vector<SongMetadata> list_album_songs =
-         m_jukebox_db->retrieve_album_songs(artist, album_name);
+      vector<SongMetadata> list_album_songs;
+      m_jukebox_db->retrieve_album_songs(artist, album_name, list_album_songs);
       if (!list_album_songs.empty()) {
          int num_songs_deleted = 0;
          for (const auto& song : list_album_songs) {

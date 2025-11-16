@@ -43,9 +43,11 @@ public:
    bool store_song_metadata(const SongMetadata& song);
    std::string sql_where_clause(bool using_encryption = false,
                                 bool using_compression = false);
-   std::vector<SongMetadata> retrieve_album_songs(const std::string& artist,
-                                                  const std::string& album);
-   std::vector<SongMetadata> songs_for_artist(const std::string& artist_name);
+   bool retrieve_album_songs(const std::string& artist,
+                             const std::string& album,
+                             std::vector<SongMetadata>& songs);
+   bool songs_for_artist(const std::string& artist_name,
+                         std::vector<SongMetadata>& songs);
    void show_listings();
    void show_artists();
    void show_genres();
