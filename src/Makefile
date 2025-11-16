@@ -6,7 +6,7 @@ LINK_CMD = c++
 # remove -ldl for non-linux
 # libapps.a    libcrypto.a  libcurlpp.a   libinih.a    libminiocpp.a  libssl.a
 # libcommon.a  libcurl.a    libdefault.a  liblegacy.a  libpugixml.a   libz.a
-LINK_LIBS = -lsqlite3 -lz
+LINK_LIBS = -lsqlite3
 
 EXE_NAME = cpp-cloud-jukebox
 
