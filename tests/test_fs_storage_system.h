@@ -5,7 +5,7 @@
 #include "TestSuite.h"
 
 
-class TestFSStorageSystem : public poivre::TestSuite {
+class TestFSStorageSystem : public chaudiere::TestSuite {
 protected:
    void runTests();
 

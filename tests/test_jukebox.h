@@ -5,7 +5,7 @@
 #include "TestSuite.h"
 
 
-class TestJukebox : public poivre::TestSuite {
+class TestJukebox : public chaudiere::TestSuite {
 protected:
    void runTests();
 

@@ -37,7 +37,14 @@ public:
    virtual bool put_object(const std::string& container_name,
                            const std::string& object_name,
                            const std::vector<unsigned char>& object_bytes,
-                           const PropertySet* headers=NULL) {
+                           const PropertySet* headers=nullptr) {
+      return false;
+   }
+
+   virtual bool put_object_from_file(const std::string& container_name,
+                                     const std::string& object_name,
+                                     const std::string& object_file_path,
+                                     const PropertySet* headers=nullptr) {
       return false;
    }
 
@@ -46,7 +53,7 @@ public:
       return false;
    }
 
-   virtual int get_object(const std::string& container_name,
+   virtual int64_t get_object(const std::string& container_name,
                           const std::string& object_name,
                           const std::string& local_file_path) {
       return 0;
@@ -198,8 +205,8 @@ void TestJukebox::test_get_container_suffix() {
    // no encryption, yes compression
    {
       JukeboxOptions jb_options;
-      jb_options.use_encryption = false;
-      jb_options.use_compression = true;
+      jb_options.set_use_encryption(false);
+      jb_options.set_use_compression(true);
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.get_container_suffix();
       requireStringEquals("-z", suffix);
@@ -208,9 +215,9 @@ void TestJukebox::test_get_container_suffix() {
    // yes encryption, no compression
    {
       JukeboxOptions jb_options;
-      jb_options.use_encryption = true;
-      jb_options.use_compression = false;
-      jb_options.encryption_key = "asdf";
+      jb_options.set_use_encryption(true);
+      jb_options.set_use_compression(false);
+      jb_options.set_encryption_key("asdf");
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.get_container_suffix();
       requireStringEquals("-e", suffix);
@@ -219,9 +226,9 @@ void TestJukebox::test_get_container_suffix() {
    // yes encryption, yes compression
    {
       JukeboxOptions jb_options;
-      jb_options.use_encryption = true;
-      jb_options.use_compression = true;
-      jb_options.encryption_key = "asdf";
+      jb_options.set_use_encryption(true);
+      jb_options.set_use_compression(true);
+      jb_options.set_encryption_key("asdf");
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.get_container_suffix();
       requireStringEquals("-ez", suffix);
@@ -243,8 +250,8 @@ void TestJukebox::test_object_file_suffix() {
    // no encryption, yes compression
    {
       JukeboxOptions jb_options;
-      jb_options.use_encryption = false;
-      jb_options.use_compression = true;
+      jb_options.set_use_encryption(false);
+      jb_options.set_use_compression(true);
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.object_file_suffix();
       requireStringEquals(".gz", suffix);
@@ -253,9 +260,9 @@ void TestJukebox::test_object_file_suffix() {
    // yes encryption, no compression
    {
       JukeboxOptions jb_options;
-      jb_options.use_encryption = true;
-      jb_options.use_compression = false;
-      jb_options.encryption_key = "asdf";
+      jb_options.set_use_encryption(true);
+      jb_options.set_use_compression(false);
+      jb_options.set_encryption_key("asdf");
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.object_file_suffix();
       requireStringEquals(".e", suffix);
@@ -264,9 +271,9 @@ void TestJukebox::test_object_file_suffix() {
    // yes encryption, yes compression
    {
       JukeboxOptions jb_options;
-      jb_options.use_encryption = true;
-      jb_options.use_compression = true;
-      jb_options.encryption_key = "asdf";
+      jb_options.set_use_encryption(true);
+      jb_options.set_use_compression(true);
+      jb_options.set_encryption_key("asdf");
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.object_file_suffix();
       requireStringEquals(".egz", suffix);

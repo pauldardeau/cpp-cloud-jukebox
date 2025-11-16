@@ -5,7 +5,7 @@
 #include "TestSuite.h"
 
 
-class TestPropertySet : public poivre::TestSuite {
+class TestPropertySet : public chaudiere::TestSuite {
 private:
    std::string test_dir;
 

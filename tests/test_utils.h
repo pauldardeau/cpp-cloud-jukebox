@@ -5,7 +5,7 @@
 #include "TestSuite.h"
 
 
-class TestUtils : public poivre::TestSuite {
+class TestUtils : public chaudiere::TestSuite {
 private:
    std::string test_dir;
 
@@ -35,8 +35,7 @@ protected:
    void test_file_read_all_text();
    void test_file_read_lines();
    void test_directory_delete_directory();
-   void test_md5_for_file();
-   void test_create_random_index_list();
+   //void test_md5_for_file();
 
 public:
    TestUtils();

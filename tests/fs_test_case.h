@@ -8,13 +8,13 @@
 
 class FSTestCase {
 private:
-   poivre::TestSuite& test_suite;
+   chaudiere::TestSuite& test_suite;
    std::string test_dir;
 
    FSTestCase(const FSTestCase&);
    FSTestCase& operator=(const FSTestCase&);
 public:
-   FSTestCase(poivre::TestSuite& the_test_suite,
+   FSTestCase(chaudiere::TestSuite& the_test_suite,
               const std::string& the_test_dir);
    ~FSTestCase();
    void setup();

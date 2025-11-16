@@ -5,7 +5,7 @@
 #include "TestSuite.h"
 
 
-class TestS3StorageSystem : public poivre::TestSuite {
+class TestS3StorageSystem : public chaudiere::TestSuite {
 protected:
    void runTests();
 

@@ -129,6 +129,10 @@ public:
       return m_fm.get_file_uid();
    }
 
+   const std::string& get_file_name() const {
+      return m_fm.get_file_name();
+   }
+
    const std::string& get_md5_hash() const {
       return m_fm.get_md5_hash();
    }
@@ -179,6 +183,10 @@ public:
 
    void set_object_name(const std::string& s) {
       m_fm.set_object_name(s);
+   }
+
+   void set_file_name(const std::string& s) {
+      m_fm.set_file_name(s);
    }
 
    void set_file_uid(const std::string& s) {

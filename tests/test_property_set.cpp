@@ -77,10 +77,7 @@ void TestPropertySet::test_get_keys() {
    ps.get_keys(keys);
    require(keys.size() == 3);
    string all = "stooge1|stooge2|stooge3";
-   auto it = keys.begin();
-   const auto it_end = keys.end();
-   for (; it != it_end; it++) {
-      const string& key = *it;
+   for (const auto& key : keys) {
       require(chaudiere::StrUtils::containsString(all, key));
    }
 }
@@ -89,7 +86,7 @@ void TestPropertySet::test_get() {
    TEST_CASE("test_get");
    PropertySet ps;
    const PropertyValue* pv = ps.get("x");
-   require(pv == NULL);
+   require(pv == nullptr);
    ps.add("bool", new BoolPropertyValue(true));
    ps.add("string", new StrPropertyValue("yikes"));
    ps.add("int", new IntPropertyValue(7));
@@ -97,27 +94,27 @@ void TestPropertySet::test_get() {
    ps.add("ulong", new ULongPropertyValue(256L));
 
    pv = ps.get("bool");
-   require(pv != NULL);
+   require(pv != nullptr);
    require(pv->is_bool());
    require(pv->get_bool_value() == true);
 
    pv = ps.get("string");
-   require(pv != NULL);
+   require(pv != nullptr);
    require(pv->is_string());
    requireStringEquals(pv->get_string_value(), "yikes");
 
    pv = ps.get("int");
-   require(pv != NULL);
+   require(pv != nullptr);
    require(pv->is_int());
    require(pv->get_int_value() == 7);
 
    pv = ps.get("long");
-   require(pv != NULL);
+   require(pv != nullptr);
    require(pv->is_long());
    require(pv->get_long_value() == 128L);
 
    pv = ps.get("ulong");
-   require(pv != NULL);
+   require(pv != nullptr);
    require(pv->is_ulong());
    require(pv->get_ulong_value() == 256L);
 }
@@ -241,57 +238,57 @@ void TestPropertySet::test_read_from_file() {
    require(ps.contains("my_string_stars"), "my_string_stars present");
 
    const PropertyValue* pv = ps.get("my_bool_true");
-   if (pv != NULL) {
+   if (pv != nullptr) {
       require(pv->is_bool(), "my_bool_true is bool");
       bool bool_value = pv->get_bool_value();
       require(bool_value == true, "my_bool_true value true");
    } else {
-      require(pv != NULL, "my_bool_true property present");
+      require(pv != nullptr, "my_bool_true property present");
    }
 
    pv = ps.get("my_bool_false");
-   if (pv != NULL) {
+   if (pv != nullptr) {
       require(pv->is_bool(), "my_bool_false is bool");
       bool bool_value = pv->get_bool_value();
       require(bool_value == false, "my_bool_false value false");
    } else {
-      require(pv != NULL, "my_bool_false property present");
+      require(pv != nullptr, "my_bool_false property present");
    }
 
    pv = ps.get("my_int_6");
-   if (pv != NULL) {
+   if (pv != nullptr) {
       require(pv->is_int(), "my_int_6 is int");
       int int_value = pv->get_int_value();
       require(int_value == 6, "my_int_6 value = 6");
    } else {
-      require(pv != NULL, "my_int_6 property present");
+      require(pv != nullptr, "my_int_6 property present");
    }
 
    pv = ps.get("my_long_150000");
-   if (pv != NULL) {
+   if (pv != nullptr) {
       require(pv->is_long(), "my_long_150000 is long");
       long long_value = pv->get_long_value();
       require(long_value == 150000L, "my_long_150000 value = 150000L");
    } else {
-      require(pv != NULL, "my_long_150000 property present");
+      require(pv != nullptr, "my_long_150000 property present");
    }
 
    pv = ps.get("my_ulong_2000");
-   if (pv != NULL) {
+   if (pv != nullptr) {
       require(pv->is_ulong(), "my_ulong_2000 is ulong");
       unsigned long ul_value = pv->get_ulong_value();
       require(ul_value == 2000L, "my_ulong_2000 value == 2000L");
    } else {
-      require(pv != NULL, "my_ulong_2000 property present");
+      require(pv != nullptr, "my_ulong_2000 property present");
    }
 
    pv = ps.get("my_string_stars");
-   if (pv != NULL) {
+   if (pv != nullptr) {
       require(pv->is_string(), "my_string_stars is string");
       string string_value = pv->get_string_value();
       requireStringEquals(string_value, "stars", "my_string_stars value == stars");
    } else {
-      require(pv != NULL, "my_string_stars property present");
+      require(pv != nullptr, "my_string_stars property present");
    }
 }
 

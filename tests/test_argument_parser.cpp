@@ -27,15 +27,15 @@ void TestArgumentParser::test_add_optional_bool_flag() {
    vector<string> args;
 
    PropertySet* ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args should return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args should return non-NULL");
+   if (ps != nullptr) {
       requireFalse(ps->contains("debug"), "props must not contain optional argument that wasn't provided");
    }
 
    args.push_back("--debug");
    ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args should return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args should return non-NULL");
+   if (ps != nullptr) {
       require(ps->contains("debug"), "props must contain provided argument");
       require(ps->get_bool_value("debug"), "bool true must be provided for optional bool arg that was provided");
    }
@@ -48,16 +48,16 @@ void TestArgumentParser::test_add_optional_int_argument() {
 
    vector<string> args;
    PropertySet* ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args must return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args must return non-NULL");
+   if (ps != nullptr) {
       requireFalse(ps->contains("logLevel"), "property must not exist because it wasn't provided");
    }
 
    args.push_back("--logLevel");
    args.push_back("5");
    ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args must return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args must return non-NULL");
+   if (ps != nullptr) {
       require(ps->contains("logLevel"), "property must exist when provided");
       int value = ps->get_int_value("logLevel");
       require(value == 5, "int value must match what was provided");
@@ -71,16 +71,16 @@ void TestArgumentParser::test_add_optional_string_argument() {
 
    vector<string> args;
    PropertySet* ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args must return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args must return non-NULL");
+   if (ps != nullptr) {
       requireFalse(ps->contains("user"), "property should not exist if not provided");
    }
 
    args.push_back("--user");
    args.push_back("johndoe");
    ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args must return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args must return non-NULL");
+   if (ps != nullptr) {
       require(ps->contains("user"), "provided property must exist");
       string userid = ps->get_string_value("user");
       requireStringEquals("johndoe", userid, "string property values must match");
@@ -94,15 +94,15 @@ void TestArgumentParser::test_add_required_argument() {
 
    vector<string> args;
    PropertySet* ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args must return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args must return non-NULL");
+   if (ps != nullptr) {
       requireFalse(ps->contains("command"), "property not provided should not exist");
    }
 
    args.push_back("play");
    ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args must return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args must return non-NULL");
+   if (ps != nullptr) {
       require(ps->contains("command"), "provided property must exist");
       string command = ps->get_string_value("command");
       requireStringEquals("play", command);
@@ -126,8 +126,8 @@ void TestArgumentParser::test_parse_args() {
    args.push_back("play");
 
    PropertySet* ps = ap.parse_args(args);
-   require(ps != NULL, "parse_args should return non-NULL");
-   if (ps != NULL) {
+   require(ps != nullptr, "parse_args should return non-NULL");
+   if (ps != nullptr) {
       require(ps->contains("logLevel"), "logLevel should exist");
       require(ps->contains("user"), "user should exist");
       require(ps->contains("debug"), "debug should exist");

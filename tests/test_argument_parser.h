@@ -5,7 +5,7 @@
 #include "TestSuite.h"
 
 
-class TestArgumentParser : public poivre::TestSuite {
+class TestArgumentParser : public chaudiere::TestSuite {
 protected:
    void runTests();
 
