@@ -1,5 +1,5 @@
 CC = c++
-CC_OPTS = -c -I../src -I../chapeau/chaudiere/src -I../chapeau/src
+CC_OPTS = -c -std=c++20 -I../src -I../chapeau/chaudiere/src -I../chapeau/src
 
 EXE_NAME = test_cpp_cloud_jukebox
 LIB_NAMES = -L../lib -lchaudiere -L../lib -lchapeau -L../lib -lsqlite3
