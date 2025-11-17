@@ -22,7 +22,7 @@ protected:
 
 public:
    TestS3StorageSystem();
-   
+
 };
 
 

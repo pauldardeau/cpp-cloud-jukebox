@@ -48,7 +48,7 @@ protected:
 
 public:
    TestJukeboxDB();
-   
+
 };
 
 

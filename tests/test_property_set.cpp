@@ -129,7 +129,7 @@ void TestPropertySet::test_get_int_value() {
    require(value == 13);
    ps.add("y", new LongPropertyValue(100L));
    value = ps.get_int_value("y");
-   require(value == 0); 
+   require(value == 0);
 }
 
 void TestPropertySet::test_get_long_value() {
@@ -168,7 +168,7 @@ void TestPropertySet::test_get_bool_value() {
    require(value == true);
    ps.add("y", new IntPropertyValue(2));
    value = ps.get_bool_value("y");
-   require(value == false); 
+   require(value == false);
 }
 
 void TestPropertySet::test_get_string_value() {

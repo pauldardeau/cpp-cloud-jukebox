@@ -35,7 +35,7 @@ void TestFSStorageSystem::test_enter() {
       require(fs.enter(), "enter must return true");
       fs.exit();
    }
-   
+
    {
       FSTestCase fs_test_case(*this, test_dir);
       FSStorageSystem fs(test_dir, false);
@@ -194,7 +194,7 @@ void TestFSStorageSystem::test_get_object_metadata() {
    require(fs.put_object("books", "tale_of_two_cities.txt", v_obj_contents, &psPut), "put_object with metadata must return true");
    require(fs.get_object_metadata("books", "tale_of_two_cities.txt", props), "get_object_metadata for object with metadata must return true");
    require(props.count() == 5, "retrieved properties must be complete");
-   
+
    // existing container, deleted object
    require(fs.delete_object("books", "tale_of_two_cities.txt"), "delete_object must return true");
    PropertySet psDeleted;
@@ -275,7 +275,7 @@ void TestFSStorageSystem::test_get_object() {
    require(fs.put_object("books", "book.txt", v_obj_contents, nullptr), "put object must work");
    ret_val = fs.get_object("books", "book.txt", local_file_path);
    require(ret_val == object_contents.size(), "existing object should return > 0");
-   
+
    // existing container, deleted object
    require(fs.delete_object("books", "book.txt"), "delete object must work");
    ret_val = fs.get_object("books", "book.txt", local_file_path);

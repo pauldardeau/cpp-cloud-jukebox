@@ -241,7 +241,7 @@ void TestJukebox::test_object_file_suffix() {
    DummyStorageSystem dss;
 
    // no encryption, no compression
-   {  
+   {
       JukeboxOptions jb_options;
       Jukebox jukebox(jb_options, dss);
       string suffix = jukebox.object_file_suffix();
@@ -288,7 +288,7 @@ void TestJukebox::test_container_for_song() {
    string container;
 
    // no encryption, no compression
-   {  
+   {
       JukeboxOptions jb_options;
       Jukebox jukebox(jb_options, dss);
       container = jukebox.container_for_song("The-Who--Whos-Next--My-Wife");

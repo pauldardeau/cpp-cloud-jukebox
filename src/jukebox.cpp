@@ -985,7 +985,7 @@ void Jukebox::downloader_cleanup() {
       if (m_downloader && m_download_thread) {
          //printf("deleting downloader and download thread\n");
          m_downloader_ready_to_delete = false;
-         m_downloader.reset();         
+         m_downloader.reset();
          m_download_thread.reset();
       } else {
          printf("NOT deleting b/c 1 or both is nullptr\n");

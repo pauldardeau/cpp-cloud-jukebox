@@ -17,7 +17,7 @@ protected:
 
 public:
    TestArgumentParser();
-   
+
 };
 
 
