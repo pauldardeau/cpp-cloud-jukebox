@@ -1,7 +1,9 @@
 #include "argument_parser.h"
 #include "property_set.h"
+#include "StrUtils.h"
 
 using namespace std;
+using namespace chaudiere;
 
 const string ArgumentParser::TYPE_BOOL = "bool";
 const string ArgumentParser::TYPE_INT = "int";
@@ -85,8 +87,7 @@ PropertySet* ArgumentParser::parse_args(const vector<string>& args) {
          } else if (arg_type == TYPE_INT) {
             i++;
             if (i < num_args) {
-               const string& next_arg = args[i];
-               int int_value = atoi(next_arg.c_str());
+               int int_value = StrUtils::parseInt(args[i]);
                pset->add(the_arg, new IntPropertyValue(int_value));
             } else {
                // missing int value
