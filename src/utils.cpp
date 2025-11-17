@@ -922,8 +922,7 @@ bool Utils::get_platform_config_value(const string& ini_file_name,
    if (get_platform_config_values(ini_file_name, kvp)) {
       if (kvp.hasKey(key)) {
          config_value = kvp.getValue(key);
-         if (StrUtils::startsWith(config_value, "\"") &&
-             StrUtils::endsWith(config_value, "\"")) {
+         if (StrUtils::startsAndEndsWith(config_value, "\"")) {
             StrUtils::strip(config_value, '"');
          }
          StrUtils::strip(config_value);

@@ -1087,8 +1087,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          string key = "audio_player_exe_file_name";
          if (kvpAudioPlayer.hasKey(key)) {
             m_audio_player_exe_file_name = kvpAudioPlayer.getValue(key);
-            if (StrUtils::startsWith(m_audio_player_exe_file_name, "\"") &&
-                StrUtils::endsWith(m_audio_player_exe_file_name, "\"")) {
+            if (StrUtils::startsAndEndsWith(m_audio_player_exe_file_name, "\"")) {
                StrUtils::strip(m_audio_player_exe_file_name, '"');
             }
             StrUtils::strip(m_audio_player_exe_file_name);
@@ -1108,8 +1107,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          key = "audio_player_command_args";
          if (kvpAudioPlayer.hasKey(key)) {
             m_audio_player_command_args = kvpAudioPlayer.getValue(key);
-            if (StrUtils::startsWith(m_audio_player_command_args, "\"") &&
-                StrUtils::endsWith(m_audio_player_command_args, "\"")) {
+            if (StrUtils::startsAndEndsWith(m_audio_player_command_args, "\"")) {
 
                StrUtils::strip(m_audio_player_command_args, '"');
             }
@@ -1141,8 +1139,7 @@ void Jukebox::play_retrieved_songs(bool shuffle) {
          key = "audio_player_resume_args";
          if (kvpAudioPlayer.hasKey(key)) {
             m_audio_player_resume_args = kvpAudioPlayer.getValue(key);
-            if (StrUtils::startsWith(m_audio_player_resume_args, "\"") &&
-                StrUtils::endsWith(m_audio_player_resume_args, "\"")) {
+            if (StrUtils::startsAndEndsWith(m_audio_player_resume_args, "\"")) {
                StrUtils::strip(m_audio_player_resume_args, '"');
             }
             StrUtils::strip(m_audio_player_resume_args);
